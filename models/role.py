@@ -1,5 +1,6 @@
 from datetime import date
-from user_employee import User, Employee
+from models.user_employee import User, Employee
+
 
 class Worker(Employee):
     def __init__(self, user_id: int, username: str, password_hash: str, employee_id: int, first_name: str, last_name: str, hire_date: date, total_leave_days: int, used_leave_days: int):
