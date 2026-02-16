@@ -12,6 +12,7 @@ class LeaveRequest:
         self.who_confirmed = who_confirmed
         # self.status = status
 
-    def confirmed_leave(self):
+    def confirmed_leave(self,who_confirmed ):
         self.status_leave = True
+        self.who_confirmed = who_confirmed
 
