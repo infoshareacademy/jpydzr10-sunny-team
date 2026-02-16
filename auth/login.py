@@ -1,19 +1,13 @@
 import hashlib
-from models.user_employee import User
+from database.database import user_database
 
-class AuthService:
-    def __init__(self, users: list[User]):
-        self.users = users
+def hash_password(password: str):
+    return hashlib.sha256(password.encode()).hexdigest()
 
-    def hash_password(self, password):
-        return hashlib.sha256(password.encode()).hexdigest()
+def login(username: str, password: str):
+    for user in user_database.values():
+        if user.username == username and user.password_hash == hash_password(password):
+            return user
 
-    def login(self, username, password):
-        password_hash = self.hash_password(password)
-
-        for user in self.users:
-            if user.username == username and user.password_hash == password_hash:
-                return True
-
-        return False
+    return None
 

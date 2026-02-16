@@ -1,23 +1,17 @@
-from models.user_employee import User
-from auth.login import AuthService
-import hashlib
+from auth.login import login, hash_password
+from database.database import create_user, user_database
 
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+create_user(1, "ola", hash_password("12345"), "Admin")
+create_user(2, "tomek", hash_password("abc"), "Worker")
+user1 = login("ola", "12345")
+user2 = login("tomek", "12345")
 
-users = [
-    User(1,"ola", hash_password("12345"), "a"),
-    User(2,"ala", hash_password("qwerty"),"b"),
-    User(3,"marek", hash_password("Pa55w0rd"),"a"),
-    User(4,"tomek", hash_password("4tepian"),"b"),
-]
-
-test = AuthService(users)
-
-user_name = input("Podaj login: ")
-password = input("Podaj hasło: ")
-
-if test.login(user_name, password):
-    print("Zalogowano!")
+if user1:
+    print("Zalogowano:", user1.username)
 else:
-    print("Błędne dane.")
+    print("Błędne dane!")
+
+if user2:
+    print("Zalogowano:", user2.username)
+else:
+    print("Błędne dane!")
