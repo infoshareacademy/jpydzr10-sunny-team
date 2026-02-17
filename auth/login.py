@@ -5,9 +5,8 @@ def hash_password(password: str):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def login(username: str, password: str):
-    # Walidacja danych logowania. (Chcemy walidacje dopiero po znalezieniu użytkownika)
-    validate_login_data(username, password)
-
+    validate_login_data(username, password) # Walidacja danych logowania przed znalezieniem użytkownika w bazie danych.
+    
     for user in user_database.values():
         if user.username == username and user.password_hash == hash_password(password):
             return user
