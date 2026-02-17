@@ -1,17 +1,28 @@
 from auth.login import login, hash_password
 from database.database import create_user, user_database
 
-create_user(1, "ola", hash_password("12345"), "Admin")
-create_user(2, "tomek", hash_password("abc"), "Worker")
-user1 = login("ola", "12345")
-user2 = login("tomek", "12345")
+create_user(1, "ola", hash_password("haslo123"), "Admin")
+create_user(2, "tomek", hash_password("qwertyui"), "Worker")
+create_user(3, "asia",  hash_password("tajne123"), "User")
 
-if user1:
-    print("Zalogowano:", user1.username)
-else:
-    print("Błędne dane!")
+testy = [
+    ("ola",   "haslo123",   "powinien się zalogować"),
+    ("ola",   "zlehaslo",   "złe hasło → None"),
+    ("tomek", "qwertyui",   "powinien się zalogować"),
+    ("asia",  "tajne123",   "powinien się zalogować"),
+    ("janek", "cokolwiek",  "nie istnieje → None"),
+    ("",      "haslo123",   "pusty username → błąd walidacji"),
+    ("ola",   "abcde",      "za krótkie hasło → błąd walidacji"),
+    ("ola",   "123456",     "poprawne, ale inne hasło → None"),
+    ("ola",   "",           "puste hasło → błąd walidacji"),
+]
 
-if user2:
-    print("Zalogowano:", user2.username)
-else:
-    print("Błędne dane!")
+print("=== TESTY LOGOWANIA ===")
+
+for username, password, opis in testy:
+    wynik = login(username, password)
+
+    if wynik is not None:
+        print(f" {opis:.<35} → ZALOGOWANO: {wynik.username}")
+    else:
+        print(f" {opis:.<35} → NIE zalogowano")
