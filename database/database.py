@@ -62,7 +62,7 @@ def save_users():
             writer.writerow(['user_id', 'username', 'password_hash', 'role'])
 
             # Dane
-            for user in user_database.values():
+            for user in sorted(user_database.values(), key=lambda u: u.user_id): # Sortujemy po user.id
                 writer.writerow([
                     user.user_id,
                     user.username,
@@ -76,7 +76,12 @@ def save_users():
 
 user_database = load_users()
 
-def create_user(user_id: int, username: str ,password_hash: str , role: str):
+def create_user(user_id: int, username: str, password: str , role: str):
+
+    from auth.login import hash_password
+
+    password_hash = hash_password(password)
+
     if role == "Admin":
         user = Admin(user_id,username,password_hash)
     else:
