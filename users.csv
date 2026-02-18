@@ -1,0 +1,3 @@
+user_id,username,password_hash,role
+2,ola,test123,Worker
+1,nowyuser,abc123hash,User
