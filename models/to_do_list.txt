@@ -1,0 +1,4 @@
+to do list:
+poprawic stale role
+moze classmethod
+moze enum
