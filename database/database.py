@@ -1,5 +1,5 @@
-from models.user_employee import User
-from models.role import Admin
+from models.user import User
+from models.admin import Admin
 
 user_database = {}
 
