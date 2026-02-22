@@ -22,7 +22,7 @@ class Permission:
                                             "can_3": False,
                                             "can_4": False}}
     # Checks if user has permission to execute command
-    def verifyPermission(self, user, command):
+    def verifyPermission(self, user: str, command: str) -> bool:
         try:
             return self.permissions[user][command]
         except KeyError:
