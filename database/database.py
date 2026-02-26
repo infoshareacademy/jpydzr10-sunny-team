@@ -1,3 +1,8 @@
+# Importy do CSV
+import os
+import csv
+from typing import Dict
+
 from models.user import User
 from models.admin import Admin
 
