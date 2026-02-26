@@ -1,0 +1,26 @@
+                                                                
+             ┌──────────────────────┐    ┌──────────────────┐   
+             │     User             │    │    Admin         │   
+             │ - user_id:: int      ┼────┤  -role = "Admin" │   
+             │ - username: str      │    │                  │   
+             │ - password_hash: str │    └──────────────────┘   
+             │ - role: str          │                           
+             └──────────┬───────────┘                           
+                        │                                       
+                        │                                       
+            ┌───────────┴─────────── ┐                           
+            │        Worker          │                           
+            │- employee_id           │                           
+            │- first_name            │                           
+            │- last_name             │                           
+            │- hire_date             │                           
+            │- role = "Worker"       │                          
+            │- total_leave_days: int │                          
+            │- used_leave_days: int  │                          
+            └──────────┬─────────────┘                          
+       ┌───────────────┴────────────┐                            
+┌──────┼───────────┐        ┌───────┼──────┐                     
+│   Manager        │        │    HR        │                     
+│- role = "Manager"│        │- role = "HR" │                     
+└──────────────────┘        └──────────────┘                     
+                                                      
