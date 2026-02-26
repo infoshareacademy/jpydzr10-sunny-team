@@ -1,5 +1,5 @@
 import hashlib
-from database.database import user_database
+from database.database import load_users
 
 def hash_password(password: str):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -11,7 +11,9 @@ def login(username: str, password: str):
         print(f"Błąd walidacji: {validate_result}")
         return None
 
-    for user in user_database.values():
+    db = load_users()
+
+    for user in db.values():
         if user.username == username and user.password_hash == hash_password(password):
             return user
 
