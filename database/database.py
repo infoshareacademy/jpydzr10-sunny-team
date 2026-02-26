@@ -1,10 +1,5 @@
-# Importy do CSV
-import os
-import csv
-from typing import Dict
-
-from models.user_employee import User
-from models.role import Admin
+from models.user import User
+from models.admin import Admin
 
 """Scieżka do naszego pliku"""
 DATA_FILE = "users.csv"     # Możecie zmienić, jeśli chcecie by plik był przechowywany gdzie indziej.

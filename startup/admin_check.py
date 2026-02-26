@@ -1,8 +1,9 @@
-from models.role import Admin
-from models.user_employee import User, Employee
-from database.database import user_databse,create_user
+from models.admin import Admin
+from models.user import User
 
-if not (any(isinstance(user,Admin) for user in user_databse.values())):
+from database.database import user_database,create_user
+
+if not (any(isinstance(User,Admin) for user in user_database.values())):
     create_user(1,"SuperAdmin","1234","Admin")
 else:
     pass
