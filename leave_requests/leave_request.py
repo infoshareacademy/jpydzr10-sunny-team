@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date,datetime
 from enum import Enum
 
 class LeaveStatus(Enum):
     pending = "Pending"
     approved = "Approved"
     rejected = "Rejected"
+    canceled = "Canceled"
 
 class LeaveRequest:
     def __init__(self,
@@ -44,3 +45,10 @@ class LeaveRequest:
         self.start_date = new_start_date
         self.end_date = new_end_date
         self.amount_days = new_amount_days
+
+    def cancel_request(self,canceled_by,canceled_at):
+        if self.status != LeaveStatus.pending:
+            raise Exception("Można anulować wniosek oczekujący")
+        self.status = LeaveStatus.canceled
+        self.canceled_by = canceled_by
+        self.canceled_at = datetime.now()
