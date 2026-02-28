@@ -30,7 +30,17 @@ class LeaveRequest:
         self.who_confirmed = who_confirmed
 
     def rejected(self,who_confirmed:str):
-        self..status_leave = LeaveStatus.rejected
+        self.status_leave = LeaveStatus.rejected
         self.who_confirmed = who_confirmed
 
+    def change_request(self,new_start_date:date,new_end_date:date,new_amount_days:int):
 
+        if self.status != LeaveStatus.pending:
+            raise Exception("Można edytować tylko wniosek oczekujący!")
+
+        if new_end_date < new_start_date:
+            raise ValueError("Data końcowa nie może być przed początkową")
+
+        self.start_date = new_start_date
+        self.end_date = new_end_date
+        self.amount_days = new_amount_days
