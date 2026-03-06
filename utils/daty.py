@@ -1,20 +1,38 @@
-# Tu trzymamy wszystko co związane z datami, urlopami, świętami
+"""Tu trzymamy wszystko co związane z datami, urlopami, świętami"""
 
 import calendar
-from datetime import date, datetime, timedelta
-import tempora
+from datetime import date
+import holidays
 
-def is_working_day(dzien: date):
-    if calendar.weekday(dzien.year, dzien.month, dzien.day) >= 5:
-        return False
-    return True
+"""Odkomentowac jesli biblioteki tempora potrzebne"""
+#import tempora
 
-def is_weekend(dzien: date) :
-    return dzien.weekday() >= 5
+class Kalendarz: #Nie zmieniac nazwy klasy na 'Calendar', bo wtedy biblioteki Calendar zle dzialaja z jakiegos powodu.
+    def __init__(self, year):
+        self.year = year
+        pl_holidays = holidays.PL(self.year)
+        self.holidays = set(pl_holidays.keys())
 
-def date_format(d: date):
-    return d.strftime("%d.%m.%Y (%a)")
+    def is_working_day(self, d: date):
+        if d.weekday() >= 5: #Usuwamy sobote i niedziele z listy dnich roboczych
+            return False
+        if self.is_holiday(d): #Usuwamy swieto z listy dnich roboczych
+            return False
+        return True
 
-def current_in_utc():
-    """zwraca aktualny czas w UTC"""
-    return datetime.now
+    def is_weekend(self, d: date):
+        return d.weekday() >= 5
+
+    def is_holiday(self, d: date):
+        return d in self.holidays
+
+    def date_format(self, d: date):
+        return d.strftime("%d.%m.%Y (%a)")
+
+    def working_day_list(self, month):
+        working_days = []
+        for day in range(1, calendar.monthrange(self.year, month)[1] + 1):
+            data = date(self.year, month, day)
+            if self.is_working_day(data):
+                working_days.append(data)
+        return working_days
