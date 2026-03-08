@@ -15,3 +15,10 @@ class Worker(User):
 
     def add_leave_request(self, leave_request: LeaveRequest):
         self.leave_requests_list.append(leave_request)
+
+    def remove_leave_request(self,leave_request: LeaveRequest):
+        self.leave_requests_list.remove(leave_request)
+
+    def get_leave_requests(self):
+        return self.leave_requests_list
+
