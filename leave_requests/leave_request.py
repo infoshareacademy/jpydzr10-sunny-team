@@ -8,11 +8,13 @@ class LeaveRequest:
         self.start_date = start_date
         self.end_date = end_date
         self.amount_days = amount_days
-        self.status_leave = False #jako odrzucony, True jako zatwierdzone
+        self.status_leave = "pending" #pending - oczegujący na decyzję, approved/declined - decyzja
+        if amount_days > 0: #TODO: wstawić pointer do pracownika i dostępnego czasu
+            self.status_leave = "declined"
         self.who_confirmed = who_confirmed
         # self.status = status
 
     def confirmed_leave(self,who_confirmed ):
-        self.status_leave = True
+        self.status_leave = "approved"
         self.who_confirmed = who_confirmed
 
