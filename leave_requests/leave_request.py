@@ -1,5 +1,6 @@
 from datetime import date,datetime
 from enum import Enum
+from database.database import load_users
 
 class LeaveStatus(Enum):
     pending = "Pending"
@@ -24,6 +25,10 @@ class LeaveRequest:
         self.amount_days = amount_days
 
         self.status = LeaveStatus.pending
+        user_list = load_users()
+        if amount_days > user_list[employee_id].total_leave_days - user_list[employee_id].used_leave_days:
+            self.status_leave = LeaveStatus.rejected
+        
         self.who_confirmed = None
 
     def approve(self,who_confirmed:str):
