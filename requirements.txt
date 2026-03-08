@@ -1,3 +1,4 @@
+holidays
 jaraco.functools==4.4.0
 more-itertools==10.8.0
 python-dateutil==2.9.0.post0

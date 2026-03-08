@@ -14,8 +14,12 @@ def is_working_day(d: date):
 def is_weekend(d: date):
     return d.weekday() >= 5
 
-def date_format(d: date):
-    return d.strftime("%d.%m.%Y (%a)")
+    def is_working_day(self, d: date):
+        if d.weekday() >= 5: #Usuwamy sobote i niedziele z listy dnich roboczych
+            return False
+        if self.is_holiday(d): #Usuwamy swieto z listy dnich roboczych
+            return False
+        return True
 
 def working_day_list(self, month):
     working_days = []
