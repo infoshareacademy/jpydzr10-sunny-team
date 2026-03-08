@@ -11,10 +11,10 @@ class LeaveRequest:
         self.amount_days = amount_days
         self.status_leave = "pending" #pending - oczegujący na decyzję, approved/declined - decyzja
         user_list = load_users()
-        if amount_days < user_list[employee_id].total_leave_days - user_list[employee_id].used_leave_days:
+        if amount_days > user_list[employee_id].total_leave_days - user_list[employee_id].used_leave_days:
             self.status_leave = "declined"
-        # self.who_confirmed = who_confirmed
-        # self.who_declined = who_declined
+        self.who_confirmed = None
+        self.who_declined = None
         # self.status = status
 
     def confirmed_leave(self,who_confirmed):
