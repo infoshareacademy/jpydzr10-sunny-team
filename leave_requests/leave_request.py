@@ -27,16 +27,16 @@ class LeaveRequest:
         self.status = LeaveStatus.pending
         user_list = load_users()
         if amount_days > user_list[employee_id].total_leave_days - user_list[employee_id].used_leave_days:
-            self.status_leave = LeaveStatus.rejected
+            self.status = LeaveStatus.rejected
         
         self.who_confirmed = None
 
     def approve(self,who_confirmed:str):
-        self.status_leave = LeaveStatus.approved
+        self.status = LeaveStatus.approved
         self.who_confirmed = who_confirmed
 
     def rejected(self,who_confirmed:str):
-        self.status_leave = LeaveStatus.rejected
+        self.status = LeaveStatus.rejected
         self.who_confirmed = who_confirmed
 
     def change_request(self,new_start_date:date,new_end_date:date,new_amount_days:int):
