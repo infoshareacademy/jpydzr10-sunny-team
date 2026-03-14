@@ -3,6 +3,7 @@
 import calendar
 from datetime import date
 import holidays
+import numpy as np
 
 """Odkomentowac jesli biblioteki tempora potrzebne"""
 #import tempora
@@ -36,3 +37,15 @@ class Kalendarz: #Nie zmieniac nazwy klasy na 'Calendar', bo wtedy biblioteki Ca
             if self.is_working_day(data):
                 working_days.append(data)
         return working_days
+
+    def count_leave_days(self, start, end):
+        if start.year != self.year or end.year != self.year:
+            raise ValueError("Zakres dat musi należeć do podanego w kalendarzu roku.")
+        elif end < start:
+            raise ValueError("Niepoprawna kolejność dat, muszą być podane chronolgicznie.")
+        else:
+            return np.busday_count(
+                start,
+                end + np.timedelta64(1, 'D'),
+                holidays=np.array(list(self.holidays), dtype='datetime64[D]')
+            )
