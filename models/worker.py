@@ -3,6 +3,8 @@ from user import User
 from utils.daty import Kalendarz
 from dateutil.relativedelta import relativedelta
 
+from leave_requests.leave_request import LeaveRequest
+
 class Worker(User):
     def __init__(self, user_id: int, username: str, password_hash: str, first_name: str, last_name: str, hire_date: date, other_experience: tuple, used_leave_days: int, role = "Worker"): #total_leave_days: int,
         super().__init__(user_id, username, password_hash, role)

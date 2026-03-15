@@ -17,7 +17,7 @@ class Kalendarz: #Nie zmieniac nazwy klasy na 'Calendar', bo wtedy biblioteki Ca
     def is_working_day(self, d: date):
         if d.weekday() >= 5: #Usuwamy sobote i niedziele z listy dnich roboczych
             return False
-        if self.is_holiday(d): #Usuwamy swieto z listy dnich roboczych
+        if self.is_holiday(d): #Usuwamy swieto z listy dnich roboczych.
             return False
         return True
 
