@@ -49,3 +49,11 @@ class Kalendarz: #Nie zmieniac nazwy klasy na 'Calendar', bo wtedy biblioteki Ca
                 end + np.timedelta64(1, 'D'),
                 holidays=np.array(list(self.holidays), dtype='datetime64[D]')
             )
+
+    def saturday_holidays(self):
+        return sum(1 for d in self.holidays if d.weekday() == 5)
+
+    def max_leave_days(self):
+        experience_less_10 = 20 + self.saturday_holidays()
+        experience_above_10 = 26 + self.saturday_holidays()
+        return experience_less_10, experience_above_10
