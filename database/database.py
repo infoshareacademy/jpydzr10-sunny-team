@@ -5,9 +5,9 @@ from typing import Dict
 
 from models.user import User
 from models.admin import Admin
-
+import startup
 """Scieżka do naszego pliku"""
-DATA_FILE = "users.csv"     # Możecie zmienić, jeśli chcecie by plik był przechowywany gdzie indziej.
+DATA_FILE = "startup/users.csv"     # Możecie zmienić, jeśli chcecie by plik był przechowywany gdzie indziej.
                             # Ewentualnie możemy utworzyć folder "Data" i tam przechowywać plik z bazą.
 
 def load_users():
