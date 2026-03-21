@@ -5,7 +5,10 @@ from typing import Dict
 
 from models.user import User
 from models.admin import Admin
+from models.worker import Worker
 import startup
+from database.workers_db import load_workers
+
 """Scieżka do naszego pliku"""
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'startup', 'users.csv'))
 # DATA_FILE = "startup/users.csv"     # Możecie zmienić, jeśli chcecie by plik był przechowywany gdzie indziej.
@@ -13,6 +16,9 @@ DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'start
 
 def load_users():
     """Wczytuje użytkowników z pliku CSV, jeśli taki plik istnieje"""
+
+    workers_data = load_workers()
+
     if not os.path.exists(DATA_FILE):
         print(f'Plik nie istnieje {DATA_FILE}. Tworzę nową pustą bazę użytkowników')
         return {}
@@ -39,8 +45,29 @@ def load_users():
 
                     if role == 'Admin':
                         user = Admin(user_id, username, password_hash)
+
+                    elif role == "Worker":
+                        w = workers_data.get(user_id)
+
+                        if not w:
+                            print(f"Brak danych worker dla ID {user_id}")
+                            continue
+
+                        user = Worker(
+                            user_id,
+                            username,
+                            password_hash,
+                            w["first_name"],
+                            w["last_name"],
+                            w["hire_date"],
+                            (w["other_experience_years"], w["other_experience_days"]),
+                            w["used_leave_days"],
+                            w["team"]
+                        )
+
                     else:
                         user = User(user_id, username, password_hash, role)
+
 
                     users[user_id] = user
 
@@ -87,6 +114,7 @@ def create_user(user_id: int, username: str, password: str , role: str):
         user = Admin(user_id,username,password_hash)
     else:
         user = User(user_id, username, password_hash, role)
+
     key = user.user_id
 
     user_database[key] = user

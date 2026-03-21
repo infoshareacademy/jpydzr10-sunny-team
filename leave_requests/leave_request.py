@@ -1,6 +1,5 @@
 from datetime import date,datetime
 from enum import Enum
-from database.database import load_users
 
 class LeaveStatus(Enum):
     pending = "Pending"
@@ -9,6 +8,7 @@ class LeaveStatus(Enum):
     canceled = "Canceled"
 
 class LeaveRequest:
+
     def __init__(self,
                  employee_id:int,
                  first_name:str,
@@ -17,6 +17,8 @@ class LeaveRequest:
                  end_date:date,
                  amount_days:int):
         """Klasa opisująca wniosek urlopowy pracownika"""
+        from database.database import load_users
+
         self.employee_id = employee_id
         self.first_name = first_name
         self.last_name = last_name

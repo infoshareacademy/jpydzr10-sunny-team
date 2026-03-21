@@ -5,8 +5,7 @@ from typing import Dict
 
 from leave_requests.leave_request import LeaveRequest, LeaveStatus
 
-DATA_FILE = "startup/leave_requests.csv"
-
+DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'startup', 'leave_requests.csv'))
 
 def load_leave_requests() -> Dict[int, LeaveRequest]:
     """Wczytuje wnioski urlopowe z pliku CSV."""
