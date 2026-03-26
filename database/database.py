@@ -7,7 +7,7 @@ from models.user import User
 from models.admin import Admin
 from models.worker import Worker
 import startup
-from database.workers_db import load_workers
+from database.workers_db import load_workers, save_workers
 
 """Scieżka do naszego pliku"""
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'startup', 'users.csv'))
@@ -54,15 +54,15 @@ def load_users():
                             continue
 
                         user = Worker(
-                            user_id,
-                            username,
-                            password_hash,
-                            w["first_name"],
-                            w["last_name"],
-                            w["hire_date"],
-                            (w["other_experience_years"], w["other_experience_days"]),
-                            w["used_leave_days"],
-                            w["team"]
+                            user_id = user_id,
+                            username = username,
+                            password_hash = password_hash,
+                            first_name = w.first_name,
+                            last_name = w.last_name,
+                            hire_date = w.hire_date,
+                            other_experience = w.other_experience,
+                            used_leave_days = w.used_leave_days,
+                            team = w.team
                         )
 
                     else:
@@ -97,6 +97,11 @@ def save_users():
                     user.password_hash,
                     user.role
                 ])
+
+            # Aktualizujemy workers.csv tylko dla Workerów
+            workers = {u.user_id: u for u in user_database.values() if isinstance(u, Worker)}
+            save_workers(workers)
+
         print(f'Zapisano {len(user_database)} użytkowników do {DATA_FILE}')
 
     except Exception as e:
