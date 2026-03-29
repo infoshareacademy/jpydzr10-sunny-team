@@ -24,3 +24,18 @@ class Worker(User):
 
     def get_leave_days(self):
         return self.total_leave_days - self.used_leave_days
+
+    def set_leave_days(self, new_value):
+        ...
+
+    def reset_leave_days(self):
+        ...
+
+    def subtract_leave_days(self, amount):
+        ...
+
+    def add_leave_days(self, amount):
+        ...
+
+    def update_leave_days(self):
+        ... # leaving empty, since I have no idea where  new value would come from
