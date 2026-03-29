@@ -1,6 +1,6 @@
 from datetime import date
 from user import User
-from utils.daty import Kalendarz
+from utils.date_utils import Calendar_utils
 from dateutil.relativedelta import relativedelta
 from leave_requests.leave_request import LeaveRequest
 
@@ -19,7 +19,7 @@ class Worker(User):
         return relativedelta(date.today(), self.hire_date - relativedelta(years=self.other_experience[0], days=self.other_experience[1])).years
 
     def _get_total_leave_days(self):
-        k=Kalendarz(date.today().year)
+        k=Calendar_utils(date.today().year)
         return k.max_leave_days()[0] if self._total_experience_years() < 10 else k.max_leave_days()[1]
 
     def get_leave_days(self):
