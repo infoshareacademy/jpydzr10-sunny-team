@@ -1,4 +1,4 @@
-from .worker import Worker
+from worker import Worker
 from datetime import date
 
 class Manager(Worker):
