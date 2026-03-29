@@ -2,6 +2,8 @@ from auth.login import login
 from admin_check import admin_exist
 from models.admin import Admin
 from leave_requests import leave_request
+from database.leave_requests_db import load_leave_requests
+
 
 def admin_menu(admin,leave_requests):
     while True:
@@ -51,7 +53,7 @@ def admin_menu(admin,leave_requests):
 
 def start_app():
     admin_exist()
-    leave_requests = []
+    leave_requests = load_leave_requests()
     while True:
         print("\n***Logowanie***")
         username = str(input("Podaj nazwę użytkownika: "))
