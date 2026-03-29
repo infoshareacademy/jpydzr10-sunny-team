@@ -41,7 +41,7 @@ class Worker(User):
         self.used_leave_days = self.used_leave_days + amount
 
     def add_leave_days(self, amount):
-        if amount < 0:
+        if amount <= 0:
             raise ValueError(f"amount of days must be positive non-zero number")
         self.used_leave_days = self.used_leave_days - amount
 
