@@ -1,5 +1,5 @@
 from datetime import date
-from .user import User
+from user import User
 from utils.daty import Kalendarz
 from dateutil.relativedelta import relativedelta
 from leave_requests.leave_request import LeaveRequest
