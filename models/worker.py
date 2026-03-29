@@ -26,7 +26,7 @@ class Worker(User):
         return self.total_leave_days - self.used_leave_days
 
     def set_leave_days(self, new_value):
-        if new_value < 0 or new_value > self.total_leave_days:
+        if new_value <= 0 or new_value > self.total_leave_days:
             raise ValueError(f"New value is out of scope:{0} - {self.total_leave_days}")
             return
         self.used_leave_days = self.total_leave_days - new_value
@@ -35,7 +35,7 @@ class Worker(User):
         self.used_leave_days = 0
 
     def subtract_leave_days(self, amount):
-        if amount < 0 or amount > self.total_leave_days - self.used_leave_days:
+        if amount <= 0 or amount > self.total_leave_days - self.used_leave_days:
             raise ValueError(f"New value is out of scope:{0} - {self.total_leave_days - self.used_leave_days} (remaining leave days)")
             return
         self.used_leave_days = self.used_leave_days + amount
