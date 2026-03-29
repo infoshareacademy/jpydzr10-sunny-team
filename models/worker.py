@@ -26,16 +26,16 @@ class Worker(User):
         return self.total_leave_days - self.used_leave_days
 
     def set_leave_days(self, new_value):
-        ...
+        self.used_leave_days = self.total_leave_days - new_value
 
     def reset_leave_days(self):
-        ...
+        self.used_leave_days = 0
 
     def subtract_leave_days(self, amount):
-        ...
+        self.used_leave_days = self.used_leave_days + amount
 
     def add_leave_days(self, amount):
-        ...
+        self.used_leave_days = self.used_leave_days - amount
 
     def update_leave_days(self):
-        ... # leaving empty, since I have no idea where  new value would come from
+        ... # leaving empty, since I have no idea where new value would come from
