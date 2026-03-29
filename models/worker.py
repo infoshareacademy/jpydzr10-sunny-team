@@ -5,8 +5,8 @@ from dateutil.relativedelta import relativedelta
 from leave_requests.leave_request import LeaveRequest
 
 class Worker(User):
-    def __init__(self, user_id: int, username: str, password_hash: str, first_name: str, last_name: str, hire_date: date, other_experience: tuple, used_leave_days: int, team: str, role = "Worker"): #total_leave_days: int,
-        super().__init__(user_id, username, password_hash, role)
+    def __init__(self, user_id: int, username: str, password_hash: str, first_name: str, last_name: str, hire_date: date, other_experience: tuple, used_leave_days: int, team: str, role = "Worker", is_active: bool = True): #total_leave_days: int,
+        super().__init__(user_id, username, password_hash, role, is_active)
         self.first_name = first_name
         self.last_name = last_name
         self.hire_date = hire_date
