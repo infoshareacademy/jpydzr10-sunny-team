@@ -3,6 +3,7 @@ from admin_check import admin_exist
 from models.admin import Admin
 from leave_requests import leave_request
 from database.leave_requests_db import load_leave_requests
+from permission_system.permission import Permission
 
 
 def admin_menu(admin,leave_requests):
