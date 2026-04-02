@@ -62,5 +62,5 @@ class LeaveRequest:
 
 
     def __repr__(self):
-        return(f"Request from{self.first_name} {self.last_name}: {self.start_date} - {self.end_date} ({self.amount_days} days)\n"
+        return(f"Request from {self.first_name} {self.last_name}: {self.start_date} - {self.end_date} ({self.amount_days} days)\n"
                f"Current status: {self.status}")
