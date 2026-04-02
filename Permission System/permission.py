@@ -1,23 +1,23 @@
 class Permission:
     def __init__(self):
         # Dictionary that holds permissions for every action for every user
-        self.permissions = {    "Admin":    {"can_1": False,
+        self.permissions = {    "Admin":    {"can_see_all_leave_requests": False,
                                             "can_2": False,
                                             "can_3": False,
                                             "can_4": False},
-                                "hr":       {"can_1": False,
+                                "hr":       {"can_see_all_leave_requests": False,
                                             "can_2": False,
                                             "can_3": False,
                                             "can_4": False},
-                                "manager":  {"can_1": False,
+                                "manager":  {"can_see_all_leave_requests": True,
                                             "can_2": False,
                                             "can_3": False,
                                             "can_4": False},
-                                "user":     {"can_1": False,
+                                "user":     {"can_see_all_leave_requests": False,
                                             "can_2": False,
                                             "can_3": False,
                                             "can_4": False},
-                                "worker":   {"can_1": False,
+                                "worker":   {"can_see_all_leave_requests": False,
                                             "can_2": False,
                                             "can_3": False,
                                             "can_4": False}}
