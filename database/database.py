@@ -5,10 +5,9 @@ from typing import Dict
 
 from models.user import User
 from models.admin import Admin
-import startup
 """Scieżka do naszego pliku"""
-DATA_FILE = "startup/users.csv"     # Możecie zmienić, jeśli chcecie by plik był przechowywany gdzie indziej.
-                            # Ewentualnie możemy utworzyć folder "Data" i tam przechowywać plik z bazą.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(BASE_DIR, "..", "startup", "users.csv")
 
 def load_users():
     """Wczytuje użytkowników z pliku CSV, jeśli taki plik istnieje"""
