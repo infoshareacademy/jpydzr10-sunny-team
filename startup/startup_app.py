@@ -256,7 +256,8 @@ def worker_menu(user, leave_requests: list):
 def manager_menu(user: Manager, leave_requests: list):
     while True:
         print(f"\n=== Panel Managera ({user.username}) ===")
-        print(f"Dostępne dni urlopu: {user.get_leave_days()} / {user.total_leave_days}")
+        if hasattr(user, "get_leave_days"):
+            print(f"Dostępne dni urlopu: {user.get_leave_days()} / {user.total_leave_days}")
         print("--- Moje wnioski ---")
         print("1. Złóż wniosek urlopowy")
         print("2. Moje urlopy")
@@ -279,7 +280,9 @@ def manager_menu(user: Manager, leave_requests: list):
                 ).date()
                 days = int(input("Liczba dni urlopu: "))
                 req = LeaveRequest(
-                    user.user_id, user.first_name, user.last_name,
+                    user.user_id,
+                    getattr(user, "first_name", user.username),
+                    getattr(user, "last_name", ""),
                     start, end, days
                 )
                 leave_requests.append(req)
@@ -347,7 +350,8 @@ def manager_menu(user: Manager, leave_requests: list):
 def hr_menu(user: HR, leave_requests: list):
     while True:
         print(f"\n=== Panel HR ({user.username}) ===")
-        print(f"Dostępne dni urlopu: {user.get_leave_days()} / {user.total_leave_days}")
+        if hasattr(user, "get_leave_days"):
+            print(f"Dostępne dni urlopu: {user.get_leave_days()} / {user.total_leave_days}")
         print("--- Moje wnioski ---")
         print("1. Złóż wniosek urlopowy")
         print("2. Moje urlopy")
@@ -370,7 +374,9 @@ def hr_menu(user: HR, leave_requests: list):
                 ).date()
                 days = int(input("Liczba dni urlopu: "))
                 req = LeaveRequest(
-                    user.user_id, user.first_name, user.last_name,
+                    user.user_id,
+                    getattr(user, "first_name", user.username),
+                    getattr(user, "last_name", ""),
                     start, end, days
                 )
                 leave_requests.append(req)
