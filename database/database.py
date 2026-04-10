@@ -102,7 +102,7 @@ def save_users():
                 ])
 
             # Aktualizujemy workers.csv tylko dla Workerów
-            workers = {u.user_id: u for u in user_database.values() if isinstance(u, Worker)}
+            workers = {u.user_id: u for u in user_database.values() if u.role == "Worker"}
             save_workers(workers)
 
         print(f'Zapisano {len(user_database)} użytkowników do {DATA_FILE}')
