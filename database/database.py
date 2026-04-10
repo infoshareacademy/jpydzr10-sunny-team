@@ -33,7 +33,7 @@ def load_users():
             next(reader, None)
 
             for row in reader:
-                if len(row) < 4:
+                if len(row) < 5:
                     print(f'Pominięto niekompletny wiersz')
                     continue
 
@@ -42,9 +42,10 @@ def load_users():
                     username = row[1]
                     password_hash = row[2]
                     role = row[3]
+                    is_active = int(row[4])
 
                     if role == 'Admin':
-                        user = Admin(user_id, username, password_hash)
+                        user = Admin(user_id, username, password_hash, is_active)
 
                     elif role == "Worker":
                         w = workers_data.get(user_id)
@@ -62,11 +63,12 @@ def load_users():
                             hire_date = w.hire_date,
                             other_experience = w.other_experience,
                             used_leave_days = w.used_leave_days,
-                            team = w.team
+                            team = w.team,
+                            is_active = is_active,
                         )
 
                     else:
-                        user = User(user_id, username, password_hash, role)
+                        user = User(user_id, username, password_hash, role, is_active)
 
 
                     users[user_id] = user
@@ -87,7 +89,7 @@ def save_users():
             writer = csv.writer(f)
 
             # Tworzymy nagłówek by plik był bardziej czytelniejszy
-            writer.writerow(['user_id', 'username', 'password_hash', 'role'])
+            writer.writerow(['user_id', 'username', 'password_hash', 'role', 'is_active'])
 
             # Dane
             for user in sorted(user_database.values(), key=lambda u: u.user_id): # Sortujemy po user.id
@@ -95,7 +97,8 @@ def save_users():
                     user.user_id,
                     user.username,
                     user.password_hash,
-                    user.role
+                    user.role,
+                    int(user.is_active)
                 ])
 
             # Aktualizujemy workers.csv tylko dla Workerów
@@ -109,16 +112,16 @@ def save_users():
 
 user_database = load_users()
 
-def create_user(user_id: int, username: str, password: str , role: str):
+def create_user(user_id: int, username: str, password: str , role: str, is_active: bool = True):
 
     from auth.login import hash_password
 
     password_hash = hash_password(password)
 
     if role == "Admin":
-        user = Admin(user_id,username,password_hash)
+        user = Admin(user_id,username,password_hash, is_active)
     else:
-        user = User(user_id, username, password_hash, role)
+        user = User(user_id, username, password_hash, role, is_active)
 
     key = user.user_id
 
