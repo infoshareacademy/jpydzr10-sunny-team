@@ -3,6 +3,8 @@ from datetime import date
 from models.worker import Worker
 from database.database import save_users, user_database
 from models.user import User
+from database.workers_db import load_workers, save_workers
+
 
 def require_admin(current_user):
     if not current_user or current_user.role != "Admin" or current_user.is_active != True:
@@ -37,8 +39,8 @@ def create_user(current_user, user_id: int, username: str, password: str, role: 
         user = User(user_id, username, password_hash, role, is_active)
 
     user_database[user_id] = user
-    save_users()
 
+    save_users() # Zapisujemy do bazy CSV nowego użytkownika
     return user
 
 
@@ -83,6 +85,47 @@ def deactivate_user(current_user, user_id: int):
         raise ValueError("User nie istnieje")
 
     user.deactivate()
+    save_users()
+
+    return user
+
+
+def change_user_role(current_user, user_id: int, new_role: str):
+    require_admin(current_user)
+
+    user = user_database.get(user_id)
+    if not user:
+        raise ValueError("User nie istnieje")
+
+    old_role = user.role
+
+    if old_role == new_role:
+        return user  # nic się nie zmienia
+
+    # zmiana NA worker
+    if new_role == "Worker" and old_role != "Worker":
+        worker = Worker(
+            user_id=user.user_id,
+            username=user.username,
+            password_hash=user.password_hash,
+            first_name="",
+            last_name="",
+            hire_date=date.today(),
+            other_experience=(0, 0),
+            used_leave_days=0,
+            team="",
+            is_active=user.is_active
+        )
+
+        user_database[user_id] = worker
+
+    # zmiana Z worker
+    if old_role == "Worker" and new_role != "Worker":
+        workers = load_workers()
+        workers.pop(user.user_id, None)
+        save_workers(workers)
+
+    user.role = new_role
     save_users()
 
     return user
