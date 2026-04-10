@@ -59,3 +59,8 @@ class LeaveRequest:
         self.status = LeaveStatus.canceled
         self.canceled_by = canceled_by
         self.canceled_at = datetime.now()
+
+
+    def __repr__(self):
+        return(f"Request from {self.first_name} {self.last_name}: {self.start_date} - {self.end_date} ({self.amount_days} days)\n"
+               f"Current status: {self.status}")
