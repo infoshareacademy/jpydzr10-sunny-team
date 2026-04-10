@@ -73,3 +73,16 @@ def update_user(current_user, user_id: int, **kwargs):
 
     save_users()
     return user
+
+
+def deactivate_user(current_user, user_id: int):
+    require_admin(current_user)
+
+    user = user_database.get(user_id)
+    if not user:
+        raise ValueError("User nie istnieje")
+
+    user.deactivate()
+    save_users()
+
+    return user
