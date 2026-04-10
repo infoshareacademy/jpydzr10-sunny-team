@@ -40,3 +40,15 @@ def create_user(current_user, user_id: int, username: str, password: str, role: 
     save_users()
 
     return user
+
+
+def get_user(current_user, user_id: int):
+    require_admin(current_user)
+
+    return user_database.get(user_id)
+
+
+def get_all_users(current_user):
+    require_admin(current_user)
+
+    return list(user_database.values())
