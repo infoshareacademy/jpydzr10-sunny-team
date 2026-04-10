@@ -2,13 +2,12 @@
 import os
 import csv
 from typing import Dict
-
+from datetime import date
 from models.user import User
 from models.admin import Admin
-import startup
 """Scieżka do naszego pliku"""
-DATA_FILE = "startup/users.csv"     # Możecie zmienić, jeśli chcecie by plik był przechowywany gdzie indziej.
-                            # Ewentualnie możemy utworzyć folder "Data" i tam przechowywać plik z bazą.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(BASE_DIR, "..", "startup", "users.csv")
 
 def load_users():
     """Wczytuje użytkowników z pliku CSV, jeśli taki plik istnieje"""
@@ -20,27 +19,46 @@ def load_users():
 
     try:
         with open(DATA_FILE, 'r', encoding='utf-8', newline='') as f:
-            reader = csv.reader(f)
-
-            # Pomijamy nagłówek, jako że to nie dane użytkowników (user_id, username, password_hash, role)
-            next(reader, None)
-
+            reader = csv.DictReader(f)
             for row in reader:
-                if len(row) < 4:
+                if not row.get('user_id'):
                     print(f'Pominięto niekompletny wiersz')
                     continue
 
                 try:
-                    user_id = int(row[0])
-                    username = row[1]
-                    password_hash = row[2]
-                    role = row[3]
-
+                    user_id = int(row['user_id'])
+                    username = row['username']
+                    password_hash = row['password_hash']
+                    role = row['role']
                     if role == 'Admin':
                         user = Admin(user_id, username, password_hash)
+                    elif role in ('Worker', 'Employee', 'HR', 'Manager'):
+                        from models.worker import Worker
+                        from models.hr import HR
+                        from models.manager import Manager
+                        first_name = row.get('first_name', '') or username
+                        last_name = row.get('last_name', '') or ''
+                        hire_date_str = row.get('hire_date', '')
+                        hire_date = date.fromisoformat(hire_date_str) if hire_date_str else date.today()
+                        other_experience = (
+                            int(row.get('other_experience_years', 0) or 0),
+                            int(row.get('other_experience_days', 0) or 0),
+                        )
+                        used_leave_days = int(row.get('used_leave_days', 0) or 0)
+                        if role == 'HR':
+                            user = HR(user_id, username, password_hash,
+                                      first_name, last_name, hire_date,
+                                      other_experience, used_leave_days)
+                        elif role == 'Manager':
+                            user = Manager(user_id, username, password_hash,
+                                           first_name, last_name, hire_date,
+                                           other_experience, used_leave_days)
+                        else:
+                            user = Worker(user_id, username, password_hash,
+                                          first_name, last_name, hire_date,
+                                          other_experience, used_leave_days)
                     else:
                         user = User(user_id, username, password_hash, role)
-
                     users[user_id] = user
 
                 except (ValueError, IndexError) as e:
@@ -59,18 +77,25 @@ def save_users():
             writer = csv.writer(f)
 
             # Tworzymy nagłówek by plik był bardziej czytelniejszy
-            writer.writerow(['user_id', 'username', 'password_hash', 'role'])
+            writer.writerow(['user_id', 'username', 'password_hash', 'role',
+                             'first_name', 'last_name', 'hire_date',
+                             'other_experience_years', 'other_experience_days',
+                             'used_leave_days'])
 
             # Dane
             for user in sorted(user_database.values(), key=lambda u: u.user_id): # Sortujemy po user.id
-                writer.writerow([
-                    user.user_id,
-                    user.username,
-                    user.password_hash,
-                    user.role
-                ])
-        print(f'Zapisano {len(user_database)} użytkowników do {DATA_FILE}')
+                base = [user.user_id, user.username, user.password_hash, user.role]
+                if hasattr(user, 'first_name'):
+                    exp = user.other_experience
+                    extra = [user.first_name, user.last_name,
+                             user.hire_date.isoformat(),
+                             exp[0], exp[1],
+                             user.used_leave_days]
+                else:
+                    extra = ['', '', '', '', '', '']
+                writer.writerow(base + extra)
 
+        print(f'Zapisano {len(user_database)} użytkowników do {DATA_FILE}')
     except Exception as e:
         print(f'Błąd zapisu do {DATA_FILE}: {e}')
 
