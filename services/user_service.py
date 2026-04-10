@@ -52,3 +52,24 @@ def get_all_users(current_user):
     require_admin(current_user)
 
     return list(user_database.values())
+
+
+def update_user(current_user, user_id: int, **kwargs):
+    require_admin(current_user)
+
+    user = user_database.get(user_id)
+    if not user:
+        raise ValueError("User nie istnieje")
+
+    if "username" in kwargs:
+        user.username = kwargs["username"]
+
+    if "password" in kwargs:
+        from auth.login import hash_password
+        user.password_hash = hash_password(kwargs["password"])
+
+    if "is_active" in kwargs:
+        user.is_active = kwargs["is_active"]
+
+    save_users()
+    return user
