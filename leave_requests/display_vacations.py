@@ -71,4 +71,5 @@ def display_vacations(my_id):
     print("=====================================")
 
 # przykładowe wywołanie (ID pracownika 1)
-display_vacations(1)
+if __name__ == "__main__":
+    display_vacations(1)

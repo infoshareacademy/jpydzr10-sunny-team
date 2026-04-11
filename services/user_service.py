@@ -1,3 +1,4 @@
+from models.admin import Admin
 from auth.login import hash_password
 from datetime import date
 from models.worker import Worker
