@@ -6,13 +6,12 @@ from typing import Dict
 from models.user import User
 from models.admin import Admin
 from models.worker import Worker
-import startup
+from models.hr import HR
+from models.manager import Manager
 from database.workers_db import load_workers, save_workers
 
 """Scieżka do naszego pliku"""
 DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'startup', 'users.csv'))
-# DATA_FILE = "startup/users.csv"     # Możecie zmienić, jeśli chcecie by plik był przechowywany gdzie indziej.
-                            # Ewentualnie możemy utworzyć folder "Data" i tam przechowywać plik z bazą.
 
 def load_users():
     """Wczytuje użytkowników z pliku CSV, jeśli taki plik istnieje"""
@@ -28,9 +27,7 @@ def load_users():
     try:
         with open(DATA_FILE, 'r', encoding='utf-8', newline='') as f:
             reader = csv.reader(f)
-
-            # Pomijamy nagłówek, jako że to nie dane użytkowników (user_id, username, password_hash, role)
-            next(reader, None)
+            next(reader, None)  # pomijamy nagłówek
 
             for row in reader:
                 if len(row) < 5:
@@ -42,34 +39,40 @@ def load_users():
                     username = row[1]
                     password_hash = row[2]
                     role = row[3]
-                    is_active = int(row[4])
+                    is_active = bool(int(row[4]))
 
                     if role == 'Admin':
-                        user = Admin(user_id, username, password_hash, is_active)
+                        user = Admin(user_id, username, password_hash, is_active=is_active)
 
-                    elif role == "Worker":
+                    elif role in ('Worker', 'HR', 'Manager'):
                         w = workers_data.get(user_id)
 
                         if not w:
                             print(f"Brak danych worker dla ID {user_id}")
                             continue
 
-                        user = Worker(
-                            user_id = user_id,
-                            username = username,
-                            password_hash = password_hash,
-                            first_name = w.first_name,
-                            last_name = w.last_name,
-                            hire_date = w.hire_date,
-                            other_experience = w.other_experience,
-                            used_leave_days = w.used_leave_days,
-                            team = w.team,
-                            is_active = is_active,
+                        kwargs = dict(
+                            user_id=user_id,
+                            username=username,
+                            password_hash=password_hash,
+                            first_name=w.first_name,
+                            last_name=w.last_name,
+                            hire_date=w.hire_date,
+                            other_experience=w.other_experience,
+                            used_leave_days=w.used_leave_days,
+                            team=w.team,
+                            is_active=is_active,
                         )
+
+                        if role == 'HR':
+                            user = HR(**kwargs)
+                        elif role == 'Manager':
+                            user = Manager(**kwargs)
+                        else:
+                            user = Worker(**kwargs)
 
                     else:
                         user = User(user_id, username, password_hash, role, is_active)
-
 
                     users[user_id] = user
 
@@ -82,17 +85,15 @@ def load_users():
     print(f'Wczytano {len(users)} użytkowników z bazy')
     return users
 
+
 def save_users():
-    """Zapisujemy nowych użytkowników do pliku CSV"""
+    """Zapisujemy użytkowników do pliku CSV"""
     try:
         with open(DATA_FILE, 'w', encoding='utf-8', newline='') as f:
             writer = csv.writer(f)
-
-            # Tworzymy nagłówek by plik był bardziej czytelniejszy
             writer.writerow(['user_id', 'username', 'password_hash', 'role', 'is_active'])
 
-            # Dane
-            for user in sorted(user_database.values(), key=lambda u: u.user_id): # Sortujemy po user.id
+            for user in sorted(user_database.values(), key=lambda u: u.user_id):
                 writer.writerow([
                     user.user_id,
                     user.username,
@@ -101,8 +102,8 @@ def save_users():
                     int(user.is_active)
                 ])
 
-            # Aktualizujemy workers.csv tylko dla Workerów
-            workers = {u.user_id: u for u in user_database.values() if u.role == "Worker"}
+            # Zapisujemy workers.csv dla Worker, HR i Manager (wszystkich dziedziczących po Worker)
+            workers = {u.user_id: u for u in user_database.values() if isinstance(u, Worker)}
             save_workers(workers)
 
         print(f'Zapisano {len(user_database)} użytkowników do {DATA_FILE}')
@@ -110,22 +111,42 @@ def save_users():
     except Exception as e:
         print(f'Błąd zapisu do {DATA_FILE}: {e}')
 
+
 user_database = load_users()
 
-def create_user(user_id: int, username: str, password: str , role: str, is_active: bool = True):
 
+def create_user(user_id: int, username: str, password: str, role: str, is_active: bool = True):
     from auth.login import hash_password
+    from datetime import date
 
     password_hash = hash_password(password)
 
-    if role == "Admin":
-        user = Admin(user_id,username,password_hash, is_active)
+    if role == 'Admin':
+        user = Admin(user_id, username, password_hash, is_active=is_active)
+
+    elif role in ('Worker', 'HR', 'Manager'):
+        kwargs = dict(
+            user_id=user_id,
+            username=username,
+            password_hash=password_hash,
+            first_name="",
+            last_name="",
+            hire_date=date.today(),
+            other_experience=(0, 0),
+            used_leave_days=0,
+            team="",
+            is_active=is_active,
+        )
+        if role == 'HR':
+            user = HR(**kwargs)
+        elif role == 'Manager':
+            user = Manager(**kwargs)
+        else:
+            user = Worker(**kwargs)
+
     else:
         user = User(user_id, username, password_hash, role, is_active)
 
-    key = user.user_id
-
-    user_database[key] = user
-
-    save_users() # Zapisujemy do bazy CSV nowego użytkownika
+    user_database[user.user_id] = user
+    save_users()
     return user
