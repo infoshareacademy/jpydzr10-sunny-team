@@ -2,7 +2,6 @@ from datetime import date
 from models.user import User
 from utils.date_utils import Calendar_utils
 from dateutil.relativedelta import relativedelta
-from leave_requests.leave_request import LeaveRequest
 
 class Worker(User):
     def __init__(self, user_id: int, username: str, password_hash: str, first_name: str, last_name: str, hire_date: date, other_experience: tuple, used_leave_days: int, team: str, role = "Worker", is_active: bool = True): #total_leave_days: int,
