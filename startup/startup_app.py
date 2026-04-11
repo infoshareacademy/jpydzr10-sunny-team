@@ -9,6 +9,8 @@ from models.hr import HR
 from database.database import load_users, create_user
 from leave_requests.leave_request import LeaveRequest
 from leave_requests.display_vacations import display_vacations
+from database.leave_requests_db import load_leave_requests, save_leave_requests
+from permission_system.permission import Permission
 
 
 # ──────────────────────────────────────────────
