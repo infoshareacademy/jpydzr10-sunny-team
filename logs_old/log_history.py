@@ -2,7 +2,7 @@ from datetime import datetime
 import csv
 import os
 
-# Ścieżka absolutna - zawsze obok tego pliku w katalogu logs/
+# Ścieżka absolutna - zawsze obok tego pliku w katalogu logs_old/
 FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'log_history.csv'))
 
 
