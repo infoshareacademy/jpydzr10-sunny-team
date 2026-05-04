@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Wszystkie wnioski urlopowe{% endblock %}
+
+{% block content %}
+<style>
+    .section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    table {
+        width: 100%;
+    }
+    th, td {
+        padding: 14px 12px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background-color: #f1f3f5;
+        font-weight: 600;
+    }
+
+    .filters {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .actions button {
+        padding: 5px;
+        margin: 2px;
+    }
+
+</style>
+
+<div class="container mt-4">
+    <h1>Wszystkie wnioski urlopowe</h1>
+
+    <!-- Filtry -->
+    <div class="filters">
+        <strong>Filtry:</strong>
+        <select style="padding:8px; margin:0 10px;">
+            <option>Wszystkie statusy</option>
+            <option>Oczekujące</option>
+            <option>Zatwierdzone</option>
+            <option>Odrzucone</option>
+        </select>
+        <button type="button" style="padding:8px 16px;">Filtruj</button>
+        <button type="button" class="reset-btn" style="padding:8px 16px;">Reset</button>
+    </div>
+
+    <div class="section">
+        <table>
+            <thead>
+                <tr>
+                    <th>Pracownik</th>
+                    <th>Data rozpoczęcia</th>
+                    <th>Data zakończenia</th>
+                    <th>Liczba dni</th>
+                    <th>Status</th>
+                    <th>Data wniosku</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dane tymczasowe -->
+                <tr>
+                    <td><strong>Anna Nowak</strong></td>
+                    <td>2026-05-20</td>
+                    <td>2026-05-28</td>
+                    <td>9</td>
+                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #ffc107; color: white;">Oczekuje</span></td>
+                    <td>2026-05-04</td>
+                    <td class="actions">
+                        <button type="button">Zatwierdź</button>
+                        <button type="button">Odrzuć</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Jan Kowalski</strong></td>
+                    <td>2026-06-01</td>
+                    <td>2026-06-10</td>
+                    <td>10</td>
+                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">Zatwierdzony</span></td>
+                    <td>2026-05-02</td>
+                    <td class="actions">
+                        <span style="color:#28a745;">Zatwierdzono</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- paginacja -->
+        <div style="margin-top: 20px; text-align: center;">
+            <button style="padding:8px 16px;">Poprzednia</button>
+            <span style="margin: 0 15px;">Strona <strong>1</strong></span>
+            <button style="padding:8px 16px;">Następna</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
