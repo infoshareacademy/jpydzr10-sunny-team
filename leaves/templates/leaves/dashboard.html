@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Urlopy{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1>Dashboard Urlopowy</h1>
+
+    <!-- Karty -->
+    <div class="cards">
+        <!-- Karta 1 -->
+        <div>
+            <div style="font-weight: bold; font-size: 1.5rem">Dostępne dni urlopu: 14</div>
+            <p style="font-size: 1.3rem">z 26 dni w 2026 roku</p>
+        </div>
+
+        <!-- Karta 2 -->
+        <div>
+            <div style="font-weight: bold; font-size: 1.5rem">Aktywne wnioski: 2</div>
+            <p style="font-size: 1.3rem">1 oczekujący na decyzję</p>
+        </div>
+
+        <!-- Karta 3 -->
+        <div>
+            <div style="font-weight: bold; font-size: 1.5rem">Wykorzystane w tym roku: 12 dni urlopu</div>
+        </div>
+    </div>
+
+    <div>------------------------------------------------------------------------------------------------------</div>
+    <!-- Ostatnie akcje -->
+    <div>
+        <h3>Ostatnie akcje</h3>
+        <div>
+            <div>
+                <strong>Anna Nowak</strong><br>
+                <span style="color: green">Zatwierdzono urlop wypoczynkowy • 10.05 - 16.05.2026 (7 dni)</span><br>
+            </div>
+        </div>
+        <br>
+        <div>
+            <div>
+                <strong>Jan Kowalski</strong><br>
+                <span style="color: red">Złożono nowy wniosek urlopowy</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
