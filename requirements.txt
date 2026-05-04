@@ -6,3 +6,4 @@ six==1.17.0
 tempora==5.8.1
 
 numpy
+django
