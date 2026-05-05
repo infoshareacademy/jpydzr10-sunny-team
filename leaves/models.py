@@ -1,16 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
 
 class WorkerProfile(models.Model):
-
-    # --- Powiązanie z użytkownikiem Django ---
     user = models.OneToOneField(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,  # gdy User zostanie usunięty, usuń też profil
-        related_name="worker_profile",
+        related_name="worker_profile"
     )
 
     # --- Pola z workers.csv ---
