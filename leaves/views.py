@@ -13,3 +13,7 @@ def dashboard(request):
 @login_required
 def vacation_list(request):
     return render(request, 'leaves/vacation_list.html')
+
+@login_required
+def all_requests_list(request):
+    return render(request, 'leaves/all_requests_list.html')
