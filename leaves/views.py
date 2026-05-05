@@ -9,3 +9,7 @@ def dashboard(request):
         'title': 'Dashboard Urlopowy',
     }
     return render(request, 'leaves/dashboard.html', context)
+
+@login_required
+def vacation_list(request):
+    return render(request, 'leaves/vacation_list.html')
