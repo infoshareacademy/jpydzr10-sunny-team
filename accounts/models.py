@@ -1,10 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-<<<<<<< JPY101-48-Szkielet-dashboardu-z-kartami
-# Create your models here.
-=======
->>>>>>> main
 
 class User(AbstractUser):
     ROLES = [
