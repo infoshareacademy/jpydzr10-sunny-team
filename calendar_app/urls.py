@@ -23,4 +23,5 @@ urlpatterns = [
     path('leaves/', include('leaves.urls')),
     path('admin_panel/',include('admin_panel.urls')),
     path('logs/',include('logs.urls')),
+    path('login/',include('login.urls'))
 ]
