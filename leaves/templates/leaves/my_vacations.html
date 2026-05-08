@@ -17,10 +17,12 @@
     table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
         background: white;
         box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     }
     th, td {
+        white-space: nowrap;
         padding: 12px 15px;
         text-align: left;
         border-bottom: 1px solid #eee;
@@ -39,6 +41,7 @@
     <!-- Sekcja 1: Aktualne -->
     <div class="section">
         <h3>Aktualne (trwające)</h3>
+        {% if current_vacations %}
         <table>
             <thead>
                 <tr>
@@ -50,21 +53,26 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Przykładowe dane -->
+            {% for req in current_vacations %}
                 <tr>
-                    <td>2026-05-05</td>
-                    <td>2026-05-12</td>
-                    <td>8</td>
-                    <td>Wypoczynkowy</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #0d6efd; color: white;">W trakcie</span></td>
+                    <td>{{ req.start_date }}</td>
+                    <td>{{ req.end_date }}</td>
+                    <td>{{ req.amount_days }}</td>
+                    <td>{{ req.type }}</td>
+                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #0d6efd; color: white;">{{ req.status }}</span></td>
                 </tr>
+            {% endfor %}
             </tbody>
         </table>
+        {% else %}
+            <p>Brak aktualnych urlopów.</p>
+        {% endif %}
     </div>
 
     <!-- Sekcja 2: Planowane -->
     <div class="section">
         <h3>Planowane</h3>
+        {% if planned_vacations %}
         <table>
             <thead>
                 <tr>
@@ -76,27 +84,26 @@
                 </tr>
             </thead>
             <tbody>
+            {% for req in planned_vacations %}
                 <tr>
-                    <td>2026-06-15</td>
-                    <td>2026-06-25</td>
-                    <td>11</td>
-                    <td>Wypoczynkowy</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">Zatwierdzony</span></td>
+                    <td>{{ req.start_date }}</td>
+                    <td>{{ req.end_date }}</td>
+                    <td>{{ req.amount_days }}</td>
+                    <td>{{ req.type }}</td>
+                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">{{ req.status }}</span></td>
                 </tr>
-                <tr>
-                    <td>2026-07-01</td>
-                    <td>2026-07-05</td>
-                    <td>5</td>
-                    <td>Na żądanie</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #ffc107; color: white;">Oczekuje</span></td>
-                </tr>
+            {% endfor %}
             </tbody>
         </table>
+        {% else %}
+            <p>Brak planowanych urlopów.</p>
+        {% endif %}
     </div>
 
     <!-- Sekcja 3: Archiwalne -->
     <div class="section">
         <h3>Archiwalne</h3>
+        {% if archival_vacations %}
         <table>
             <thead>
                 <tr>
@@ -108,22 +115,20 @@
                 </tr>
             </thead>
             <tbody>
+            {% for req in archival_vacations %}
                 <tr>
-                    <td>2026-03-10</td>
-                    <td>2026-03-18</td>
-                    <td>9</td>
-                    <td>Wypoczynkowy</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">Zatwierdzony</span></td>
+                    <td>{{ req.start_date }}</td>
+                    <td>{{ req.end_date }}</td>
+                    <td>{{ req.amount_days }}</td>
+                    <td>{{ req.type }}</td>
+                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">{{ req.status }}</span></td>
                 </tr>
-                <tr>
-                    <td>2025-12-20</td>
-                    <td>2025-12-25</td>
-                    <td>6</td>
-                    <td>Świąteczny</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #dc3545; color: white;">Odrzucony</span></td>
-                </tr>
+            {% endfor %}
             </tbody>
         </table>
+        {% else %}
+            <p>Brak archiwalnych urlopów.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
