@@ -152,8 +152,6 @@
                     <td>
                         {% if req.status == 'accepted' or req.status == 'approved' %}
                             <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
-                        {% elif req.status == 'pending' %}
-                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
                         {% elif req.status == 'rejected' %}
                             <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
                         {% elif req.status == 'cancelled' %}

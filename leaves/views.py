@@ -18,7 +18,8 @@ def all_requests_list(request):
 @login_required
 def my_vacations(request):
 
-    user = request.user
+    # Zduplikowana logika z leave_requests/display_vacations.py
+    # Trzeba to potem zrefactorować gdy będziemy pobierali dane z DB
     today = date.today()
 
     # Pobieramy tylko wnioski użytkownika
@@ -34,18 +35,19 @@ def my_vacations(request):
         vacation = v.copy()
         vacation['days'] = days
 
-        if vacation['start_date'] <= today <= vacation['end_date']:
+        if v['start_date'] <= today <= v['end_date']:
             current.append(vacation)
-        elif vacation['start_date'] > today:
+        elif v['start_date'] > today:
             planned.append(vacation)
         else:
-            archival.append(vacation)
+            # Filtrujemy archiwalne wnioski tak by nie wyświetlały statusu oczekującego
+            if v['status'] != 'pending':
+                archival.append(vacation)
 
     context = {
         'current_vacations': current,
         'planned_vacations': planned,
         'archival_vacations': archival,
-        'user': user,
     }
 
     return render(request, 'leaves/my_vacations.html', context)
