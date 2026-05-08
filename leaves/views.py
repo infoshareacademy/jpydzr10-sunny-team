@@ -21,16 +21,19 @@ def my_vacations(request):
     user = request.user
     today = date.today()
 
-    my_vacation = [v for v in vacations if v['employee_id'] == user.id]
-
-    # TODO: Tutaj trzeba załadować wnioski danego użytkownika
-    # Na razie wstawiam mock data - później zmienimy na prawdziwe ładowanie z DB
+    # Pobieramy tylko wnioski użytkownika
+    my_vacation = [v for v in vacations if v['employee_id'] == request.user.id]
 
     current = []
     planned = []
     archival = []
 
-    for vacation in my_vacation:
+    for v in my_vacation:
+        days = (v['end_date'] - v['start_date']).days + 1
+
+        vacation = v.copy()
+        vacation['days'] = days
+
         if vacation['start_date'] <= today <= vacation['end_date']:
             current.append(vacation)
         elif vacation['start_date'] > today:

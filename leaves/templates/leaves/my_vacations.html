@@ -32,6 +32,16 @@
         font-weight: 600;
     }
 
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-block;
+        min-width: 110px;
+        text-align: center;
+    }
+
 </style>
 
 <div class="container margin-top: 4">
@@ -48,7 +58,6 @@
                     <th>Data rozpoczęcia</th>
                     <th>Data zakończenia</th>
                     <th>Liczba dni</th>
-                    <th>Typ urlopu</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -57,9 +66,20 @@
                 <tr>
                     <td>{{ req.start_date }}</td>
                     <td>{{ req.end_date }}</td>
-                    <td>{{ req.amount_days }}</td>
-                    <td>{{ req.type }}</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #0d6efd; color: white;">{{ req.status }}</span></td>
+                    <td>{{ req.days }}</td>
+                    <td>
+                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
+                        {% elif req.status == 'pending' %}
+                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
+                        {% elif req.status == 'rejected' %}
+                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
+                        {% elif req.status == 'cancelled' %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
+                        {% else %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -79,7 +99,6 @@
                     <th>Data rozpoczęcia</th>
                     <th>Data zakończenia</th>
                     <th>Liczba dni</th>
-                    <th>Typ urlopu</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -88,9 +107,20 @@
                 <tr>
                     <td>{{ req.start_date }}</td>
                     <td>{{ req.end_date }}</td>
-                    <td>{{ req.amount_days }}</td>
-                    <td>{{ req.type }}</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">{{ req.status }}</span></td>
+                    <td>{{ req.days }}</td>
+                    <td>
+                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
+                        {% elif req.status == 'pending' %}
+                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
+                        {% elif req.status == 'rejected' %}
+                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
+                        {% elif req.status == 'cancelled' %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
+                        {% else %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -110,7 +140,6 @@
                     <th>Data rozpoczęcia</th>
                     <th>Data zakończenia</th>
                     <th>Liczba dni</th>
-                    <th>Typ urlopu</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -119,9 +148,20 @@
                 <tr>
                     <td>{{ req.start_date }}</td>
                     <td>{{ req.end_date }}</td>
-                    <td>{{ req.amount_days }}</td>
-                    <td>{{ req.type }}</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">{{ req.status }}</span></td>
+                    <td>{{ req.days }}</td>
+                    <td>
+                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
+                        {% elif req.status == 'pending' %}
+                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
+                        {% elif req.status == 'rejected' %}
+                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
+                        {% elif req.status == 'cancelled' %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
+                        {% else %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
