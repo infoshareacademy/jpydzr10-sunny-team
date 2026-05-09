@@ -1,3 +1,7 @@
+from functools import wraps
+from django.shortcuts import redirect
+
+
 class Permission:
     """
     System uprawnień aplikacji urlopowej.
@@ -87,6 +91,23 @@ class Permission:
         except KeyError:
             print(f"Brak uprawnienia '{action}' dla roli '{role}'")
             return False
+
+
+# @role_required decorator
+def role_required(action):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not Permission.verifyPermission(request.user.role, action):
+                return redirect('dashboard')
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+# use case:
+# @login_required #from django
+# @role_required("can_add_users") #for example
+# def particular_view(request):
+#   ...
 
 
 if __name__ == "__main__":
