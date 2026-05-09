@@ -1,6 +1,6 @@
 from functools import wraps
 from django.shortcuts import redirect
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 class Permission:
     """
@@ -109,6 +109,19 @@ def role_required(action):
 # def particular_view(request):
 #   ...
 
+
+class RoleRequiredMixin(LoginRequiredMixin):
+    required_action = None
+
+    def dispatch(self, request, *args, **kwargs):
+        if not Permission.verifyPermission(request.user.role, self.required_action):
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+# use case:
+# class Particular_view(RoleRequiredMixin, View):
+#   required_action = "can_add_users"
+#   ...
 
 if __name__ == "__main__":
     roles = ["Admin", "Manager", "HR", "Worker"]
