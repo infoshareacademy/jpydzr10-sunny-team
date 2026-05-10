@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'leaves',
     'accounts',
     'logs',
-    'admin_panel'
+    'admin_panel',
+    'login'
 ]
 AUTH_USER_MODEL = 'accounts.User'
 
