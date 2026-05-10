@@ -9,8 +9,28 @@ from .services import count_leave_days_service
 
 @login_required(login_url='/accounts/login/')
 def dashboard(request):
+    from leaves.models import WorkerProfile
+
+    try:
+        profile = WorkerProfile.objects.get(user=request.user)
+        total_days = profile._get_total_leave_days()
+        used_days = profile.used_leave_days
+        remaining_days = profile.get_leave_days()
+        # pasek postępu: ile % urlopu wykorzystano (0-100)
+        progress_percent = round((used_days / total_days) * 100) if total_days > 0 else 0
+    except WorkerProfile.DoesNotExist:
+        # jeśli zalogowany user nie ma profilu (np. Admin bez profilu)
+        total_days = None
+        used_days = None
+        remaining_days = None
+        progress_percent = 0
+
     context = {
         'title': 'Dashboard Urlopowy',
+        'total_days': total_days,
+        'used_days': used_days,
+        'remaining_days': remaining_days,
+        'progress_percent': progress_percent,
     }
     return render(request, 'leaves/dashboard.html', context)
 
