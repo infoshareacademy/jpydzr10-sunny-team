@@ -88,8 +88,6 @@ def my_vacations(request):
     }
 
     return render(request, 'leaves/my_vacations.html', context)
-def all_requests_list(request):
-    return render(request, 'leaves/all_requests_list.html')
 
 @login_required
 def new_request(request):
