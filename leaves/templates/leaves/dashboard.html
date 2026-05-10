@@ -48,6 +48,17 @@
         font-weight: bold;
         margin: 10px 0;
     }
+    .progress-bar-bg {
+        background: #e9ecef;
+        border-radius: 8px;
+        height: 12px;
+        margin-top: 10px;
+    }
+    .progress-bar-fill {
+        background: #28a745;
+        height: 12px;
+        border-radius: 8px;
+    }
     .last-actions {
         background: white;
         padding: 25px;
@@ -69,8 +80,17 @@
     <div class="cards">
         <div class="card">
             <h3>Dostępne dni urlopu</h3>
-            <div class="number" style="color: #28a745;">14</div>
-            <p>z 26 dni w 2026 roku</p>
+            {% if remaining_days is not None %}
+                <div class="number" style="color: #28a745;">{{ remaining_days }}</div>
+                <p>z {{ total_days }} dni w 2026 roku</p>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: {{ progress_percent }}%;"></div>
+                </div>
+                <small style="color: #888;">{{ progress_percent }}% wykorzystano</small>
+            {% else %}
+                <div class="number" style="color: #aaa;">—</div>
+                <p>Brak profilu pracownika</p>
+            {% endif %}
         </div>
 
         <div class="card">
@@ -81,7 +101,11 @@
 
         <div class="card">
             <h3>Wykorzystane w tym roku</h3>
-            <div class="number" style="color: #6c757d;">12</div>
+            {% if used_days is not None %}
+                <div class="number" style="color: #6c757d;">{{ used_days }}</div>
+            {% else %}
+                <div class="number" style="color: #aaa;">—</div>
+            {% endif %}
             <p>dni urlopu</p>
         </div>
     </div>
