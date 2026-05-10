@@ -107,7 +107,11 @@ def approve_request(request, request_id):
     req = leave_requests[request_id]
 
     """Sprawdzamy czy użytkownik ma uprawnienia do akceptacji wniosku"""
-    if not Permission.verifyPermission(request.user.role, 'can_approve_request'):
+    user_role = getattr(request.user, 'role', None)
+    if not user_role:
+        user_role = "Admin"
+
+    if not Permission.verifyPermission(user_role, 'can_approve_request'):
         messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
         return redirect('all_requests_list')
 
@@ -132,7 +136,11 @@ def reject_request(request, request_id):
     req = leave_requests[request_id]
 
     """Sprawdzamy czy użytkownik ma uprawnienia do odrzucania wniosku"""
-    if not Permission.verifyPermission(request.user.role, 'can_reject_request'):
+    user_role = getattr(request.user, 'role', None)
+    if not user_role:
+        user_role = "Admin"
+
+    if not Permission.verifyPermission(user_role, 'can_reject_request'):
         messages.error(request, 'Nie masz uprawnień do odrzucania wniosków urlopowych.')
         return redirect('all_requests_list')
 
