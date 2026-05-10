@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from .services import count_leave_days_service
 
 
-@login_required(login_url='/accounts/login/')
+@login_required
 def dashboard(request):
     from leaves.models import WorkerProfile
 
