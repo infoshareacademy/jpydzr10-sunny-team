@@ -85,7 +85,6 @@
             <tbody>
                 {% for req in all_vacations %}
                 <tr>
-                    <tr>
                     <td><strong>{{ req.first_name }} {{ req.last_name }}</strong><br>
                         <small>ID: {{ req.employee_id }}</small>
                     <td>{{ req.start_date }}</td>
@@ -106,9 +105,26 @@
                     </td>
                     <td>{{ req.who_confirmed|default:"—" }}</td>
                     <td class="actions">
-                       {% if req.status == 'Pending' %}
-                            <button type="button" style="background:#28a745; color:white;">Zatwierdź</button>
-                            <button type="button" style="background:#dc3545; color:white;">Odrzuć</button>
+                        {% if req.status == 'pending' or req.status == 'Pending' %}
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="request_id" value="{{ req.id }}">
+                                <button type="submit"
+                                        formaction="{% url 'approve_request' req.id %}"
+                                        style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:4px;">
+                                    Zatwierdź
+                                </button>
+                            </form>
+
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="request_id" value="{{ req.id }}">
+                                <button type="submit"
+                                        formaction="{% url 'reject_request' req.id %}"
+                                        style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:4px;">
+                                    Odrzuć
+                                </button>
+                            </form>
                         {% else %}
                             <span style="color:#28a745;">Przetworzony</span>
                         {% endif %}
