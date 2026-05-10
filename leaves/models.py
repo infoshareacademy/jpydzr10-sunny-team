@@ -18,6 +18,10 @@ class WorkerProfile(models.Model):
     used_leave_days = models.IntegerField(default=0)
     team = models.CharField(max_length=100)
 
+    class Meta:
+        verbose_name = "Profil pracownika"
+        verbose_name_plural = "Profile pracowników"
+
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} ({self.team})"
 
