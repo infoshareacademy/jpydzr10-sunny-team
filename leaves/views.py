@@ -1,10 +1,15 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from datetime import date
+
+from django.views.decorators.http import require_POST
+
 from leave_requests.display_vacations import vacations
-from database.leave_requests_db import load_leave_requests
+from database.leave_requests_db import load_leave_requests, save_leave_requests
 from django.http import JsonResponse
 from .services import count_leave_days_service
+from django.contrib import messages
+from accounts.permission import Permission
 
 
 @login_required(login_url='/accounts/login/')
@@ -88,6 +93,47 @@ def my_vacations(request):
     }
 
     return render(request, 'leaves/my_vacations.html', context)
+
+@login_required
+@require_POST
+def approve_request(request, request_id):
+
+    leave_requests = load_leave_requests()
+
+    if request_id not in leave_requests:
+        messages.error(request, 'Nie znaleziono wniosku')
+        return redirect('all_requests_list')
+
+    req = leave_requests[request_id]
+
+    try:
+        req.approve(who_confirmed=request.user.username)
+        save_leave_requests(leave_requests)
+        messages.success(request, f'Wniosek od {req.first_name} {req.last_name} został zatwierdzony.')
+    except Exception as e:
+        messages.error(request, f'Błąd podczas zatwierdzania: {e}')
+
+    return redirect('all_requests_list')
+
+@login_required
+@require_POST
+def reject_request(request, request_id):
+    leave_requests = load_leave_requests()
+
+    if request_id not in leave_requests:
+        messages.error(request, 'Nie znaleziono wniosku')
+        return redirect('all_requests_list')
+
+    req = leave_requests[request_id]
+
+    try:
+        req.rejected(who_confirmed=request.user.username)
+        save_leave_requests(leave_requests)
+        messages.success(request, f'Wniosek od {req.first_name} {req.last_name} został odrzucony.')
+    except Exception as e:
+        messages.error(request, f'Błąd podczas odrzucania {e}')
+
+    return redirect('all_requests_list')
 
 @login_required
 def new_request(request):
