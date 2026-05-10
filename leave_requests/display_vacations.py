@@ -9,10 +9,10 @@ vacations = [
     {"employee_id": 1, "start_date": date(2026, 4, 5),  "end_date": date(2026, 4, 12), "status": "pending"},
     {"employee_id": 1, "start_date": date(2025, 12, 20),"end_date": date(2025, 12, 28),"status": "accepted"},
     {"employee_id": 1, "start_date": date(2026, 3, 10), "end_date": date(2026, 3, 16), "status": "rejected"},
-    {"employee_id": 1, "start_date": date(2026, 12, 22), "end_date": date(2025, 12, 28), "status": "cancelled"},
+    {"employee_id": 1, "start_date": date(2026, 12, 22), "end_date": date(2026, 12, 28), "status": "cancelled"},
     {"employee_id": 2, "start_date": date(2026, 3, 1),  "end_date": date(2026, 3, 7),  "status": "accepted"},
-    {"employee_id": 2, "start_date": date(2026, 12, 20), "end_date": date(2025, 12, 28), "status": "accepted"},
-    {"employee_id": 2, "start_date": date(2026, 11, 26), "end_date": date(2025, 12, 28), "status": "cancelled"},
+    {"employee_id": 2, "start_date": date(2026, 12, 20), "end_date": date(2026, 12, 28), "status": "accepted"},
+    {"employee_id": 2, "start_date": date(2026, 11, 26), "end_date": date(2026, 12, 28), "status": "cancelled"},
 ]
 
 def display_vacations(my_id):

@@ -36,6 +36,16 @@
         margin: 2px;
     }
 
+     .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-block;
+        min-width: 110px;
+        text-align: center;
+    }
+
 </style>
 
 <div class="container mt-4">
@@ -43,15 +53,20 @@
 
     <!-- Filtry -->
     <div class="filters">
-        <strong>Filtry:</strong>
-        <select style="padding:8px; margin:0 10px;">
-            <option>Wszystkie statusy</option>
-            <option>Oczekujące</option>
-            <option>Zatwierdzone</option>
-            <option>Odrzucone</option>
-        </select>
-        <button type="button" style="padding:8px 16px;">Filtruj</button>
-        <button type="button" class="reset-btn" style="padding:8px 16px;">Reset</button>
+        <form method="get">
+            <strong>Filtry:</strong>
+            <select name="status" style="padding:8px; margin:0 10px;">
+                <option value="">Wszystkie statusy</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Oczekujące</option>
+                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Zatwierdzone</option>
+                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Odrzucone</option>
+            </select>
+            <button type="submit" style="padding:8px 16px;">Filtruj</button>
+            <a href="{% url 'all_requests_list' %}"
+               style="padding:8px 16px; background:#6c757d; color:white; text-decoration:none; border-radius:4px;">
+                Reset
+            </a>
+        </form>
     </div>
 
     <div class="section">
@@ -68,37 +83,49 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Dane tymczasowe -->
+                {% for req in all_vacations %}
                 <tr>
-                    <td><strong>Anna Nowak</strong></td>
-                    <td>2026-05-20</td>
-                    <td>2026-05-28</td>
-                    <td>9</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #ffc107; color: white;">Oczekuje</span></td>
-                    <td>2026-05-04</td>
+                    <tr>
+                    <td><strong>{{ req.first_name }} {{ req.last_name }}</strong><br>
+                        <small>ID: {{ req.employee_id }}</small>
+                    <td>{{ req.start_date }}</td>
+                    <td>{{ req.end_date }}</td>
+                    <td><strong>{{ req.days }}</strong></td>
+                    <td>
+                        {% if req.status == 'Approved' %}
+                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
+                        {% elif req.status == 'Pending' %}
+                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
+                        {% elif req.status == 'Rejected' %}
+                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
+                        {% elif req.status == 'Canceled' %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
+                        {% else %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ req.who_confirmed|default:"—" }}</td>
                     <td class="actions">
-                        <button type="button">Zatwierdź</button>
-                        <button type="button">Odrzuć</button>
+                       {% if req.status == 'Pending' %}
+                            <button type="button" style="background:#28a745; color:white;">Zatwierdź</button>
+                            <button type="button" style="background:#dc3545; color:white;">Odrzuć</button>
+                        {% else %}
+                            <span style="color:#28a745;">Przetworzony</span>
+                        {% endif %}
                     </td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td><strong>Jan Kowalski</strong></td>
-                    <td>2026-06-01</td>
-                    <td>2026-06-10</td>
-                    <td>10</td>
-                    <td><span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">Zatwierdzony</span></td>
-                    <td>2026-05-02</td>
-                    <td class="actions">
-                        <span style="color:#28a745;">Zatwierdzono</span>
-                    </td>
+                    <td colspan="7" style="text-align:center; padding:30px;">Brak wniosków urlopowych.</td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
 
-        <!-- paginacja -->
-        <div style="margin-top: 20px; text-align: center;">
+        <!-- Paginacja -->
+        <div style="margin-top: 25px; text-align: center;">
             <button style="padding:8px 16px;">Poprzednia</button>
-            <span style="margin: 0 15px;">Strona <strong>1</strong></span>
+            <span style="margin: 0 20px;">Strona <strong>1</strong></span>
             <button style="padding:8px 16px;">Następna</button>
         </div>
     </div>

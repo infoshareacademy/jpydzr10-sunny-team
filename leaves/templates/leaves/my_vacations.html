@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Moje Urlopy{% endblock %}
+
+{% block content %}
+
+<!--- Przerzucić style potem do pliku CSS -->
+<style>
+    .section {
+        margin-bottom: 50px;
+    }
+    .section h3 {
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        background: white;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+        white-space: nowrap;
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-block;
+        min-width: 110px;
+        text-align: center;
+    }
+
+</style>
+
+<div class="container margin-top: 4">
+
+    <h1 class="margin-bottom: 4">Moje Urlopy</h1>
+
+    <!-- Sekcja 1: Aktualne -->
+    <div class="section">
+        <h3>Aktualne (trwające)</h3>
+        {% if current_vacations %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Data rozpoczęcia</th>
+                    <th>Data zakończenia</th>
+                    <th>Liczba dni</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for req in current_vacations %}
+                <tr>
+                    <td>{{ req.start_date }}</td>
+                    <td>{{ req.end_date }}</td>
+                    <td>{{ req.days }}</td>
+                    <td>
+                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
+                        {% elif req.status == 'pending' %}
+                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
+                        {% elif req.status == 'rejected' %}
+                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
+                        {% elif req.status == 'cancelled' %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
+                        {% else %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>Brak aktualnych urlopów.</p>
+        {% endif %}
+    </div>
+
+    <!-- Sekcja 2: Planowane -->
+    <div class="section">
+        <h3>Planowane</h3>
+        {% if planned_vacations %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Data rozpoczęcia</th>
+                    <th>Data zakończenia</th>
+                    <th>Liczba dni</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for req in planned_vacations %}
+                <tr>
+                    <td>{{ req.start_date }}</td>
+                    <td>{{ req.end_date }}</td>
+                    <td>{{ req.days }}</td>
+                    <td>
+                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
+                        {% elif req.status == 'pending' %}
+                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
+                        {% elif req.status == 'rejected' %}
+                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
+                        {% elif req.status == 'cancelled' %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
+                        {% else %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>Brak planowanych urlopów.</p>
+        {% endif %}
+    </div>
+
+    <!-- Sekcja 3: Archiwalne -->
+    <div class="section">
+        <h3>Archiwalne</h3>
+        {% if archival_vacations %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Data rozpoczęcia</th>
+                    <th>Data zakończenia</th>
+                    <th>Liczba dni</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for req in archival_vacations %}
+                <tr>
+                    <td>{{ req.start_date }}</td>
+                    <td>{{ req.end_date }}</td>
+                    <td>{{ req.days }}</td>
+                    <td>
+                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
+                        {% elif req.status == 'rejected' %}
+                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
+                        {% elif req.status == 'cancelled' %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
+                        {% else %}
+                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>Brak archiwalnych urlopów.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
