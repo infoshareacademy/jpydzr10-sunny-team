@@ -39,7 +39,7 @@ def dashboard(request):
         'active_count': active_count,
         'pending_count': pending_count,
     }
-    
+
     return render(request, 'leaves/dashboard.html', context)
 
 @login_required
@@ -134,3 +134,39 @@ def calculate_days_api(request):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+@login_required
+def team_leave_balance(request):
+    # Tylko Manager i HR mają dostęp
+    if request.user.role not in ['Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    from leaves.models import WorkerProfile
+
+    # Pobierz team managera/HR z jego własnego profilu
+    try:
+        my_profile = WorkerProfile.objects.get(user=request.user)
+        team_name = my_profile.team
+    except WorkerProfile.DoesNotExist:
+        team_name = None
+
+    # Pobierz wszystkich pracowników z tego samego zespołu
+    if team_name:
+        team_profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+    else:
+        team_profiles = []
+
+    team_data = []
+    for profile in team_profiles:
+        team_data.append({
+            'first_name': profile.user.first_name,
+            'last_name': profile.user.last_name,
+            'total_days': profile._get_total_leave_days(),
+            'used_days': profile.used_leave_days,
+            'remaining_days': profile.get_leave_days(),
+        })
+
+    context = {
+        'team_name': team_name,
+        'team_data': team_data,
+    }
+    return render(request, 'leaves/team_leave_balance.html', context)
