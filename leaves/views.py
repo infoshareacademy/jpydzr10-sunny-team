@@ -5,6 +5,7 @@ from leave_requests.display_vacations import vacations
 from database.leave_requests_db import load_leave_requests
 from django.http import JsonResponse
 from .services import count_leave_days_service
+from leaves.models import WorkerProfile, LeaveRequest
 
 
 @login_required
@@ -25,13 +26,20 @@ def dashboard(request):
         remaining_days = None
         progress_percent = 0
 
+    my_requests = LeaveRequest.objects.filter(employee=request.user)
+    active_count = my_requests.exclude(status=LeaveRequest.Status.CANCELED).count()
+    pending_count = my_requests.filter(status=LeaveRequest.Status.PENDING).count()
+
     context = {
         'title': 'Dashboard Urlopowy',
         'total_days': total_days,
         'used_days': used_days,
         'remaining_days': remaining_days,
         'progress_percent': progress_percent,
+        'active_count': active_count,
+        'pending_count': pending_count,
     }
+    
     return render(request, 'leaves/dashboard.html', context)
 
 @login_required
