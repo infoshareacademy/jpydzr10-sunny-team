@@ -170,3 +170,35 @@ def calculate_days_api(request):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
+@login_required
+def log_history(request):
+
+    logs = ChangeLog.objects.all().order_by('-created_at')
+
+    # Filtry
+    action_filter = request.GET.get('action', '')
+    object_type_filter = request.GET.get('object_type', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+
+    if object_type_filter:
+        logs = logs.filter(object_type=object_type_filter)
+
+    if date_from:
+        logs = logs.filter(created_at__date__gte=date_from)
+    if date_to:
+        logs = logs.filter(created_at__date__lte=date_to)
+
+    context = {
+        'logs': logs,
+        'action_filter': action_filter,
+        'object_type_filter': object_type_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+
+    return render(request, 'leaves/log_history.html', context)
