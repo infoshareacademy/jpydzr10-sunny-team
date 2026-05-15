@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from .services import count_leave_days_service
 from django.contrib import messages
 from accounts.permission import Permission
+from logs.models import ChangeLog
 
 
 @login_required(login_url='/accounts/login/')

@@ -9,4 +9,5 @@ urlpatterns = [
     path('calculate-days/', views.calculate_days_api, name='calculate_days_api'),
     path('approve/<int:request_id>/', views.approve_request, name='approve_request'),
     path('reject/<int:request_id>/', views.reject_request, name='reject_request'),
+    path('logs/', views.log_history, name='logs'),
 ]
