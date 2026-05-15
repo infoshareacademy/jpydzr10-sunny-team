@@ -42,7 +42,8 @@ def all_requests_list(request):
             'days': days,
             'status': req.status.value if hasattr(req.status, 'value') else req.status,
             'who_confirmed': req.who_confirmed,
-            'created_at': getattr(req, 'created_at', None)
+            'created_at': getattr(req, 'created_at', None) # Narazie nie pobiera nic bo pobiera dane z pliku csv, który
+                                                           # nie zapisuje nawet takiej informacji
         }
         all_vacations.append(vacation)
 
@@ -109,7 +110,7 @@ def approve_request(request, request_id):
     """Sprawdzamy czy użytkownik ma uprawnienia do akceptacji wniosku"""
     user_role = getattr(request.user, 'role', None)
     if not user_role:
-        user_role = "Admin"
+        user_role = "Admin" # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
 
     if not Permission.verifyPermission(user_role, 'can_approve_request'):
         messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
@@ -138,7 +139,7 @@ def reject_request(request, request_id):
     """Sprawdzamy czy użytkownik ma uprawnienia do odrzucania wniosku"""
     user_role = getattr(request.user, 'role', None)
     if not user_role:
-        user_role = "Admin"
+        user_role = "Admin" # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
 
     if not Permission.verifyPermission(user_role, 'can_reject_request'):
         messages.error(request, 'Nie masz uprawnień do odrzucania wniosków urlopowych.')
