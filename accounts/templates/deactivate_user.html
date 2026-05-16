@@ -5,8 +5,8 @@
 {% block content %}
   <h1>Deactivate account</h1>
  
-  <p>Are you sure you want to deactivate <strong>{{ target_user.username }}</strong> ({{ target_user.role }})?</p>
-  <p>They will no longer be able to log in.</p>
+  <p>Jestes pewny, czy chcesz dezaktywowac konto <strong>{{ target_user.username }}</strong> ({{ target_user.role }})?</p>
+  <p>Ten uzytkownik nie bedzie w stanie ponownie sie zalogowac.</p>
  
   <form method="post">
     {% csrf_token %}
