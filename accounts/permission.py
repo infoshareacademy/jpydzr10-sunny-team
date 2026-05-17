@@ -38,6 +38,8 @@ class Permission:
             "can_list_users":         True,
             "can_reset_password":     True,
             "can_see_user_vacations": True,
+            "can_deactivate_staff":   True,
+            "can_deactivate_worker":  True,
         },
         "Manager": {
             "can_approve_request":    True,
@@ -51,6 +53,8 @@ class Permission:
             "can_list_users":         False,
             "can_reset_password":     False,
             "can_see_user_vacations": True,
+            "can_deactivate_staff":   False,
+            "can_deactivate_worker":  True,
         },
         "HR": {
             "can_approve_request":    False,
@@ -64,6 +68,8 @@ class Permission:
             "can_list_users":         True,
             "can_reset_password":     False,
             "can_see_user_vacations": True,
+            "can_deactivate_staff":   False,
+            "can_deactivate_worker":  True,
         },
         "Worker": {
             "can_approve_request":    False,
@@ -77,6 +83,8 @@ class Permission:
             "can_list_users":         False,
             "can_reset_password":     False,
             "can_see_user_vacations": False,
+            "can_deactivate_staff":   False,
+            "can_deactivate_worker":  False,
         },
     }
 

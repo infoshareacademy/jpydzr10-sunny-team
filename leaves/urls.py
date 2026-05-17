@@ -10,4 +10,7 @@ urlpatterns = [
     path('approve/<int:request_id>/', views.approve_request, name='approve_request'),
     path('reject/<int:request_id>/', views.reject_request, name='reject_request'),
     path('logs/', views.log_history, name='log_history'),
+    path('team-balance/', views.team_leave_balance, name='team_leave_balance'),
+    path('export-csv/', views.export_requests_csv, name='export_requests_csv'),
+
 ]
