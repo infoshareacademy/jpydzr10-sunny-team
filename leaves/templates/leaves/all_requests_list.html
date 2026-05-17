@@ -88,6 +88,7 @@
                     <th>Data zakończenia</th>
                     <th>Liczba dni</th>
                     <th>Status</th>
+                    <th>Kto zatwierdził</th>
                     <th>Data wniosku</th>
                     <th>Akcje</th>
                 </tr>
@@ -95,7 +96,6 @@
             <tbody>
                 {% for req in all_vacations %}
                 <tr>
-                    <tr>
                     <td><strong>{{ req.first_name }} {{ req.last_name }}</strong><br>
                         <small>ID: {{ req.employee_id }}</small>
                     <td>{{ req.start_date }}</td>
@@ -115,10 +115,27 @@
                         {% endif %}
                     </td>
                     <td>{{ req.who_confirmed|default:"—" }}</td>
+                    <td>{{ req.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
                     <td class="actions">
-                       {% if req.status == 'Pending' %}
-                            <button type="button" style="background:#28a745; color:white;">Zatwierdź</button>
-                            <button type="button" style="background:#dc3545; color:white;">Odrzuć</button>
+                        {% if req.status == 'pending' or req.status == 'Pending' %}
+                            <!-- Zatwierdź -->
+                            <form method="post" action="{% url 'approve_request' req.id %}" style="display: inline;" class="action-form">
+                                {% csrf_token %}
+                                <button type="button"
+                                        onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ZATWIERDZIĆ</strong> ten wniosek?')"
+                                        style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:4px;">
+                                    Zatwierdź
+                                </button>
+                            </form>
+                            <!-- Odrzuć -->
+                            <form method="post" action="{% url 'reject_request' req.id %}" style="display: inline;" class="action-form">
+                                {% csrf_token %}
+                                <button type="button"
+                                        onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ODRZUCIĆ</strong> ten wniosek?')"
+                                        style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:4px;">
+                                    Odrzuć
+                                </button>
+                            </form>
                         {% else %}
                             <span style="color:#28a745;">Przetworzony</span>
                         {% endif %}
@@ -140,5 +157,54 @@
         </div>
     </div>
 </div>
+<!-- MODAL POTWIERDZENIA -->
+<div id="customModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modalTitle">Potwierdź akcję</h3>
+        <p id="modalText"></p>
 
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeModal()">Anuluj</button>
+            <button class="btn-confirm" onclick="confirmAction()">Tak, wykonaj</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.65); justify-content: center; align-items: center; z-index: 1000;
+    }
+    .modal-content {
+        background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 420px;
+        text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    }
+    .modal-buttons { display: flex; gap: 15px; margin-top: 25px; }
+    .btn-confirm { background: #28a745; color: white; flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .btn-cancel { background: #e2e2e2; color: #333; flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+</style>
+
+<script>
+    let currentForm = null;
+
+    function showConfirmModal(form, message) {
+        currentForm = form;
+        document.getElementById('modalText').innerHTML = message;
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('customModal').style.display = 'none';
+        currentForm = null;
+    }
+
+    function confirmAction() {
+        if (currentForm) {
+            currentForm.submit();     // Wysyła formularz
+        } else {
+            console.error("Brak currentForm!");
+        }
+        closeModal();
+    }
+</script>
 {% endblock %}
