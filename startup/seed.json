@@ -1,0 +1,190 @@
+[
+{
+  "model": "accounts.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$uQH9kh46rJXCNLBKOURvo7$uwS3qvPG4jhIEk29FOYOZVCH6UuqU+Z2TfYvHJQxII8=",
+    "last_login": "2026-05-14T17:07:13.404Z",
+    "is_superuser": true,
+    "username": "admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@admin.pl",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-05-12T17:30:20.867Z",
+    "role": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 2,
+  "fields": {
+    "password": "!DPrgaz3pJxBZVcSyDjZMwoOj0aRQuxK8mbj1reBx",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "ola",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-14T17:05:04.844Z",
+    "role": "Worker",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 3,
+  "fields": {
+    "password": "!Sw19oxHFvDporku5J1SJ1LbLRHSxsGGNDWCi4jHh",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "tomek",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-14T17:05:04.848Z",
+    "role": "HR",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 4,
+  "fields": {
+    "password": "!KjMmvhds9tNLplz9jVVLdoKDLe50lAaq9cQEwpdM",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "janek",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-14T17:05:04.850Z",
+    "role": "Worker",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 5,
+  "fields": {
+    "password": "!dTv8nEgFIWrrP9DkNYHaUaG72V9Q08wwRsQAnCKY",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "alojzy.noga",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": false,
+    "date_joined": "2026-05-14T17:05:04.852Z",
+    "role": "Worker",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 6,
+  "fields": {
+    "password": "!IY3VIpdRhnNBiBODkYHT0GeKozaACssbvf9XUA9W",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "marek",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-14T17:05:04.855Z",
+    "role": "Manager",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "leaves.workerprofile",
+  "pk": 1,
+  "fields": {
+    "user": 2,
+    "hire_date": "2020-06-15",
+    "other_experience_years": 2,
+    "other_experience_days": 120,
+    "used_leave_days": 5,
+    "team": "A"
+  }
+},
+{
+  "model": "leaves.workerprofile",
+  "pk": 2,
+  "fields": {
+    "user": 3,
+    "hire_date": "2000-03-20",
+    "other_experience_years": 25,
+    "other_experience_days": 60,
+    "used_leave_days": 6,
+    "team": "B"
+  }
+},
+{
+  "model": "leaves.workerprofile",
+  "pk": 3,
+  "fields": {
+    "user": 4,
+    "hire_date": "2015-01-01",
+    "other_experience_years": 7,
+    "other_experience_days": 265,
+    "used_leave_days": 12,
+    "team": "A"
+  }
+},
+{
+  "model": "leaves.workerprofile",
+  "pk": 4,
+  "fields": {
+    "user": 5,
+    "hire_date": "2016-06-01",
+    "other_experience_years": 10,
+    "other_experience_days": 10,
+    "used_leave_days": 1,
+    "team": "A"
+  }
+},
+{
+  "model": "leaves.workerprofile",
+  "pk": 5,
+  "fields": {
+    "user": 6,
+    "hire_date": "2012-03-10",
+    "other_experience_years": 5,
+    "other_experience_days": 60,
+    "used_leave_days": 3,
+    "team": "A"
+  }
+},
+{
+  "model": "leaves.leaverequest",
+  "pk": 1,
+  "fields": {
+    "employee": 2,
+    "start_date": "2026-05-05",
+    "end_date": "2026-05-09",
+    "amount_days": 5,
+    "status": "pending",
+    "who_confirmed": null,
+    "created_at": "2026-05-16T08:40:27.844Z",
+    "updated_at": "2026-05-16T08:40:27.844Z"
+  }
+}
+]
