@@ -6,6 +6,8 @@ from database.leave_requests_db import load_leave_requests
 from django.http import JsonResponse
 from .services import count_leave_days_service
 from leaves.models import WorkerProfile, LeaveRequest
+import csv
+from django.http import HttpResponse
 
 
 @login_required
@@ -168,3 +170,40 @@ def team_leave_balance(request):
         'team_data': team_data,
     }
     return render(request, 'leaves/team_leave_balance.html', context)
+
+
+@login_required
+def export_requests_csv(request):
+    # tylko Manager i HR mają dostęp
+    if request.user.role not in ['Manager', 'HR', 'Admin']:
+        return render(request, 'leaves/access_denied.html')
+
+    from leaves.models import LeaveRequest
+
+    # odpowiedź HTTP jako plik CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="wnioski_urlopowe.csv"'
+
+    writer = csv.writer(response)
+
+    # nagłówki kolumn
+    writer.writerow([
+        'ID', 'Pracownik', 'Data od', 'Data do',
+        'Dni', 'Status', 'Potwierdził', 'Data złożenia'
+    ])
+
+    # dane z bazy
+    requests = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+    for req in requests:
+        writer.writerow([
+            req.id,
+            f"{req.employee.first_name} {req.employee.last_name}",
+            req.start_date,
+            req.end_date,
+            req.amount_days,
+            req.get_status_display(),
+            f"{req.who_confirmed.first_name} {req.who_confirmed.last_name}" if req.who_confirmed else '',
+            req.created_at.strftime('%Y-%m-%d %H:%M'),
+        ])
+
+    return response
