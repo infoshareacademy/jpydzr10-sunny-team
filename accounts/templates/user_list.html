@@ -14,14 +14,13 @@
     <tbody>
       {% for user in users %}
         <tr>
-          <td>{{ user.name }}</td>
-          <td>{{ user.surname }}</td>
+          <td>{{ user.username }}</td>
           <td>{{ user.role }}</td>
           <td>{{ user.is_active }}</td>
         </tr>
       {% empty %}
         <tr>
-          <td colspan="4">No users found.</td>
+          <td colspan="4">Nie znaleziono uztkownikow.</td>
         </tr>
       {% endfor %}
     </tbody>
