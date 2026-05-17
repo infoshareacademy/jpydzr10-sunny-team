@@ -11,7 +11,7 @@ from database.leave_requests_db import load_leave_requests, save_leave_requests
 from leave_requests.leave_request import LeaveRequest
 from leave_requests.display_vacations import display_vacations
 from logs_old.log_history import app_log
-from permission_system.permission import Permission
+from accounts.permission import Permission
 
 
 # ──────────────────────────────────────────────
