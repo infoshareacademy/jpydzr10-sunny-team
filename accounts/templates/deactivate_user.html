@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+ 
+{% block title %}Deaktywuj{{ target_user.username }}{% endblock %}
+ 
+{% block content %}
+  <h1>Dezaktywacja konta</h1>
+ 
+  <p>Jestes pewny, czy chcesz dezaktywowac konto <strong>{{ target_user.username }}</strong> ({{ target_user.role }})?</p>
+  <p>Ten uzytkownik nie bedzie w stanie ponownie sie zalogowac.</p>
+ 
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Tak, dezaktywuj</button>
+    <a href="{% url 'user_list' %}">Anuluj</a>
+  </form>
+{% endblock %}
+ 
