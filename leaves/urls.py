@@ -7,5 +7,7 @@ urlpatterns = [
     path('all-requests/', views.all_requests_list, name='all_requests_list'),
     path('new-request/', views.new_request, name='new_request'),
     path('calculate-days/', views.calculate_days_api, name='calculate_days_api'),
+    path('team-balance/', views.team_leave_balance, name='team_leave_balance'),
+    path('export-csv/', views.export_requests_csv, name='export_requests_csv'),
 
 ]

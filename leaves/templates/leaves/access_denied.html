@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 80px;">
+    <h2>Brak dostępu</h2>
+    <p>Ta strona jest dostępna tylko dla Manager i HR.</p>
+    <a href="{% url 'dashboard' %}">Wróć do dashboardu</a>
+</div>
+{% endblock %}

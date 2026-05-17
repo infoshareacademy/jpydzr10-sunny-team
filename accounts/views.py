@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import User
 from .permission import Permission
+from permission import role_required
 
 
 @login_required
@@ -22,3 +23,12 @@ def deactivate_user(request, pk):
         return redirect('user_list')
 
     return render(request, 'accounts/deactivate_user.html', {'target_user': target_user})
+
+
+@login_required
+@role_required('can_view_user_list')
+def user_list(request):
+    users = User.objects.all()
+    return render(request, 'accounts/user_list.html', {'users': users})
+
+

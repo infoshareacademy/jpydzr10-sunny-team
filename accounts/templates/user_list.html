@@ -1,0 +1,28 @@
+{% extends "templates/base.html" %}
+{% block title %}Lista uzytkownikow{% endblock %}
+{% block content %}
+  <h1>Uzytkownicy</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Imie</th>
+        <th>Nazwisko</th>
+        <th>Rola</th>
+        <th>Czy aktywny</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <td>{{ user.username }}</td>
+          <td>{{ user.role }}</td>
+          <td>{{ user.is_active }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4">Nie znaleziono uztkownikow.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

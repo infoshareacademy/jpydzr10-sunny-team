@@ -5,13 +5,43 @@ from leave_requests.display_vacations import vacations
 from database.leave_requests_db import load_leave_requests
 from django.http import JsonResponse
 from .services import count_leave_days_service
+from leaves.models import WorkerProfile, LeaveRequest
+import csv
+from django.http import HttpResponse
 
 
-@login_required(login_url='/accounts/login/')
+@login_required
 def dashboard(request):
+    from leaves.models import WorkerProfile
+
+    try:
+        profile = WorkerProfile.objects.get(user=request.user)
+        total_days = profile._get_total_leave_days()
+        used_days = profile.used_leave_days
+        remaining_days = profile.get_leave_days()
+        # pasek postępu: ile % urlopu wykorzystano (0-100)
+        progress_percent = round((used_days / total_days) * 100) if total_days > 0 else 0
+    except WorkerProfile.DoesNotExist:
+        # jeśli zalogowany user nie ma profilu (np. Admin bez profilu)
+        total_days = None
+        used_days = None
+        remaining_days = None
+        progress_percent = 0
+
+    my_requests = LeaveRequest.objects.filter(employee=request.user)
+    active_count = my_requests.exclude(status=LeaveRequest.Status.CANCELED).count()
+    pending_count = my_requests.filter(status=LeaveRequest.Status.PENDING).count()
+
     context = {
         'title': 'Dashboard Urlopowy',
+        'total_days': total_days,
+        'used_days': used_days,
+        'remaining_days': remaining_days,
+        'progress_percent': progress_percent,
+        'active_count': active_count,
+        'pending_count': pending_count,
     }
+
     return render(request, 'leaves/dashboard.html', context)
 
 @login_required
@@ -104,3 +134,76 @@ def calculate_days_api(request):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+@login_required
+def team_leave_balance(request):
+    # Tylko Manager i HR mają dostęp
+    if request.user.role not in ['Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    from leaves.models import WorkerProfile
+
+    # Pobierz team managera/HR z jego własnego profilu
+    try:
+        my_profile = WorkerProfile.objects.get(user=request.user)
+        team_name = my_profile.team
+    except WorkerProfile.DoesNotExist:
+        team_name = None
+
+    # Pobierz wszystkich pracowników z tego samego zespołu
+    if team_name:
+        team_profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+    else:
+        team_profiles = []
+
+    team_data = []
+    for profile in team_profiles:
+        team_data.append({
+            'first_name': profile.user.first_name,
+            'last_name': profile.user.last_name,
+            'total_days': profile._get_total_leave_days(),
+            'used_days': profile.used_leave_days,
+            'remaining_days': profile.get_leave_days(),
+        })
+
+    context = {
+        'team_name': team_name,
+        'team_data': team_data,
+    }
+    return render(request, 'leaves/team_leave_balance.html', context)
+
+
+@login_required
+def export_requests_csv(request):
+    # tylko Manager i HR mają dostęp
+    if request.user.role not in ['Manager', 'HR', 'Admin']:
+        return render(request, 'leaves/access_denied.html')
+
+    from leaves.models import LeaveRequest
+
+    # odpowiedź HTTP jako plik CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="wnioski_urlopowe.csv"'
+
+    writer = csv.writer(response)
+
+    # nagłówki kolumn
+    writer.writerow([
+        'ID', 'Pracownik', 'Data od', 'Data do',
+        'Dni', 'Status', 'Potwierdził', 'Data złożenia'
+    ])
+
+    # dane z bazy
+    requests = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+    for req in requests:
+        writer.writerow([
+            req.id,
+            f"{req.employee.first_name} {req.employee.last_name}",
+            req.start_date,
+            req.end_date,
+            req.amount_days,
+            req.get_status_display(),
+            f"{req.who_confirmed.first_name} {req.who_confirmed.last_name}" if req.who_confirmed else '',
+            req.created_at.strftime('%Y-%m-%d %H:%M'),
+        ])
+
+    return response
