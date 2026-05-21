@@ -12,6 +12,7 @@ urlpatterns = [
     path('team-balance/', views.team_leave_balance, name='team_leave_balance'),
     path('export-csv/', views.export_requests_csv, name='export_requests_csv'),
     path('edit-request/<int:pk>/', views.LeaveRequestUpdateView.as_view(), name='leave_request_edit'),
+    path('cancel-request/<int:pk>/', views.CancelLeaveView.as_view(), name='leave_request_cancel'),
 
 
 ]

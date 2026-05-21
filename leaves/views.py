@@ -1,13 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_POST
 from django.views.generic import  CreateView, UpdateView
-from leave_requests.display_vacations import vacations
 from database.leave_requests_db import load_leave_requests, save_leave_requests
-from django.http import JsonResponse
-from .services import count_leave_days_service
 from django.contrib import messages
 from accounts.permission import Permission
 from logs.models import ChangeLog
@@ -16,6 +13,8 @@ import csv
 from django.http import HttpResponse
 from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.generic import View
 
 
 
@@ -92,41 +91,51 @@ def all_requests_list(request):
 
     return render(request, 'leaves/all_requests_list.html', context)
 
+
 @login_required
 def my_vacations(request):
-
-    # Zduplikowana logika z leave_requests/display_vacations.py
-    # Trzeba to potem zrefactorować gdy będziemy pobierali dane z DB
     today = date.today()
 
-    # Pobieramy tylko wnioski użytkownika
-    my_vacation = [v for v in vacations if v['employee_id'] == request.user.id]
+    my_requests = LeaveRequest.objects.filter(employee=request.user)
 
     current = []
     planned = []
     archival = []
 
-    for v in my_vacation:
-        days = (v['end_date'] - v['start_date']).days + 1
+    for req in my_requests:
+        entry = {
+            'pk': req.pk,
+            'start_date': req.start_date,
+            'end_date': req.end_date,
+            'days': req.amount_days,
+            'status': req.status,
+        }
 
-        vacation = v.copy()
-        vacation['days'] = days
+        # 1. Każdy oczekujący wniosek traktujemy jako "Planowany" (niezależnie od daty)
+        if req.status == LeaveRequest.Status.PENDING:
+            planned.append(entry)
 
-        if v['start_date'] <= today <= v['end_date']:
-            current.append(vacation)
-        elif v['start_date'] > today:
-            planned.append(vacation)
+        # 2. Każdy odrzucony lub anulowany wniosek trafia od razu do historii
+        elif req.status in [LeaveRequest.Status.CANCELED, LeaveRequest.Status.REJECTED]:
+            archival.append(entry)
+
+        # 3. Zatwierdzony urlop, który trwa właśnie DZISIAJ
+        elif req.start_date <= today <= req.end_date and req.status == LeaveRequest.Status.APPROVED:
+            current.append(entry)
+
+        # 4. Zatwierdzony urlop, który odbędzie się w PRZYSZŁOŚCI (start_date > today)
+        elif req.start_date > today and req.status == LeaveRequest.Status.APPROVED:
+            planned.append(entry)
+
+        # 5. Wszystko inne (stare, zatwierdzone urlopy, które już minęły)
         else:
-            # Filtrujemy archiwalne wnioski tak by nie wyświetlały statusu oczekującego
-            if v['status'] != 'pending':
-                archival.append(vacation)
+            archival.append(entry)
 
     context = {
         'current_vacations': current,
         'planned_vacations': planned,
         'archival_vacations': archival,
     }
-
     return render(request, 'leaves/my_vacations.html', context)
 
 @login_required
@@ -190,22 +199,37 @@ def reject_request(request, request_id):
 
 
 class LeaveRequestView(LoginRequiredMixin, CreateView):
+    """
+     Widok odpowiedzialny za tworzenie nowego wniosku urlopowego.
+     Wymaga zalogowania użytkownika.
+    """
     model = LeaveRequest
     form_class = LeaveRequestForm
     template_name = 'leaves/new_request.html'
     success_url = reverse_lazy('my_vacations')
 
     def get_form_kwargs(self):
+        """
+        Przekazuje zalogowanego użytkownika do formularza jako dodatkowy argument (kwargs),
+        """
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
+        """
+        Obsługuje proces po poprawnym wypełnieniu formularza.
+         1. Jeśli wniosek nie został jeszcze potwierdzony w modalu (potwierdzenie dwuetapowe),
+            przerywa zapis i zwraca widok z parametrem show_modal=True.
+         2. Po ostatecznym potwierdzeniu, przypisuje wniosek do zalogowanego użytkownika i go zapisuje.
+        """
         is_confirmed = form.cleaned_data.get('confirmed') == 'true'
         if not is_confirmed:
+            # Użytkownik wysłał formularz po raz pierwszy, pokazujemy okno podsumowania (modal)
             context = self.get_context_data(form=form, show_modal=True)
             return self.render_to_response(context)
 
+        # Użytkownik potwierdził wniosek w modalu, zapisujemy w bazie
         obj = form.save(commit=False)
         obj.employee = self.request.user
         obj.amount_days = form.cleaned_data['amount_days']
@@ -213,16 +237,23 @@ class LeaveRequestView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
+        """
+        Rozbudowuje kontekst szablonu o dodatkowe dane:
+         - Dostępną liczbę dni urlopowych pracownika.
+         - Wyliczone dane z formularza (liczba dni, sformatowane daty), jeśli formularz jest poprawny.
+        """
         from leaves.models import WorkerProfile
         context = super().get_context_data(**kwargs)
         form = context['form']
 
+        # Pobieranie puli dostępnych dni urlopowych profilu pracownika
         try:
             profile = WorkerProfile.objects.get(user=self.request.user)
             context['available_days'] = profile.get_leave_days()
         except WorkerProfile.DoesNotExist:
             context['available_days'] = None
 
+        # Formatowanie dat do wyświetlenia w podsumowaniu (modalu)
         if form.is_bound and form.is_valid():
             context['amount_days'] = form.cleaned_data.get('amount_days')
             context['start_date'] = form.cleaned_data.get('start_date').strftime('%d.%m.%Y')
@@ -235,60 +266,88 @@ class LeaveRequestView(LoginRequiredMixin, CreateView):
         return context
 
 class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Widok odpowiedzialny za edycję istniejącego wniosku urlopowego.
+    Zawiera walidację uprawnień oraz stanu wniosku.
+    """
     model = LeaveRequest
     form_class = LeaveRequestForm
     template_name = 'leaves/edit_request.html'
     success_url = reverse_lazy('my_vacations')
 
     def dispatch(self, request, *args, **kwargs):
+        """
+        Główna metoda kontrolująca dostęp do widoku. Sprawdza:
+         1. Czy rola użytkownika pozwala ogólnie na modyfikację wniosków.
+         2. Czy wniosek ma status "PENDING" (oczekujący) – tylko takie można edytować.
+         3. Czy pracownik  próbuje edytować swój własny wniosek, a nie cudzy.
+        """
+
+        # Sprawdzenie uprawnień globalnych dla roli
         if not Permission.verifyPermission(request.user.role, 'can_change_request'):
             return redirect('dashboard')
 
         obj = self.get_object()
 
+        # Blokada edycji wniosków, które zostały już zaakceptowane lub odrzucone
         if obj.status != LeaveRequest.Status.PENDING:
             messages.error(request, "Można edytować tylko wnioski oczekujące.")
             return redirect('my_vacations')
 
-        if request.user.role == 'Worker' and obj.employee != request.user:
+        # Pracownik nie może edytować wniosków innych osób
+        if obj.employee != request.user:
             messages.error(request, "Możesz edytować tylko własne wnioski.")
             return redirect('my_vacations')
 
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
+        """
+        Przekazuje zalogowanego użytkownika do formularza edycji.
+        """
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
+        """
+        Obsługuje proces zapisu edytowanego wniosku.
+        Podobnie jak przy tworzeniu – najpierw wymusza potwierdzenie w modalu (`confirmed == 'true'`).
+        """
         is_confirmed = form.cleaned_data.get('confirmed') == 'true'
         if not is_confirmed:
             context = self.get_context_data(form=form, show_modal=True)
             return self.render_to_response(context)
 
+        # Zapis zaktualizowanych danych wniosku
         obj = form.save(commit=False)
         obj.amount_days = form.cleaned_data['amount_days']
         obj.save()
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
+        """
+        Rozbudowuje kontekst szablonu edycji. Oprócz aktualnie wprowadzanych danych i dostępnych dni,
+        dorzuca do kontekstu pierwotne daty wniosku (`existing_start`, `existing_end`) przed edycją.
+        """
         from leaves.models import WorkerProfile
         context = super().get_context_data(**kwargs)
         form = context['form']
 
+        # Pobranie obecnych (starych) dat wniosku z bazy danych w celu wyświetlenia ich w szablonie
         pk = self.kwargs['pk']
         leave_request = LeaveRequest.objects.get(pk=pk)
-
         context['existing_start'] = leave_request.start_date.strftime('%d.%m.%Y')
         context['existing_end'] = leave_request.end_date.strftime('%d.%m.%Y')
 
+        # Pobranie puli dostępnych dni urlopowych
         try:
             profile = WorkerProfile.objects.get(user=self.request.user)
             context['available_days'] = profile.get_leave_days()
         except WorkerProfile.DoesNotExist:
             context['available_days'] = None
 
+        # Formatowanie nowo wpisywanych w formularzu dat
         if form.is_bound and form.is_valid():
             context['amount_days'] = form.cleaned_data.get('amount_days')
             context['start_date'] = form.cleaned_data.get('start_date').strftime('%d.%m.%Y')
@@ -299,6 +358,35 @@ class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
             context['end_date'] = None
 
         return context
+
+@method_decorator(require_POST, name='dispatch')
+class CancelLeaveView(LoginRequiredMixin, View):
+
+    def post(self, request, pk):
+        leave_request = get_object_or_404(LeaveRequest, pk=pk)
+
+        # sprawdź uprawnienie roli
+        if not Permission.verifyPermission(request.user.role, 'can_cancel_request'):
+            messages.error(request, "Nie masz uprawnień do anulowania wniosków.")
+            return redirect('dashboard')
+
+        # Worker tylko własne
+        if request.user.role == 'Worker' and leave_request.employee != request.user:
+            messages.error(request, "Możesz anulować tylko własne wnioski.")
+            return redirect('my_vacations')
+
+        # tylko pending
+        if leave_request.status != LeaveRequest.Status.PENDING:
+            messages.error(request, "Można anulować tylko wnioski oczekujące.")
+            return redirect('my_vacations')
+
+        leave_request.cancel_request(who=request.user)
+        messages.success(request, "Wniosek został anulowany.")
+
+        # Worker wraca do swoich, reszta do listy wszystkich
+        if request.user.role == 'Worker':
+            return redirect('my_vacations')
+        return redirect('all_requests_list')
 
 @login_required
 def log_history(request):
