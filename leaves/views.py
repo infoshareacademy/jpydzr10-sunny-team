@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from datetime import date
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_POST
-
+from django.views.generic import  CreateView
 from leave_requests.display_vacations import vacations
 from database.leave_requests_db import load_leave_requests, save_leave_requests
 from django.http import JsonResponse
@@ -11,9 +11,12 @@ from .services import count_leave_days_service
 from django.contrib import messages
 from accounts.permission import Permission
 from logs.models import ChangeLog
-from leaves.models import WorkerProfile, LeaveRequest
+from leaves.models import LeaveRequest
 import csv
 from django.http import HttpResponse
+from .forms import LeaveRequestForm
+from django.urls import reverse_lazy
+
 
 
 @login_required
@@ -185,9 +188,51 @@ def reject_request(request, request_id):
 
     return redirect('all_requests_list')
 
-@login_required
-def new_request(request):
-    return render(request, 'leaves/new_request.html')
+
+class LeaveRequestView(LoginRequiredMixin, CreateView):
+    model = LeaveRequest
+    form_class = LeaveRequestForm
+    template_name = 'leaves/new_request.html'
+    success_url = reverse_lazy('my_vacations')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        is_confirmed = form.cleaned_data.get('confirmed') == 'true'
+        if not is_confirmed:
+            context = self.get_context_data(form=form, show_modal=True)
+            return self.render_to_response(context)
+
+        obj = form.save(commit=False)
+        obj.employee = self.request.user
+        obj.amount_days = form.cleaned_data['amount_days']
+        obj.save()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        from leaves.models import WorkerProfile
+        context = super().get_context_data(**kwargs)
+        form = context['form']
+
+        try:
+            profile = WorkerProfile.objects.get(user=self.request.user)
+            context['available_days'] = profile.get_leave_days()
+        except WorkerProfile.DoesNotExist:
+            context['available_days'] = None
+
+        if form.is_bound and form.is_valid():
+            context['amount_days'] = form.cleaned_data.get('amount_days')
+            context['start_date'] = form.cleaned_data.get('start_date').strftime('%d.%m.%Y')
+            context['end_date'] = form.cleaned_data.get('end_date').strftime('%d.%m.%Y')
+        else:
+            context['amount_days'] = None
+            context['start_date'] = None
+            context['end_date'] = None
+
+        return context
 
 @login_required
 def calculate_days_api(request):
