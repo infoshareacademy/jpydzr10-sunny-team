@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Nowy wniosek{% endblock %}
+
+{% block content %}
+
+    <style>
+        #id_start_date_error,
+        #id_end_date_error {
+            display: none;
+        }
+        #leave-form .errorlist.nonfield {
+            display: none;
+        }
+
+        .popup-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(0px);
+            z-index: 1050;
+            justify-content: center;
+            align-items: flex-start;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+        }
+
+        .modal-content-box {
+            width: 450px;
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .popup-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+        }
+
+        .popup-modal.active .modal-content-box {
+            transform: translateY(0);
+        }
+
+        .form-container {
+            width: 450px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .top {
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .error-block {
+            padding: 15px;
+            background: #ffcccc;
+            border-radius: 12px;
+            border-style: solid;
+            color: #e60000;
+            border-width: 2px;
+            text-align: justify;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .form {
+            margin-top: 20px;
+        }
+        .btn-primary {
+            margin-top: 30px;
+            margin-left: auto;
+            display: block;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+    </style>
+
+<div class="form-container">
+    <h2 class="top">{% block top %}Top{% endblock %}</h2>
+    {% block description %}{% endblock %}
+    {% if form.non_field_errors %}
+        <div class="error-block">
+            {{ form.non_field_errors|striptags }}
+        </div>
+    {% endif %}
+    <div class="form">
+        <form id="leave-form" method="post" novalidate>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-primary" type="submit">{% block button %}Button{% endblock %}</button>
+        </form>
+    </div>
+</div>
+
+<div>
+    <div id="popup-modal" class="popup-modal">
+        <div class="modal-content-box">
+            <h2 class="top">Potwierdzenie</h2>
+            <p>Czy na pewno chcesz {% block approve %}{% endblock %} wniosek?<br>
+                <b>{{ start_date }} - {{ end_date}}</b></p>
+
+            <p>Wnioskowane / Dostępne dni:<br>
+                <b>{{ amount_days }} / {{ available_days }} dni</b></p>
+
+            <div class="modal-actions">
+                <button class="btn btn-danger" type="button" onclick="closeModal()">Anuluj</button>
+                <button class="btn btn-success" type="button" onclick="confirmAndSubmit()">Tak</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <script>
+        const modal = document.getElementById('popup-modal');
+        const form = document.getElementById('leave-form');
+        const confirmedInput = document.getElementById('id_confirmed');
+        const startDateInput = document.getElementById('id_start_date');
+        const endDateInput = document.getElementById('id_end_date');
+
+        {% if show_modal %}
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        {% endif %}
+
+        function resetConfirmation() {
+            if (confirmedInput) {
+                confirmedInput.value = 'false';
+            }
+            closeModal();
+        }
+
+        if (startDateInput) {
+            startDateInput.addEventListener('change', resetConfirmation);
+            startDateInput.addEventListener('input', resetConfirmation);
+        }
+        if (endDateInput) {
+            endDateInput.addEventListener('change', resetConfirmation);
+            endDateInput.addEventListener('input', resetConfirmation);
+        }
+
+        function confirmAndSubmit() {
+            if (confirmedInput) {
+                confirmedInput.value = 'true';
+            }
+            form.submit();
+        }
+
+        function closeModal() {
+            if (confirmedInput) {
+                confirmedInput.value = 'false';
+            }
+            modal.classList.remove('active');
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+{% endblock %}
