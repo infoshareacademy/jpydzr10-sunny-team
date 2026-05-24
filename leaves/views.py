@@ -234,7 +234,8 @@ class LeaveRequestView(LoginRequiredMixin, CreateView):
         obj.employee = self.request.user
         obj.amount_days = form.cleaned_data['amount_days']
         obj.save()
-        return super().form_valid(form)
+        self.object = obj
+        return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         """
@@ -323,7 +324,7 @@ class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
         obj = form.save(commit=False)
         obj.amount_days = form.cleaned_data['amount_days']
         obj.save()
-        return super().form_valid(form)
+        return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         """

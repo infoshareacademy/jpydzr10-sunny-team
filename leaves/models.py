@@ -2,8 +2,7 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from dateutil.relativedelta import relativedelta
-#from .model_leave_request import LeaveRequest
-from .services import count_leave_days_service
+
 
 
 class WorkerProfile(models.Model):
