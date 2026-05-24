@@ -15,6 +15,14 @@
     {% block navbar %}{% endblock %}
     </nav>
 
+    {% if messages %}
+    <ul>
+    {% for message in messages %}
+        <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+
     <main>
     {% block content %}{% endblock %}
     </main>
