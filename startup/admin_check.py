@@ -1,6 +1,4 @@
-from auth.login import hash_password
 from models.admin import Admin
-from models.user import User
 from database.database import user_database,create_user
 
 def admin_exist():

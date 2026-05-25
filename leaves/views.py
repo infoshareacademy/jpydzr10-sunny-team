@@ -18,7 +18,6 @@ from django.http import HttpResponse
 
 @login_required
 def dashboard(request):
-    from leaves.models import WorkerProfile
 
     try:
         profile = WorkerProfile.objects.get(user=request.user)
@@ -238,7 +237,6 @@ def team_leave_balance(request):
     if request.user.role not in ['Manager', 'HR']:
         return render(request, 'leaves/access_denied.html')
 
-    from leaves.models import WorkerProfile
 
     # Pobierz team managera/HR z jego własnego profilu
     try:
