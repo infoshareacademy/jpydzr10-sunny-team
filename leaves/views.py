@@ -54,37 +54,34 @@ def dashboard(request):
 def all_requests_list(request):
 
     status_filter = request.GET.get('status', '').lower()
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
 
-    # Ładujemy wnioski z bazy (tak jak w startup_app.py)
-    leave_requests = load_leave_requests()
+    # pobieram wnioski z bazy zamiast load_leave_requests()
+    qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
 
-    all_vacations = []
+    if status_filter and status_filter in LeaveRequest.Status.values:
+        qs = qs.filter(status=status_filter)
 
-    for req_id, req in leave_requests.items():
-        days = (req.end_date - req.start_date).days + 1
+    if date_from_str:
+        try:
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+            qs = qs.filter(start_date__gte=date_from)
+        except ValueError:
+            pass
 
-        vacation = {
-            'id': req_id,
-            'employee_id': req.employee_id,
-            'first_name': req.first_name,
-            'last_name': req.last_name,
-            'start_date': req.start_date,
-            'end_date': req.end_date,
-            'days': days,
-            'status': req.status.value if hasattr(req.status, 'value') else req.status,
-            'who_confirmed': req.who_confirmed,
-            'created_at': getattr(req, 'created_at', None) # Narazie nie pobiera nic bo pobiera dane z pliku csv, który
-                                                           # nie zapisuje nawet takiej informacji
-        }
-        all_vacations.append(vacation)
-
-    # Filtr statusu
-    if status_filter:
-        all_vacations = [v for v in all_vacations if v['status'].lower() == status_filter]
+    if date_to_str:
+        try:
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+            qs = qs.filter(end_date__lte=date_to)
+        except ValueError:
+            pass
 
     context = {
-        'all_vacations': all_vacations,
+        'all_vacations': qs,
         'status_filter': status_filter,
+        'date_from': date_from_str,
+        'date_to': date_to_str,
     }
 
     return render(request, 'leaves/all_requests_list.html', context)
