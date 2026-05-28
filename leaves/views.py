@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from datetime import date
+from datetime import date, datetime
 
 from django.views.decorators.http import require_POST
 
@@ -232,6 +232,8 @@ def log_history(request):
     }
 
     return render(request, 'leaves/log_history.html', context)
+
+
 @login_required
 def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
@@ -278,6 +280,34 @@ def export_requests_csv(request):
 
     from leaves.models import LeaveRequest
 
+    # filtry z adresu URL
+    status_filter = request.GET.get('status', '')
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+
+    # punkt wyjścia - wszystkie wnioski
+    qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+
+    # filtruję po statusie
+    if status_filter and status_filter in LeaveRequest.Status.values:
+        qs = qs.filter(status=status_filter)
+
+    # filtruję po datach
+    if date_from_str:
+        try:
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+            qs = qs.filter(start_date__gte=date_from)
+        except ValueError:
+            pass  # zignoruj jeśli data jest nieprawidłowa
+
+    if date_to_str:
+        try:
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+            qs = qs.filter(end_date__lte=date_to)
+        except ValueError:
+            pass    # zignoruj jeśli data jest nieprawidłowa
+
+
     # odpowiedź HTTP jako plik CSV
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="wnioski_urlopowe.csv"'
@@ -286,8 +316,8 @@ def export_requests_csv(request):
 
     # nagłówki kolumn
     writer.writerow([
-        'ID', 'Pracownik', 'Data od', 'Data do',
-        'Dni', 'Status', 'Potwierdził', 'Data złożenia'
+        'ID', 'Imię', 'Nazwisko', 'Data od', 'Data do',
+        'Liczba dni', 'Status', 'Potwierdził', 'Data złożenia'
     ])
 
     # dane z bazy
@@ -295,12 +325,13 @@ def export_requests_csv(request):
     for req in requests:
         writer.writerow([
             req.id,
-            f"{req.employee.first_name} {req.employee.last_name}",
+            {req.employee.first_name},
+            {req.employee.last_name},
             req.start_date,
             req.end_date,
             req.amount_days,
             req.get_status_display(),
-            f"{req.who_confirmed.first_name} {req.who_confirmed.last_name}" if req.who_confirmed else '',
+            f"{req.who_confirmed.last_name} {req.who_confirmed.first_name}" if req.who_confirmed else '',
             req.created_at.strftime('%Y-%m-%d %H:%M'),
         ])
 
