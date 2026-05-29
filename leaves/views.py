@@ -1,9 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from datetime import date
-
 from django.views.decorators.http import require_POST
-
 from leave_requests.display_vacations import vacations
 from database.leave_requests_db import load_leave_requests, save_leave_requests
 from django.http import JsonResponse
@@ -14,6 +12,8 @@ from logs.models import ChangeLog
 from leaves.models import WorkerProfile, LeaveRequest
 import csv
 from django.http import HttpResponse
+import calendar
+from datetime import timedelta
 
 
 @login_required
@@ -305,3 +305,123 @@ def export_requests_csv(request):
         ])
 
     return response
+
+
+@login_required
+def team_calendar(request):
+    # miesięczny kalendarz urlopów dla całego zespołu
+
+    if request.user.role not in ['Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    # jeśli w url jest rok/mc to pobieram
+    # jeśli brak to bieżący
+    today = date.today()
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
+
+    # dane którego zespołu
+    try:
+        my_profile = WorkerProfile.objects.get(user=request.user)
+        team_name = my_profile.team
+    except WorkerProfile.DoesNotExist:
+        team_name = None
+
+    # lista pracowników
+    if team_name:
+        team_profiles = (
+            WorkerProfile.objects
+            .filter(team=team_name)
+            .select_related('user')
+        )
+    else:
+        team_profiles = WorkerProfile.objects.none()
+
+    team_members = [
+        {
+            'id': p.user.id,
+            'name': f"{p.user.last_name} {p.user.first_name}",
+        }
+        for p in team_profiles
+    ]
+
+    # urlopy w statusie approved
+    first_day = date(year, month, 1)    # 1. dzień mc-a
+    last_day = date(year, month, calendar.monthrange(year, month)[1])   # ost. dzień mc-a
+
+    team_user_ids = [m['id'] for m in team_members]
+
+    approved_leaves = LeaveRequest.objects.filter(
+        employee__id__in=team_user_ids,  # tylko ten zespół
+        status=LeaveRequest.Status.APPROVED,
+        start_date__lte=last_day,  # zaczyna się przed końcem miesiąca
+        end_date__gte=first_day,  # kończy się po początku miesiąca
+    ).select_related('employee')
+
+    # słownik urlopowiczów z danego mc-a
+    leave_map = {}
+
+    for leave in approved_leaves:
+        current = max(leave.start_date, first_day)
+        end = min(leave.end_date, last_day)
+
+        while current <= end:
+            day_num = current.day
+
+            if day_num not in leave_map:
+                leave_map[day_num] = []
+
+            name = f"{leave.employee.last_name} {leave.employee.first_name}"
+            if name not in leave_map[day_num]:
+                leave_map[day_num].append(name)
+
+            current += timedelta(days=1)
+
+    # miesięczny widok kalendarze
+    # monthcalendar(rok, miesiąc) zwraca listę tygodni,
+    # każdy tydzień to lista 7 liczb (0 = ten dzień należy do innego miesiąca)
+    # Przykład: [[0, 0, 1, 2, 3, 4, 5], [6, 7, 8, ...], ...]
+    cal = calendar.monthcalendar(year, month)
+
+    # zamieniam siatkę liczbową na siatkę słowników z datą i urlopami
+    weeks = []
+    for week in cal:
+        week_row = []
+        for day_num in week:
+            if day_num == 0:
+                # dzień spoza miesiąca — pusta komórka
+                week_row.append({'day': 0, 'leaves': [], 'is_today': False})
+            else:
+                week_row.append({
+                    'day': day_num,
+                    'leaves': leave_map.get(day_num, []),  # [] jeśli brak urlopów
+                    'is_today': date(year, month, day_num) == today,
+                })
+        weeks.append(week_row)
+
+    # poprzedni i następny miesiąc (do przycisków nawigacji)
+    if month == 1:
+        prev_year, prev_month = year - 1, 12
+    else:
+        prev_year, prev_month = year, month - 1
+
+    if month == 12:
+        next_year, next_month = year + 1, 1
+    else:
+        next_year, next_month = year, month + 1
+
+    # do html
+    context = {
+        'year': year,
+        'month': month,
+        'month_name': calendar.month_name[month],
+        'weeks': weeks,
+        'team_name': team_name,
+        'team_members': team_members,
+        'prev_year': prev_year,
+        'prev_month': prev_month,
+        'next_year': next_year,
+        'next_month': next_month,
+        'today': today,
+    }
+    return render(request, 'leaves/team_calendar.html', context)
