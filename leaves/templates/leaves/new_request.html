@@ -1,154 +1,182 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wniosek o urlop</title>
+{% extends 'base.html' %}
+
+{% block title %}Nowy wniosek{% endblock %}
+
+{% block content %}
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 50px; line-height: 1.6; background-color: #f4f7f6; }
-        .container { max-width: 400px; background: white; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; margin-top: 0; }
-
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        input[type="date"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-
-        #submitBtn { width: 100%; padding: 14px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s; }
-        #submitBtn:hover { background-color: #0056b3; }
-        #submitBtn:disabled { background-color: #ccc; cursor: not-allowed; }
-
-        #error-message { color: #d9534f; background: #fdf7f7; border: 1px solid #d9534f; padding: 12px; border-radius: 6px; display: none; margin-bottom: 20px; font-size: 14px; }
-
-        .modal-overlay {
+        #id_start_date_error,
+        #id_end_date_error {
             display: none;
+        }
+        #leave-form .errorlist.nonfield {
+            display: none;
+        }
+
+        .popup-modal {
+            display: flex;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            justify-content: center; align-items: center;
-            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(0px);
+            z-index: 1050;
+            justify-content: center;
+            align-items: flex-start;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
         }
-        .modal-content {
-            background: white; padding: 30px; border-radius: 10px;
-            width: 90%; max-width: 450px; text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            animation: fadeIn 0.3s ease-out;
+
+        .modal-content-box {
+            width: 450px;
+            margin-top: 40px;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .modal-content h3 { margin-top: 0; color: #333; }
-        .modal-buttons { display: flex; gap: 15px; margin-top: 25px; }
+        .popup-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+        }
 
-        .btn-confirm { background: #007bff; color: white; flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-confirm:hover { background: #0056b3; }
+        .popup-modal.active .modal-content-box {
+            transform: translateY(0);
+        }
 
-        .btn-cancel { background: #e2e2e2; color: #333; flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-cancel:hover { background: #d4d4d4; }
+        .form-container {
+            width: 450px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
 
-        .success-icon { color: #28a745; font-size: 3em; display: block; margin-bottom: 10px; }
+        .top {
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .error-block {
+            padding: 15px;
+            background: #ffcccc;
+            border-radius: 12px;
+            border-style: solid;
+            color: #e60000;
+            border-width: 2px;
+            text-align: justify;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .form {
+            margin-top: 20px;
+        }
+        .btn-primary {
+            margin-top: 30px;
+            margin-left: auto;
+            display: block;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
     </style>
-</head>
-<body>
 
-<div class="container">
-    <h2>Wniosek o urlop</h2>
-    <div id="error-message"></div>
-    <form id="leaveForm">
-        <div class="form-group">
-            <label for="dateFrom">Data od:</label>
-            <input type="date" id="dateFrom" name="start" required>
+<div class="form-container">
+    <h2 class="top">Nowy wniosek</h2>
+
+    {% if form.non_field_errors %}
+        <div class="error-block">
+            {{ form.non_field_errors|striptags }}
         </div>
-        <div class="form-group">
-            <label for="dateTo">Data do:</label>
-            <input type="date" id="dateTo" name="end" required>
-        </div>
-        <button type="button" id="submitBtn" onclick="handleFormSubmit()">Wyślij wniosek</button>
-    </form>
+    {% endif %}
+    <div class="form">
+        <form id="leave-form" method="post" novalidate>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="btn btn-primary" type="submit">Wyślij wniosek</button>
+        </form>
+    </div>
 </div>
 
-<div id="customModal" class="modal-overlay">
-    <div class="modal-content" id="modalContent">
-        <h3 id="modalTitle">Potwierdź wniosek</h3>
-        <p id="modalText"></p>
-        <div id="modalActions" class="modal-buttons">
-            <button class="btn-cancel" onclick="closeModal()">Anuluj</button>
-            <button class="btn-confirm" onclick="submitFinal()">Tak, wyślij!</button>
+<div>
+    <div id="popup-modal" class="popup-modal">
+        <div class="modal-content-box">
+            <h2 class="top">Potwierdzenie</h2>
+            <p>Czy na pewno chcesz wysłać wniosek?<br>
+                <b>{{ start_date }} - {{ end_date}}</b></p>
+
+            <p>Wnioskowane / Dostępne dni:<br>
+                <b>{{ amount_days }} / {{ available_days }} dni</b></p>
+
+            <div class="modal-actions">
+                <button class="btn btn-danger" type="button" onclick="closeModal()">Anuluj</button>
+                <button class="btn btn-success" type="button" onclick="confirmAndSubmit()">Tak, wyślij</button>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-    function closeModal() {
-        document.getElementById('customModal').style.display = 'none';
-        document.getElementById('modalTitle').style.display = 'block';
-        document.getElementById('modalActions').style.display = 'flex';
-        const closeBtn = document.getElementById('tempCloseBtn');
-        if (closeBtn) closeBtn.remove();
-    }
 
-    async function handleFormSubmit() {
-        const start = document.getElementById('dateFrom').value;
-        const end = document.getElementById('dateTo').value;
-        const errorDiv = document.getElementById('error-message');
-        const btn = document.getElementById('submitBtn');
+    <script>
+        const modal = document.getElementById('popup-modal');
+        const form = document.getElementById('leave-form');
+        const confirmedInput = document.getElementById('id_confirmed');
+        const startDateInput = document.getElementById('id_start_date');
+        const endDateInput = document.getElementById('id_end_date');
 
-        errorDiv.style.display = 'none';
+        {% if show_modal %}
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        {% endif %}
 
-        if (!start || !end) {
-            errorDiv.innerText = "Proszę uzupełnić obie daty.";
-            errorDiv.style.display = 'block';
-            return;
-        }
-
-        try {
-            btn.disabled = true;
-            btn.innerText = "Łączenie...";
-
-            const response = await fetch(`/leaves/calculate-days/?start=${start}&end=${end}`);
-            const data = await response.json();
-
-            if (!response.ok) throw new Error(data.error || "Wystąpił błąd serwera.");
-
-            document.getElementById('modalText').innerHTML =
-                `Czy na pewno chcesz urlop od <b>${start}</b> do <b>${end}</b>?<br><br>Dni robocze: <b>${data.count}</b>`;
-
-            document.getElementById('customModal').style.display = 'flex';
-
-        } catch (error) {
-            errorDiv.innerText = error.message;
-            errorDiv.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Wyślij wniosek";
-        }
-    }
-
-    function submitFinal() {
-        document.getElementById('modalTitle').style.display = 'none';
-        document.getElementById('modalActions').style.display = 'none';
-
-        const modalText = document.getElementById('modalText');
-        modalText.innerHTML = `
-            <span class="success-icon">✔</span>
-            <span style="color: #28a745; font-weight: bold; font-size: 1.2em;">
-                Wniosek wysłany pomyślnie!
-            </span>
-        `;
-
-        const content = document.getElementById('modalContent');
-        const closeBtn = document.createElement('button');
-        closeBtn.id = 'tempCloseBtn';
-        closeBtn.innerText = 'Zamknij';
-        closeBtn.className = 'btn-confirm';
-        closeBtn.style.marginTop = '20px';
-        closeBtn.style.width = '100%';
-        closeBtn.onclick = () => {
+        function resetConfirmation() {
+            if (confirmedInput) {
+                confirmedInput.value = 'false';
+            }
             closeModal();
-            location.reload();
-        };
-        content.appendChild(closeBtn);
+        }
 
+        if (startDateInput) {
+            startDateInput.addEventListener('change', resetConfirmation);
+            startDateInput.addEventListener('input', resetConfirmation);
+        }
+        if (endDateInput) {
+            endDateInput.addEventListener('change', resetConfirmation);
+            endDateInput.addEventListener('input', resetConfirmation);
+        }
 
-    }
-</script>
-</body>
-</html>
+        function confirmAndSubmit() {
+            if (confirmedInput) {
+                confirmedInput.value = 'true';
+            }
+            form.submit();
+        }
+
+        function closeModal() {
+            if (confirmedInput) {
+                confirmedInput.value = 'false';
+            }
+            modal.classList.remove('active');
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+{% endblock %}
