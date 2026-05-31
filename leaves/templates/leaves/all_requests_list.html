@@ -61,6 +61,15 @@
                 <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Zatwierdzone</option>
                 <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Odrzucone</option>
             </select>
+
+            <!-- filtry na zakres dat -->
+            <label style="margin-left:10px;">Od:</label>
+            <input type="date" name="date_from" value="{{ date_from }}" style="padding:8px; margin:0 5px;">
+
+            <label style="margin-left:10px;">Do:</label>
+            <input type="date" name="date_to" value="{{ date_to }}" style="padding:8px; margin:0 5px;">
+
+
             <button type="submit" style="padding:8px 16px;">Filtruj</button>
             <a href="{% url 'all_requests_list' %}"
                style="padding:8px 16px; background:#6c757d; color:white; text-decoration:none; border-radius:4px;">

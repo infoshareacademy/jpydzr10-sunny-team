@@ -1,0 +1,100 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+body {
+    display: flex;
+    flex-direction: column;
+}
+main {
+    flex: 1;
+}
+
+.mynavbar {
+    background: lightskyblue;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 30px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-weight: 1000;
+}
+
+.nav-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 40px;
+    width: 100%;
+    position: relative;
+}
+
+.brand-logo {
+    color: #ffdf22;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-weight: 1000;
+    font-size: 2rem;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.brand-logo i {
+    font-size: 4rem;
+    display: inline-block;
+    line-height: 1;
+    animation: sunnyMotion 20s linear infinite;
+}
+
+@keyframes sunnyMotion {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    margin-left: 60px;
+}
+
+.nav-links a {
+    color: white !important;
+    text-decoration: none !important;
+    font-size: 1.3rem;
+}
+
+.nav-links a:hover {
+    color: #ffdf22 !important;
+}
+
+.footer {
+    padding: 30px;
+    background: transparent;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border-top: 2px solid #e9ecef;
+    border-top-left-radius: 30px;
+    border-top-right-radius: 30px;
+}
+
+.btn-warning {
+    color: white !important;
+    font-weight: 1000;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.nav-container form,
+.nav-container .user-section {
+    margin-left: auto;
+}

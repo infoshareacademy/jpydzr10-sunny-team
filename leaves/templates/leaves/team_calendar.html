@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+ 
+{% block title %}Kalendarz urlopów zespołu{% endblock %}
+ 
+{% block content %}
+<style>
+    /* ── Ogólny układ strony ── */
+    .calendar-page {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 0 20px;
+        font-family: Arial, sans-serif;
+    }
+ 
+    /* ── Nagłówek z nawigacją miesiąc ← / → ── */
+    .cal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .cal-header h1 {
+        font-size: 1.8rem;
+        color: #2c3e50;
+        margin: 0;
+    }
+    .nav-btn {
+        background: #0d6efd;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 18px;
+        font-size: 1rem;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .nav-btn:hover { background: #0b5ed7; color: white; }
+ 
+    /* ── Legenda kolorów ── */
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+    }
+    .legend-dot {
+        width: 14px; height: 14px;
+        border-radius: 50%;
+    }
+ 
+    /* ── Tabela kalendarza ── */
+    .cal-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;   /* każda kolumna ma tę samą szerokość */
+    }
+    .cal-table th {
+        background: #0d6efd;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+    }
+    .cal-table td {
+        border: 1px solid #dee2e6;
+        vertical-align: top;
+        padding: 6px;
+        height: 110px;          /* stała wysokość komórki */
+        background: white;
+    }
+ 
+    /* ── Komórka spoza bieżącego miesiąca ── */
+    .cal-table td.empty {
+        background: #f8f9fa;
+    }
+ 
+    /* ── Numer dnia w komórce ── */
+    .day-num {
+        font-weight: bold;
+        font-size: 0.95rem;
+        color: #495057;
+        margin-bottom: 4px;
+    }
+ 
+    /* ── Wyróżnienie „dzisiaj" ── */
+    .cal-table td.today {
+        background: #fff8e1;
+        border: 2px solid #ffc107;
+    }
+    .cal-table td.today .day-num {
+        color: #e65100;
+    }
+ 
+    /* ── Chipsy z imionami pracowników ── */
+    .leave-chip {
+        display: inline-block;
+        font-size: 0.72rem;
+        padding: 2px 7px;
+        border-radius: 12px;
+        color: white;
+        margin: 1px 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+ 
+    /* 10 kolorów dla różnych pracowników */
+    .color-0  { background: #3b82f6; }
+    .color-1  { background: #ef4444; }
+    .color-2  { background: #10b981; }
+    .color-3  { background: #f59e0b; }
+    .color-4  { background: #8b5cf6; }
+    .color-5  { background: #ec4899; }
+    .color-6  { background: #06b6d4; }
+    .color-7  { background: #84cc16; }
+    .color-8  { background: #f97316; }
+    .color-9  { background: #6366f1; }
+ 
+    /* ── Panel z listą pracowników po prawej ── */
+    .page-layout {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+    }
+    .cal-wrapper { flex: 1; }
+    .sidebar {
+        width: 200px;
+        flex-shrink: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    }
+    .sidebar h3 {
+        font-size: 1rem;
+        color: #2c3e50;
+        margin: 0 0 12px 0;
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 8px;
+    }
+    .sidebar ul {
+        list-style: none;
+        padding: 0; margin: 0;
+    }
+    .sidebar li {
+        font-size: 0.82rem;
+        padding: 4px 0;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+    .sidebar-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+</style>
+ 
+<div class="calendar-page">
+ 
+    {# ── Nagłówek strony ── #}
+    <div class="cal-header">
+        {# Link do POPRZEDNIEGO miesiąca #}
+        <a class="nav-btn"
+           href="?year={{ prev_year }}&month={{ prev_month }}">&#8592; Poprzedni</a>
+ 
+        <h1>
+            Kalendarz urlopów — {{ month_name }} {{ year }}
+            {% if team_name %}
+                <small style="font-size:1rem; color:#6c757d;">({{ team_name }})</small>
+            {% endif %}
+        </h1>
+ 
+        {# Link do NASTĘPNEGO miesiąca #}
+        <a class="nav-btn"
+           href="?year={{ next_year }}&month={{ next_month }}">Następny &#8594;</a>
+    </div>
+ 
+    <div class="page-layout">
+ 
+        {# ── Lewa część: tabela kalendarza ── #}
+        <div class="cal-wrapper">
+ 
+            {# Legenda — każdy pracownik innym kolorem #}
+            <div class="legend">
+                {% for member in team_members %}
+                    <div class="legend-item">
+                        <div class="legend-dot color-{{ forloop.counter0|stringformat:"d"|slice:"-1:" }}"></div>
+                        <span>{{ member.name }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+ 
+            {# Tabela z dniami #}
+            <table class="cal-table">
+                <thead>
+                    <tr>
+                        <th>Pon</th>
+                        <th>Wt</th>
+                        <th>Śr</th>
+                        <th>Czw</th>
+                        <th>Pt</th>
+                        <th style="background:#6c757d;">Sob</th>
+                        <th style="background:#6c757d;">Nd</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in weeks %}
+                    <tr>
+                        {% for cell in week %}
+                            {% if cell.day == 0 %}
+                                {# Pusta komórka — dzień spoza miesiąca #}
+                                <td class="empty"></td>
+                            {% else %}
+                                <td class="{% if cell.is_today %}today{% endif %}">
+ 
+                                    {# Numer dnia #}
+                                    <div class="day-num">{{ cell.day }}</div>
+ 
+                                    {# Chipsy pracowników na urlopie tego dnia #}
+                                    {% for name in cell.leaves %}
+                                        {# Szukamy indeksu pracownika w team_members, żeby dobrać kolor #}
+                                        {% for member in team_members %}
+                                            {% if member.name == name %}
+                                                <span class="leave-chip color-{{ forloop.counter0|stringformat:"d"|slice:"-1:" }}"
+                                                      title="{{ name }}">
+                                                    {{ name }}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+ 
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+ 
+        </div>{# koniec .cal-wrapper #}
+ 
+        {# ── Prawa część: lista pracowników ── #}
+        <div class="sidebar">
+            <h3>Zespół</h3>
+            <ul>
+                {% for member in team_members %}
+                <li>
+                    <div class="sidebar-dot color-{{ forloop.counter0|stringformat:"d"|slice:"-1:" }}"></div>
+                    {{ member.name }}
+                </li>
+                {% empty %}
+                <li>Brak pracowników</li>
+                {% endfor %}
+            </ul>
+        </div>
+ 
+    </div>{# koniec .page-layout #}
+ 
+</div>
+ 
+{% endblock %}
+ 
