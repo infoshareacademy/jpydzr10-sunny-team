@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from datetime import date
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_POST
-from django.views.generic import  CreateView
+from django.views.generic import  CreateView, UpdateView
 from leave_requests.display_vacations import vacations
 from database.leave_requests_db import load_leave_requests, save_leave_requests
 from django.http import JsonResponse
@@ -234,17 +234,71 @@ class LeaveRequestView(LoginRequiredMixin, CreateView):
 
         return context
 
-@login_required
-def calculate_days_api(request):
-    try:
-        count = count_leave_days_service(
-            request.GET.get('start'),
-            request.GET.get('end')
-        )
-        return JsonResponse({'count': count})
-    except ValueError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
+    model = LeaveRequest
+    form_class = LeaveRequestForm
+    template_name = 'leaves/edit_request.html'
+    success_url = reverse_lazy('my_vacations')
 
+    def dispatch(self, request, *args, **kwargs):
+        if not Permission.verifyPermission(request.user.role, 'can_change_request'):
+            return redirect('dashboard')
+
+        obj = self.get_object()
+
+        if obj.status != LeaveRequest.Status.PENDING:
+            messages.error(request, "Można edytować tylko wnioski oczekujące.")
+            return redirect('my_vacations')
+
+        if request.user.role == 'Worker' and obj.employee != request.user:
+            messages.error(request, "Możesz edytować tylko własne wnioski.")
+            return redirect('my_vacations')
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        is_confirmed = form.cleaned_data.get('confirmed') == 'true'
+        if not is_confirmed:
+            context = self.get_context_data(form=form, show_modal=True)
+            return self.render_to_response(context)
+
+        obj = form.save(commit=False)
+        obj.amount_days = form.cleaned_data['amount_days']
+        obj.save()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        from leaves.models import WorkerProfile
+        context = super().get_context_data(**kwargs)
+        form = context['form']
+
+        pk = self.kwargs['pk']
+        leave_request = LeaveRequest.objects.get(pk=pk)
+
+        context['existing_start'] = leave_request.start_date.strftime('%d.%m.%Y')
+        context['existing_end'] = leave_request.end_date.strftime('%d.%m.%Y')
+
+        try:
+            profile = WorkerProfile.objects.get(user=self.request.user)
+            context['available_days'] = profile.get_leave_days()
+        except WorkerProfile.DoesNotExist:
+            context['available_days'] = None
+
+        if form.is_bound and form.is_valid():
+            context['amount_days'] = form.cleaned_data.get('amount_days')
+            context['start_date'] = form.cleaned_data.get('start_date').strftime('%d.%m.%Y')
+            context['end_date'] = form.cleaned_data.get('end_date').strftime('%d.%m.%Y')
+        else:
+            context['amount_days'] = None
+            context['start_date'] = None
+            context['end_date'] = None
+
+        return context
 
 @login_required
 def log_history(request):

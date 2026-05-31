@@ -4,8 +4,6 @@ from datetime import date
 from .utils import Calendar_utils
 from .models import LeaveRequest
 
-
-
 class LeaveRequestForm(forms.ModelForm):
     confirmed = forms.CharField(widget=forms.HiddenInput(), required=False)
 
@@ -36,6 +34,12 @@ class LeaveRequestForm(forms.ModelForm):
         except WorkerProfile.DoesNotExist:
             raise ValidationError("Nie znaleziono profilu pracownika.")
 
+        if self.instance and self.instance.pk:
+            if start_date == self.instance.start_date and end_date == self.instance.end_date:
+                raise ValidationError(
+                    "Nie wprowadzono żadnych zmian."
+                )
+
         today = date.today()
         if start_date < today or end_date < today:
             raise ValidationError("Nie można wybrać daty z przeszłości.")
@@ -60,6 +64,9 @@ class LeaveRequestForm(forms.ModelForm):
             start_date__lte=end_date,
             end_date__gte=start_date,
         )
+
+        if self.instance and self.instance.pk:
+            overlapping = overlapping.exclude(pk=self.instance.pk)
 
         if overlapping.exists():
             conflict = overlapping.first()

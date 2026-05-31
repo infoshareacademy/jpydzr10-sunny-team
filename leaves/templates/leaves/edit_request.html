@@ -1,0 +1,17 @@
+{% extends 'request_base.html' %}
+
+{% block title %}Edycja wniosku{% endblock %}
+{% block form_title %}Edytuj wniosek{% endblock %}
+{% block top %}Edytuj wniosek{% endblock %}
+
+
+{% block form_action %}{% url 'leave_request_edit' form.instance.id %}{% endblock %}
+
+{% block button %}Edytuj wniosek{% endblock %}
+
+{% block description %}
+<p>Aktualny zakres dat:<br>
+    <b>{{ existing_start }} - {{ existing_end }}</b></p>
+{% endblock %}
+
+{% block approve %}edytować{% endblock %}
