@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from datetime import date
+from datetime import date, datetime
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_POST
 from django.views.generic import  CreateView, UpdateView
@@ -56,37 +57,34 @@ def dashboard(request):
 def all_requests_list(request):
 
     status_filter = request.GET.get('status', '').lower()
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
 
-    # Ładujemy wnioski z bazy (tak jak w startup_app.py)
-    leave_requests = load_leave_requests()
+    # pobieram wnioski z bazy zamiast load_leave_requests()
+    qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
 
-    all_vacations = []
+    if status_filter and status_filter in LeaveRequest.Status.values:
+        qs = qs.filter(status=status_filter)
 
-    for req_id, req in leave_requests.items():
-        days = (req.end_date - req.start_date).days + 1
+    if date_from_str:
+        try:
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+            qs = qs.filter(start_date__gte=date_from)
+        except ValueError:
+            pass
 
-        vacation = {
-            'id': req_id,
-            'employee_id': req.employee_id,
-            'first_name': req.first_name,
-            'last_name': req.last_name,
-            'start_date': req.start_date,
-            'end_date': req.end_date,
-            'days': days,
-            'status': req.status.value if hasattr(req.status, 'value') else req.status,
-            'who_confirmed': req.who_confirmed,
-            'created_at': getattr(req, 'created_at', None) # Narazie nie pobiera nic bo pobiera dane z pliku csv, który
-                                                           # nie zapisuje nawet takiej informacji
-        }
-        all_vacations.append(vacation)
-
-    # Filtr statusu
-    if status_filter:
-        all_vacations = [v for v in all_vacations if v['status'].lower() == status_filter]
+    if date_to_str:
+        try:
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+            qs = qs.filter(end_date__lte=date_to)
+        except ValueError:
+            pass
 
     context = {
-        'all_vacations': all_vacations,
+        'all_vacations': qs,
         'status_filter': status_filter,
+        'date_from': date_from_str,
+        'date_to': date_to_str,
     }
 
     return render(request, 'leaves/all_requests_list.html', context)
@@ -420,6 +418,8 @@ def log_history(request):
     }
 
     return render(request, 'leaves/log_history.html', context)
+
+
 @login_required
 def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
@@ -466,6 +466,34 @@ def export_requests_csv(request):
 
     from leaves.models import LeaveRequest
 
+    # filtry z adresu URL
+    status_filter = request.GET.get('status', '')
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+
+    # punkt wyjścia - wszystkie wnioski
+    qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+
+    # filtruję po statusie
+    if status_filter and status_filter in LeaveRequest.Status.values:
+        qs = qs.filter(status=status_filter)
+
+    # filtruję po datach
+    if date_from_str:
+        try:
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+            qs = qs.filter(start_date__gte=date_from)
+        except ValueError:
+            pass  # zignoruj jeśli data jest nieprawidłowa
+
+    if date_to_str:
+        try:
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+            qs = qs.filter(end_date__lte=date_to)
+        except ValueError:
+            pass    # zignoruj jeśli data jest nieprawidłowa
+
+
     # odpowiedź HTTP jako plik CSV
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="wnioski_urlopowe.csv"'
@@ -474,8 +502,8 @@ def export_requests_csv(request):
 
     # nagłówki kolumn
     writer.writerow([
-        'ID', 'Pracownik', 'Data od', 'Data do',
-        'Dni', 'Status', 'Potwierdził', 'Data złożenia'
+        'ID', 'Imię', 'Nazwisko', 'Data od', 'Data do',
+        'Liczba dni', 'Status', 'Potwierdził', 'Data złożenia'
     ])
 
     # dane z bazy
@@ -483,12 +511,13 @@ def export_requests_csv(request):
     for req in requests:
         writer.writerow([
             req.id,
-            f"{req.employee.first_name} {req.employee.last_name}",
+            {req.employee.first_name},
+            {req.employee.last_name},
             req.start_date,
             req.end_date,
             req.amount_days,
             req.get_status_display(),
-            f"{req.who_confirmed.first_name} {req.who_confirmed.last_name}" if req.who_confirmed else '',
+            f"{req.who_confirmed.last_name} {req.who_confirmed.first_name}" if req.who_confirmed else '',
             req.created_at.strftime('%Y-%m-%d %H:%M'),
         ])
 
