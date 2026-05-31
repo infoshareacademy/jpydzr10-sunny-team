@@ -4,7 +4,6 @@
 
 {% block content %}
 
-<!--- Przerzucić style potem do pliku CSS -->
 <style>
     .section {
         margin-bottom: 50px;
@@ -41,14 +40,12 @@
         min-width: 110px;
         text-align: center;
     }
-
 </style>
 
-<div class="container margin-top: 4">
+<div class="container mt-4">
 
-    <h1 class="margin-bottom: 4">Moje Urlopy</h1>
+    <h1 class="mb-4">Moje Urlopy</h1>
 
-    <!-- Sekcja 1: Aktualne -->
     <div class="section">
         <h3>Aktualne (trwające)</h3>
         {% if current_vacations %}
@@ -68,13 +65,13 @@
                     <td>{{ req.end_date }}</td>
                     <td>{{ req.days }}</td>
                     <td>
-                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                        {% if req.status == 'approved' %}
                             <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
                         {% elif req.status == 'pending' %}
                             <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
                         {% elif req.status == 'rejected' %}
                             <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
-                        {% elif req.status == 'cancelled' %}
+                        {% elif req.status == 'canceled' or req.status == 'cancelled' %}
                             <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
                         {% else %}
                             <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
@@ -89,7 +86,6 @@
         {% endif %}
     </div>
 
-    <!-- Sekcja 2: Planowane -->
     <div class="section">
         <h3>Planowane</h3>
         {% if planned_vacations %}
@@ -100,6 +96,7 @@
                     <th>Data zakończenia</th>
                     <th>Liczba dni</th>
                     <th>Status</th>
+                    <th>Akcje</th>
                 </tr>
             </thead>
             <tbody>
@@ -109,16 +106,32 @@
                     <td>{{ req.end_date }}</td>
                     <td>{{ req.days }}</td>
                     <td>
-                        {% if req.status == 'accepted' or req.status == 'approved' %}
+                        {% if req.status == 'approved' %}
                             <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
                         {% elif req.status == 'pending' %}
                             <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
-                        {% elif req.status == 'rejected' %}
-                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
-                        {% elif req.status == 'cancelled' %}
+                        {% elif req.status == 'canceled' or req.status == 'cancelled' %}
                             <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
                         {% else %}
                             <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if req.status == 'pending' %}
+                            <a href="{% url 'leave_request_edit' req.pk %}"
+                               class="btn btn-primary">Edytuj</a>
+
+                            <form method="post"
+                                  action="{% url 'leave_request_cancel' req.pk %}"
+                                  style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger"
+                                        onclick="return confirm('Czy na pewno chcesz anulować?')">
+                                    Anuluj
+                                </button>
+                            </form>
+                        {% else %}
+
                         {% endif %}
                     </td>
                 </tr>
@@ -130,7 +143,6 @@
         {% endif %}
     </div>
 
-    <!-- Sekcja 3: Archiwalne -->
     <div class="section">
         <h3>Archiwalne</h3>
         {% if archival_vacations %}
@@ -154,7 +166,7 @@
                             <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
                         {% elif req.status == 'rejected' %}
                             <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
-                        {% elif req.status == 'cancelled' %}
+                        {% elif req.status == 'canceled' or req.status == 'cancelled' %}
                             <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
                         {% else %}
                             <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>

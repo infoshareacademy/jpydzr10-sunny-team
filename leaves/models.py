@@ -2,8 +2,7 @@ from django.db import models
 from django.conf import settings
 from datetime import date
 from dateutil.relativedelta import relativedelta
-from .model_leave_request import LeaveRequest
-from .services import count_leave_days_service
+
 
 
 class WorkerProfile(models.Model):
@@ -134,18 +133,6 @@ class LeaveRequest(models.Model):
         if self.status != self.Status.PENDING:
             raise ValueError("Wniosek musi być oczekujący.")
 
-    def clean(self):
-        if not self.start_date or not self.end_date:
-            return
-        try:
-            calculated_days = count_leave_days_service(
-                self.start_date.strftime('%Y-%m-%d'),
-                self.end_date.strftime('%Y-%m-%d')
-            )
-            self.amount_days = calculated_days
-
-        except ValueError as e:
-            raise e
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -40,6 +40,7 @@ class Permission:
             "can_see_user_vacations": True,
             "can_deactivate_staff":   True,
             "can_deactivate_worker":  True,
+            "can_view_user_list":     True,
         },
         "Manager": {
             "can_approve_request":    True,
@@ -55,6 +56,7 @@ class Permission:
             "can_see_user_vacations": True,
             "can_deactivate_staff":   False,
             "can_deactivate_worker":  True,
+            "can_view_user_list":     False,
         },
         "HR": {
             "can_approve_request":    False,
@@ -70,6 +72,7 @@ class Permission:
             "can_see_user_vacations": True,
             "can_deactivate_staff":   False,
             "can_deactivate_worker":  True,
+            "can_view_user_list":     True,
         },
         "Worker": {
             "can_approve_request":    False,
@@ -85,6 +88,7 @@ class Permission:
             "can_see_user_vacations": False,
             "can_deactivate_staff":   False,
             "can_deactivate_worker":  False,
+            "can_view_user_list":     False,
         },
     }
 
