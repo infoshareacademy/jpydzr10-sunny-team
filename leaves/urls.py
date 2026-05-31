@@ -14,6 +14,8 @@ urlpatterns = [
     path('team-calendar/', views.team_calendar, name='team_calendar'),
     path('edit-request/<int:pk>/', views.LeaveRequestUpdateView.as_view(), name='leave_request_edit'),
     path('cancel-request/<int:pk>/', views.CancelLeaveView.as_view(), name='leave_request_cancel'),
+    path("add-user/", views.add_user, name="add_user"),
+    path("reset-password/", views.reset_password, name="reset_password"),
 
 
 ]

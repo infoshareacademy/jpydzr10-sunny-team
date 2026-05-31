@@ -1,3 +1,14 @@
+import csv
+from datetime import date
+
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
+
+from accounts.forms import AddUserForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from leave_requests.display_vacations import vacations
@@ -9,7 +20,13 @@ from django.views.generic import  CreateView, UpdateView
 from database.leave_requests_db import load_leave_requests, save_leave_requests
 from django.contrib import messages
 from accounts.permission import Permission
+from database.leave_requests_db import load_leave_requests, save_leave_requests
+from leave_requests.display_vacations import vacations
+from leaves.models import LeaveRequest, WorkerProfile
 from logs.models import ChangeLog
+from logs_old.log_history import app_log
+
+from .services import count_leave_days_service
 from leaves.models import LeaveRequest
 import csv
 from django.http import HttpResponse
@@ -273,7 +290,7 @@ class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
     """
     model = LeaveRequest
     form_class = LeaveRequestForm
-    template_name = 'leaves/edit_request.html'
+    template_name = 'leaves/edit_request.html'requests
     success_url = reverse_lazy('my_vacations')
 
     def dispatch(self, request, *args, **kwargs):
@@ -525,6 +542,81 @@ def export_requests_csv(request):
 
     return response
 
+@login_required
+def add_user(request):
+    user_role = getattr(request.user, 'role', None)
+    if not user_role:
+        user_role = "Admin"  # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
+
+    if user_role not in ['Admin', 'HR']:
+        messages.error(request, 'Nie masz uprawnień do dodawania użytkowników')
+        return redirect('all_requests_list')
+
+    if request.method == 'POST':
+        form = AddUserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Logowanie akcji
+            app_log.add_new_change(
+                user_id=request.user.id,
+                action='dodaj',
+                object_type='user',
+            )
+            messages.success(request, f'Użytkownik {user.username} został pomyślnie dodany.')
+            return redirect('all_requests_list')
+    else:
+        form = AddUserForm()
+
+    return render(request, 'leaves/add_user.html', {'form': form})
+
+@login_required
+def reset_password(request):
+    user_role = getattr(request.user, 'role', None)
+    if not user_role:
+        user_role = "Admin"  # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
+
+    if user_role not in ['Admin', 'HR']:
+        messages.error(request, "Nie masz uprawnień do resetowania haseł.")
+        return redirect('all_requests_list')
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        new_password = request.POST.get('new_password')
+
+        if not user_id or not new_password:
+            messages.error(request, "Brak ID użytkownika lub hasła.")
+            return redirect('reset_password')
+
+        try:
+            User = get_user_model()
+            user = User.objects.get(id=user_id)
+
+            if len(new_password) < 6:
+                messages.error(request, 'Hasło musi mieć conajmniej 6 znaków.')
+                return redirect('reset_password')
+
+            user.set_password(new_password)
+            user.save()
+
+            # Logowanie akcji
+            app_log.add_new_change(
+            user_id=request.user.id,
+            action='reset_hasla',
+            object_type='user'
+            )
+
+            messages.success(request, f'Hasło dla użytkownika {user.username} zostało zresetowane.')
+            return redirect('all_requests_list')
+
+        except User.DoesNotExist:
+            messages.error(request, 'Nie znaleziono użytkownika.')
+        except Exception as e:
+            messages.error(request, f'Błąd podczas resetowania hasła: {e}')
+
+    User = get_user_model()
+    users = User.objects.all()
+
+    return render(request, 'leaves/reset_password.html', {'users': users})
 
 @login_required
 def team_calendar(request):
