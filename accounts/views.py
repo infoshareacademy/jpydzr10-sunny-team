@@ -2,8 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import User
-from .permission import Permission
-from permission import role_required
+from .permission import Permission, role_required
+
 
 
 @login_required
