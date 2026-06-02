@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import User
 from .permission import Permission
-from permission import role_required
+from accounts.permission import role_required
 
 
 @login_required
@@ -15,6 +16,7 @@ def deactivate_user(request, pk):
         required_action = 'can_deactivate_worker'
 
     if not Permission.verifyPermission(request.user.role, required_action):
+        messages.error(request, 'Nie masz uprawnień do dezaktywacji tego konta')
         return redirect('dashboard')
 
     if request.method == 'POST':
