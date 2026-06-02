@@ -8,7 +8,7 @@ from database.workers_db import load_workers, save_workers
 
 
 def require_admin(current_user):
-    if not current_user or current_user.role != "Admin" or current_user.is_active != True:
+    if not current_user or current_user.role != "Admin" or not current_user.is_active:
         raise PermissionError("Tylko admin może wykonać tę operację")
 
 

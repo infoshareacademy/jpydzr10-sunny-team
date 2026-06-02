@@ -31,7 +31,7 @@ def load_users():
 
             for row in reader:
                 if len(row) < 5:
-                    print(f'Pominięto niekompletny wiersz')
+                    print('Pominięto niekompletny wiersz')
                     continue
 
                 try:
