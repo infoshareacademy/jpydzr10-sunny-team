@@ -1,0 +1,12 @@
+% extends 'base.html' %}
+
+{% block title %}403 - Brak dostępu{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 100px;">
+    <h1 style="font-size: 120px; color: #ffc107; margin: 0;">403</h1>
+    <h2>Brak dostępu</h2>
+    <p>Nie masz uprawnień do przeglądania tej strony.</p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">Wróć na Dashboard</a>
+</div>
+{% endblock %}
