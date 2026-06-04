@@ -26,6 +26,7 @@
             </ul>
 
             <div class="user-section">
+                Witaj {{ user.first_name }} {{ user.last_name }} ({{ user.role }}) !
                         <form action="{% url 'logout' %}" method="post" class="d-inline">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-warning">
