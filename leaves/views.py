@@ -56,6 +56,7 @@ def dashboard(request):
         progress_percent = 0
 
     my_requests = LeaveRequest.objects.filter(employee=request.user)
+    recent_requests = LeaveRequest.objects.select_related('employee').order_by('-created_at')[:5]
     active_count = my_requests.exclude(status=LeaveRequest.Status.CANCELED).count()
     pending_count = my_requests.filter(status=LeaveRequest.Status.PENDING).count()
 
@@ -67,6 +68,7 @@ def dashboard(request):
         'progress_percent': progress_percent,
         'active_count': active_count,
         'pending_count': pending_count,
+        'recent_requests': recent_requests,
     }
 
     return render(request, 'leaves/dashboard.html', context)
