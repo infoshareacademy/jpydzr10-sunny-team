@@ -1,0 +1,42 @@
+  name: "Python flow"
+  on:
+    pull_request:
+      branches:
+        - develop
+  jobs:
+    build:
+      runs-on: "ubuntu-latest"
+      strategy:
+        matrix:
+          python-version: ["3.13"]
+      services:
+        mysql:
+          image: mysql:8.0
+          env:
+            MYSQL_DATABASE: calendar_db
+            MYSQL_ROOT_PASSWORD: 12345678
+          options: >-
+            --health-cmd mysqladmin ping
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 5
+          ports:
+            - 3306:3306
+      steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v5
+          with:
+            python-version: ${{ matrix.python-version }}
+
+        - name: Display Python version
+          run: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+
+        - name: Django migrate
+          run: |
+              python manage.py migrate
+        - name: Django test
+          run: | 
+              python manage.py test
