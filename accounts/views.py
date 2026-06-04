@@ -33,4 +33,20 @@ def user_list(request):
     users = User.objects.all()
     return render(request, 'accounts/user_list.html', {'users': users})
 
+@login_required
+def switch_role(request):
+    ALLOWED_ROLES = {
+        'Manager': ['Manager', 'Worker'],
+        'HR': ['HR', 'Worker'],
+        'Admin': ['Admin'],
+        'Worker': ['Worker'],
+    }
+    new_role = request.POST.get("role")
+    if new_role in ALLOWED_ROLES.get(request.user.role, []):
+        request.session['active_role'] = new_role
+        messages.success(request,"Rola została zmieniona poprawnie!")
+        return redirect('dashboard')
+    else:
+        messages.error(request, 'Nie masz uprawnień do tej roli')
+        return redirect('dashboard')
 
