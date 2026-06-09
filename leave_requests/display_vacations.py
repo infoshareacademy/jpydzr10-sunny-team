@@ -1,5 +1,4 @@
 from datetime import date
-from leave_requests.leave_request import LeaveRequest, LeaveStatus
 
 """Tymczasowa lista na potrzeby testów. Po utworzeniu akceptacji wniosków 
     i połączeniu pobierania danych z bazy danych lub pliku csv, poniższą liste trzeba zastąpić."""

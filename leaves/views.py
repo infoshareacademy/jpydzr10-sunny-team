@@ -26,7 +26,7 @@ from leaves.models import LeaveRequest, WorkerProfile
 from logs.models import ChangeLog
 from logs_old.log_history import app_log
 
-from .services import count_leave_days_service
+# from .services import count_leave_days_service
 from leaves.models import LeaveRequest
 import csv
 from django.http import HttpResponse
@@ -40,7 +40,6 @@ from django.views.generic import View
 
 @login_required
 def dashboard(request):
-    from leaves.models import WorkerProfile
 
     try:
         profile = WorkerProfile.objects.get(user=request.user)
@@ -290,7 +289,7 @@ class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
     """
     model = LeaveRequest
     form_class = LeaveRequestForm
-    template_name = 'leaves/edit_request.html'requests
+    template_name = 'leaves/edit_request.html'
     success_url = reverse_lazy('my_vacations')
 
     def dispatch(self, request, *args, **kwargs):
@@ -445,7 +444,6 @@ def team_leave_balance(request):
     if request.user.role not in ['Manager', 'HR']:
         return render(request, 'leaves/access_denied.html')
 
-    from leaves.models import WorkerProfile
 
     # Pobierz team managera/HR z jego własnego profilu
     try:
