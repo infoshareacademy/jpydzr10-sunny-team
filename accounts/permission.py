@@ -110,7 +110,8 @@ def role_required(action):
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
-            if not Permission.verifyPermission(request.user.role, action):
+            active_role = request.session.get('active_role', request.user.role)
+            if not Permission.verifyPermission(active_role, action):
                 return redirect('dashboard')
             return view_func(request, *args, **kwargs)
         return wrapper
@@ -126,7 +127,8 @@ class RoleRequiredMixin(LoginRequiredMixin):
     required_action = None
 
     def dispatch(self, request, *args, **kwargs):
-        if not Permission.verifyPermission(request.user.role, self.required_action):
+        active_role = request.session.get('active_role', request.user.role)
+        if not Permission.verifyPermission(active_role, self.required_action):
             return redirect('dashboard')
         return super().dispatch(request, *args, **kwargs)
 

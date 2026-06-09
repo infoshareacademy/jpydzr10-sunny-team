@@ -109,24 +109,34 @@
             <p>dni urlopu</p>
         </div>
     </div>
-
+    {% if active_role == 'Manager' or active_role == 'HR' %}
+<div class="section">
+    <h2>Zarządzanie zespołem</h2>
+    <a href="{% url 'all_requests_list' %}" class="btn btn-primary">Zobacz wnioski zespołu</a>
+    <a href="{% url 'team_leave_balance' %}" class="btn btn-secondary">Bilans urlopów zespołu</a>
+</div>
+{% else %}
+<div class="section">
+    <h2>Moje wnioski</h2>
+    <a href="{% url 'my_vacations' %}" class="btn btn-primary">Zobacz moje urlopy</a>
+    <a href="{% url 'new_request' %}" class="btn btn-success">Złóż nowy wniosek</a>
+</div>
+{% endif %}
     <!-- Ostatnie akcje -->
     <div class="section last-actions">
         <h2>Ostatnie akcje</h2>
-
+        {% for req in recent_requests %}
         <div class="action-item">
-            <strong>Anna Nowak</strong> — Urlop wypoczynkowy (10.05 - 16.05.2026)
-            <span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #28a745; color: white;">Zatwierdzono</span>
+            <strong>{{ req.employee.first_name }} {{ req.employee.last_name }}</strong>
+            — {{ req.start_date|date:"d.m.Y" }} - {{ req.end_date|date:"d.m.Y" }}
+            <span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #6c757d; color: white;">
+                {{ req.get_status_display }}
+            </span>
         </div>
+        {% empty %}
+        <p>Brak ostatnich akcji.</p>
+        {% endfor %}
 
-        <div class="action-item">
-            <strong>Jan Kowalski</strong> — Złożono wniosek urlopowy na żądanie
-            <span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #ffc107; color: white;">Oczekuje</span>
-        </div>
-
-        <div class="action-item">
-            <strong>Piotr Wiśniewski</strong> — Wniosek urlopowy odrzucony
-            <span style="padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; background: #dc3545; color: white;">Odrzucono</span>
         </div>
     </div>
 

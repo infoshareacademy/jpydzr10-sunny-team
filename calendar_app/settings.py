@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'logs',
     'admin_panel',
     'login'
+
 ]
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -72,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.active_role',
             ],
         },
     },
