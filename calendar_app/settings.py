@@ -88,8 +88,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'calendar_db',
         'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
+        'PASSWORD': '12345678',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
         #'OPTIONS': {
             #'unix_socket': '/tmp/mysql.sock',
