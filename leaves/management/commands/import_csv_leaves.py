@@ -1,7 +1,7 @@
 import csv
 import os
 from django.core.management.base import BaseCommand
-from leaves.model_leave_request import LeaveRequest
+from leaves.models import LeaveRequest
 from accounts.models import User
 
 class Command(BaseCommand):
