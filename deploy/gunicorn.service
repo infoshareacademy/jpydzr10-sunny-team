@@ -1,0 +1,15 @@
+[Unit]
+Description=Gunicorn daemon dla SunnyTeamProject
+After=network.target
+
+[Service]
+User=Username
+Group=www-data
+WorkingDirectory=/path_to_project/jpydzr10-sunny-team
+ExecStart=/path_to_project/jpydzr10-sunny-team/.venv/bin/gunicorn \
+          --workers 3 \
+          --bind 127.0.0.1:8000 \
+          calendar_app.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
