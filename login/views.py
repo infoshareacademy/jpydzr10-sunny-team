@@ -27,3 +27,9 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+def home(request):
+    if request.user.is_authenticated:
+        # return redirect('dashboard')
+        pass
+    return redirect('login')

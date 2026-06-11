@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from login import views as log_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,5 +24,6 @@ urlpatterns = [
     path('leaves/', include('leaves.urls')),
     path('admin_panel/',include('admin_panel.urls')),
     path('logs/',include('logs.urls')),
-    path('login/',include('login.urls'))
+    path('login/',include('login.urls')),
+    path('', log_views.home, name='home'),
 ]
