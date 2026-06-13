@@ -106,11 +106,10 @@
             <tbody>
                 {% for req in all_vacations %}
                 <tr>
-                    <td><strong>{{ req.first_name }} {{ req.last_name }}</strong><br>
-                        <small>ID: {{ req.employee_id }}</small>
+                    <td><strong>{{ req.employee.first_name }} {{ req.employee.last_name }}</strong></td>
                     <td>{{ req.start_date }}</td>
                     <td>{{ req.end_date }}</td>
-                    <td><strong>{{ req.days }}</strong></td>
+                    <td><strong>{{ req.amount_days }}</strong></td>
                     <td>
                         {% if req.status == 'Approved' %}
                             <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
