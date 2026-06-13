@@ -708,6 +708,13 @@ def team_calendar(request):
         end_date__gte=first_day,  # kończy się po początku miesiąca
     ).select_related('employee')
 
+    pending_leaves = LeaveRequest.objects.filter(
+        employee__id__in=team_user_ids,
+        status=LeaveRequest.Status.PENDING,
+        start_date__lte=last_day,
+        end_date__gte=first_day,
+    ).select_related('employee')
+
     # słownik urlopowiczów z danego mc-a
     leave_map = {}
 
@@ -727,6 +734,24 @@ def team_calendar(request):
 
             current += timedelta(days=1)
 
+    pending_map = {}
+
+    for leave in pending_leaves:
+        current = max(leave.start_date, first_day)
+        end = min(leave.end_date, last_day)
+
+        while current <= end:
+            day_num = current.day
+
+            if day_num not in pending_map:
+                pending_map[day_num] = []
+
+            name = f"{leave.employee.last_name} {leave.employee.first_name}"
+            if name not in pending_map[day_num]:
+                pending_map[day_num].append(name)
+
+            current += timedelta(days=1)
+
     # miesięczny widok kalendarze
     # monthcalendar(rok, miesiąc) zwraca listę tygodni,
     # każdy tydzień to lista 7 liczb (0 = ten dzień należy do innego miesiąca)
@@ -740,11 +765,12 @@ def team_calendar(request):
         for day_num in week:
             if day_num == 0:
                 # dzień spoza miesiąca — pusta komórka
-                week_row.append({'day': 0, 'leaves': [], 'is_today': False})
+                week_row.append({'day': 0, 'leaves': [], 'pending': [], 'is_today': False})
             else:
                 week_row.append({
                     'day': day_num,
                     'leaves': leave_map.get(day_num, []),  # [] jeśli brak urlopów
+                    'pending': pending_map.get(day_num, []),
                     'is_today': date(year, month, day_num) == today,
                 })
         weeks.append(week_row)
