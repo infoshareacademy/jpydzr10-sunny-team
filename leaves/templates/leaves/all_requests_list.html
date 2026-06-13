@@ -89,85 +89,64 @@
         </form>
     </div>
 
+{% if is_hr %}
+    <div class="section">
+        <h2>Zespół A</h2>
+        <table>
+            <thead><tr><th>Pracownik</th><th>Data rozpoczęcia</th><th>Data zakończenia</th><th>Liczba dni</th><th>Status</th><th>Kto zatwierdził</th><th>Data wniosku</th><th>Akcje</th></tr></thead>
+            <tbody>
+                {% for req in qs_a %}
+                <tr>
+                    <td><strong>{{ req.employee.first_name }} {{ req.employee.last_name }}</strong><br><small>Zespół: {{ req.employee.worker_profile.team }}</small></td>
+                    <td>{{ req.start_date }}</td><td>{{ req.end_date }}</td><td><strong>{{ req.amount_days }}</strong></td>
+                    <td>{% if req.status == 'approved' %}<span class="status-badge" style="background:#28a745;color:white;">Zatwierdzony</span>{% elif req.status == 'pending' %}<span class="status-badge" style="background:#ffc107;color:#212529;">Oczekujący</span>{% elif req.status == 'rejected' %}<span class="status-badge" style="background:#dc3545;color:white;">Odrzucony</span>{% else %}<span class="status-badge" style="background:#6c757d;color:white;">{{ req.status|title }}</span>{% endif %}</td>
+                    <td>{{ req.who_confirmed|default:"—" }}</td><td>{{ req.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+                    <td class="actions">{% if req.status == 'pending' %}<form method="post" action="{% url 'approve_request' req.id %}" style="display:inline;" class="action-form">{% csrf_token %}<button type="button" onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ZATWIERDZIĆ</strong> ten wniosek?')" style="background:#28a745;color:white;border:none;padding:6px 12px;border-radius:4px;">Zatwierdź</button></form><form method="post" action="{% url 'reject_request' req.id %}" style="display:inline;" class="action-form">{% csrf_token %}<button type="button" onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ODRZUCIĆ</strong> ten wniosek?')" style="background:#dc3545;color:white;border:none;padding:6px 12px;border-radius:4px;">Odrzuć</button></form>{% else %}<span style="color:#28a745;">Przetworzony</span>{% endif %}</td>
+                </tr>
+                {% empty %}<tr><td colspan="8" style="text-align:center;padding:30px;">Brak wniosków.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="section">
+        <h2>Zespół B</h2>
+        <table>
+            <thead><tr><th>Pracownik</th><th>Data rozpoczęcia</th><th>Data zakończenia</th><th>Liczba dni</th><th>Status</th><th>Kto zatwierdził</th><th>Data wniosku</th><th>Akcje</th></tr></thead>
+            <tbody>
+                {% for req in qs_b %}
+                <tr>
+                    <td><strong>{{ req.employee.first_name }} {{ req.employee.last_name }}</strong><br><small>Zespół: {{ req.employee.worker_profile.team }}</small></td>
+                    <td>{{ req.start_date }}</td><td>{{ req.end_date }}</td><td><strong>{{ req.amount_days }}</strong></td>
+                    <td>{% if req.status == 'approved' %}<span class="status-badge" style="background:#28a745;color:white;">Zatwierdzony</span>{% elif req.status == 'pending' %}<span class="status-badge" style="background:#ffc107;color:#212529;">Oczekujący</span>{% elif req.status == 'rejected' %}<span class="status-badge" style="background:#dc3545;color:white;">Odrzucony</span>{% else %}<span class="status-badge" style="background:#6c757d;color:white;">{{ req.status|title }}</span>{% endif %}</td>
+                    <td>{{ req.who_confirmed|default:"—" }}</td><td>{{ req.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+                    <td class="actions">{% if req.status == 'pending' %}<form method="post" action="{% url 'approve_request' req.id %}" style="display:inline;" class="action-form">{% csrf_token %}<button type="button" onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ZATWIERDZIĆ</strong> ten wniosek?')" style="background:#28a745;color:white;border:none;padding:6px 12px;border-radius:4px;">Zatwierdź</button></form><form method="post" action="{% url 'reject_request' req.id %}" style="display:inline;" class="action-form">{% csrf_token %}<button type="button" onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ODRZUCIĆ</strong> ten wniosek?')" style="background:#dc3545;color:white;border:none;padding:6px 12px;border-radius:4px;">Odrzuć</button></form>{% else %}<span style="color:#28a745;">Przetworzony</span>{% endif %}</td>
+                </tr>
+                {% empty %}<tr><td colspan="8" style="text-align:center;padding:30px;">Brak wniosków.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
     <div class="section">
         <table>
-            <thead>
-                <tr>
-                    <th>Pracownik</th>
-                    <th>Data rozpoczęcia</th>
-                    <th>Data zakończenia</th>
-                    <th>Liczba dni</th>
-                    <th>Status</th>
-                    <th>Kto zatwierdził</th>
-                    <th>Data wniosku</th>
-                    <th>Akcje</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Pracownik</th><th>Data rozpoczęcia</th><th>Data zakończenia</th><th>Liczba dni</th><th>Status</th><th>Kto zatwierdził</th><th>Data wniosku</th><th>Akcje</th></tr></thead>
             <tbody>
                 {% for req in all_vacations %}
                 <tr>
-                    <td>
-                    <strong>{{ req.employee.first_name }} {{ req.employee.last_name }}</strong><br>
-                    <small>Zespół: {{ req.employee.worker_profile.team }}</small></td>
-                    <td>{{ req.start_date }}</td>
-                    <td>{{ req.end_date }}</td>
-                    <td><strong>{{ req.amount_days }}</strong></td>
-                    <td>
-                        {% if req.status == 'approved' %}
-                            <span class="status-badge" style="background: #28a745; color: white;">Zatwierdzony</span>
-                        {% elif req.status == 'Pending' %}
-                            <span class="status-badge" style="background: #ffc107; color: #212529;">Oczekujący</span>
-                        {% elif req.status == 'Rejected' %}
-                            <span class="status-badge" style="background: #dc3545; color: white;">Odrzucony</span>
-                        {% elif req.status == 'Canceled' %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">Anulowany</span>
-                        {% else %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ req.who_confirmed|default:"—" }}</td>
-                    <td>{{ req.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
-                    <td class="actions">
-                        {% if req.status == 'pending' or req.status == 'Pending' %}
-                            <!-- Zatwierdź -->
-                            <form method="post" action="{% url 'approve_request' req.id %}" style="display: inline;" class="action-form">
-                                {% csrf_token %}
-                                <button type="button"
-                                        onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ZATWIERDZIĆ</strong> ten wniosek?')"
-                                        style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:4px;">
-                                    Zatwierdź
-                                </button>
-                            </form>
-                            <!-- Odrzuć -->
-                            <form method="post" action="{% url 'reject_request' req.id %}" style="display: inline;" class="action-form">
-                                {% csrf_token %}
-                                <button type="button"
-                                        onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ODRZUCIĆ</strong> ten wniosek?')"
-                                        style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:4px;">
-                                    Odrzuć
-                                </button>
-                            </form>
-                        {% else %}
-                            <span style="color:#28a745;">Przetworzony</span>
-                        {% endif %}
-                    </td>
+                    <td><strong>{{ req.employee.first_name }} {{ req.employee.last_name }}</strong><br><small>Zespół: {{ req.employee.worker_profile.team }}</small></td>
+                    <td>{{ req.start_date }}</td><td>{{ req.end_date }}</td><td><strong>{{ req.amount_days }}</strong></td>
+                    <td>{% if req.status == 'approved' %}<span class="status-badge" style="background:#28a745;color:white;">Zatwierdzony</span>{% elif req.status == 'pending' %}<span class="status-badge" style="background:#ffc107;color:#212529;">Oczekujący</span>{% elif req.status == 'rejected' %}<span class="status-badge" style="background:#dc3545;color:white;">Odrzucony</span>{% else %}<span class="status-badge" style="background:#6c757d;color:white;">{{ req.status|title }}</span>{% endif %}</td>
+                    <td>{{ req.who_confirmed|default:"—" }}</td><td>{{ req.created_at|date:"Y-m-d H:i"|default:"—" }}</td>
+                    <td class="actions">{% if req.status == 'pending' %}<form method="post" action="{% url 'approve_request' req.id %}" style="display:inline;" class="action-form">{% csrf_token %}<button type="button" onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ZATWIERDZIĆ</strong> ten wniosek?')" style="background:#28a745;color:white;border:none;padding:6px 12px;border-radius:4px;">Zatwierdź</button></form><form method="post" action="{% url 'reject_request' req.id %}" style="display:inline;" class="action-form">{% csrf_token %}<button type="button" onclick="showConfirmModal(this.form, 'Czy na pewno chcesz <strong>ODRZUCIĆ</strong> ten wniosek?')" style="background:#dc3545;color:white;border:none;padding:6px 12px;border-radius:4px;">Odrzuć</button></form>{% else %}<span style="color:#28a745;">Przetworzony</span>{% endif %}</td>
                 </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" style="text-align:center; padding:30px;">Brak wniosków urlopowych.</td>
-                </tr>
-                {% endfor %}
+                {% empty %}<tr><td colspan="8" style="text-align:center;padding:30px;">Brak wniosków urlopowych.</td></tr>{% endfor %}
             </tbody>
         </table>
-
-        <!-- Paginacja -->
-        <div style="margin-top: 25px; text-align: center;">
+        <div style="margin-top:25px;text-align:center;">
             <button style="padding:8px 16px;">Poprzednia</button>
-            <span style="margin: 0 20px;">Strona <strong>1</strong></span>
+            <span style="margin:0 20px;">Strona <strong>1</strong></span>
             <button style="padding:8px 16px;">Następna</button>
         </div>
     </div>
-</div>
+{% endif %}</div>
 <!-- MODAL POTWIERDZENIA -->
 <div id="customModal" class="modal-overlay">
     <div class="modal-content">

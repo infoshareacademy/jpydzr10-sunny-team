@@ -108,14 +108,25 @@ def all_requests_list(request):
         except ValueError:
             pass
 
-    context = {
-        'all_vacations': qs,
-        'status_filter': status_filter,
-        'date_from': date_from_str,
-        'date_to': date_to_str,
-    }
+    if active_role == 'HR':
+        context = {
+            'qs_a': qs.filter(employee__worker_profile__team='a'),
+            'qs_b': qs.filter(employee__worker_profile__team='b'),
+            'is_hr': True,
+            'status_filter': status_filter,
+            'date_from': date_from_str,
+            'date_to': date_to_str,
+        }
+    else:
+        context = {
+            'all_vacations': qs,
+            'status_filter': status_filter,
+            'date_from': date_from_str,
+            'date_to': date_to_str,
+        }
 
     return render(request, 'leaves/all_requests_list.html', context)
+    
 
 @login_required
 def my_vacations(request):

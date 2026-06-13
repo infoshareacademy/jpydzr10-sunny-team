@@ -124,10 +124,9 @@ class LeaveRequest(models.Model):
 
     def __str__(self):
         return (
-            f"{self.first_name} {self.last_name}: "
+            f"{self.employee.first_name} {self.employee.last_name}: "
             f"{self.start_date} – {self.end_date} "
             f"({self.amount_days} dni) [{self.get_status_display()}]"
-
         )
 
     def check_is_pending(self):
