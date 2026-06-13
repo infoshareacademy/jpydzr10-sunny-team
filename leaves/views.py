@@ -342,7 +342,8 @@ class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
         """
 
         # Sprawdzenie uprawnień globalnych dla roli
-        if not Permission.verifyPermission(request.user.role, 'can_change_request'):
+        active_role = request.session.get('active_role', request.user.role)
+        if not Permission.verifyPermission(active_role, 'can_change_request'):
             return redirect('dashboard')
 
         obj = self.get_object()
