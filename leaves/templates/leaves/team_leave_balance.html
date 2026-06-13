@@ -4,37 +4,47 @@
 
 {% block content %}
 <div style="max-width: 900px; margin: 30px auto; padding: 20px;">
-    <h1>Urlopy zespołu: {{ team_name }}</h1>
+    <h1>Bilans urlopów{% if not is_hr %} — zespół {{ teams.0.team_name }}{% endif %}</h1>
 
-    {% if team_data %}
-    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-        <thead>
-            <tr style="background: #0d6efd; color: white;">
-                <th style="padding: 12px; text-align: left;">Pracownik</th>
-                <th style="padding: 12px; text-align: center;">Całkowity</th>
-                <th style="padding: 12px; text-align: center;">Wykorzystany</th>
-                <th style="padding: 12px; text-align: center;">Pozostały</th>
-                <th style="padding: 12px;">Postęp</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for member in team_data %}
-            <tr style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 12px;">{{ member.first_name }} {{ member.last_name }}</td>
-                <td style="padding: 12px; text-align: center;">{{ member.total_days }}</td>
-                <td style="padding: 12px; text-align: center;">{{ member.used_days }}</td>
-                <td style="padding: 12px; text-align: center; color: #28a745; font-weight: bold;">{{ member.remaining_days }}</td>
-                <td style="padding: 12px;">
-                    <div style="background: #e9ecef; border-radius: 8px; height: 10px;">
-                        <div style="background: #28a745; width: {% widthratio member.used_days member.total_days 100 %}%; height: 10px; border-radius: 8px;"></div>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p>Brak pracowników w zespole lub brak przypisanego zespołu.</p>
-    {% endif %}
+    {% for team in teams %}
+    <div style="margin-bottom: 40px;">
+        <h2 style="color: #0d6efd; border-bottom: 2px solid #0d6efd; padding-bottom: 8px;">
+            Zespół: {{ team.team_name }}
+        </h2>
+
+        {% if team.team_data %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+                <tr style="background: #0d6efd; color: white;">
+                    <th style="padding: 12px; text-align: left;">Pracownik</th>
+                    <th style="padding: 12px; text-align: center;">Całkowity</th>
+                    <th style="padding: 12px; text-align: center;">Wykorzystany</th>
+                    <th style="padding: 12px; text-align: center;">Pozostały</th>
+                    <th style="padding: 12px;">Postęp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in team.team_data %}
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 12px;">{{ member.first_name }} {{ member.last_name }}</td>
+                    <td style="padding: 12px; text-align: center;">{{ member.total_days }}</td>
+                    <td style="padding: 12px; text-align: center;">{{ member.used_days }}</td>
+                    <td style="padding: 12px; text-align: center; color: #28a745; font-weight: bold;">{{ member.remaining_days }}</td>
+                    <td style="padding: 12px;">
+                        <div style="background: #e9ecef; border-radius: 8px; height: 10px;">
+                            <div style="background: #28a745; width: {% widthratio member.used_days member.total_days 100 %}%; height: 10px; border-radius: 8px;"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>Brak pracowników w zespole lub brak przypisanego zespołu.</p>
+        {% endif %}
+    </div>
+    {% empty %}
+        <p>Brak danych do wyświetlenia.</p>
+    {% endfor %}
 </div>
 {% endblock %}

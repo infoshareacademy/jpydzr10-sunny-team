@@ -109,9 +109,20 @@ def all_requests_list(request):
             pass
 
     if active_role == 'HR':
+        all_team_names = (
+            WorkerProfile.objects
+            .values_list('team', flat=True)
+            .distinct()
+            .order_by('team')
+        )
+        teams = []
+        for team_name in all_team_names:
+            teams.append({
+                'team_name': team_name,
+                'requests': qs.filter(employee__worker_profile__team=team_name),
+            })
         context = {
-            'qs_a': qs.filter(employee__worker_profile__team='a'),
-            'qs_b': qs.filter(employee__worker_profile__team='b'),
+            'teams': teams,
             'is_hr': True,
             'status_filter': status_filter,
             'date_from': date_from_str,
@@ -483,37 +494,66 @@ def log_history(request):
 @login_required
 def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
-    if request.user.role not in ['Manager', 'HR']:
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Manager', 'HR']:
         return render(request, 'leaves/access_denied.html')
 
+    if active_role == 'HR':
+        # HR widzi wszystkie zespoły
+        all_team_names = (
+            WorkerProfile.objects
+            .values_list('team', flat=True)
+            .distinct()
+            .order_by('team')
+        )
 
-    # Pobierz team managera/HR z jego własnego profilu
-    try:
-        my_profile = WorkerProfile.objects.get(user=request.user)
-        team_name = my_profile.team
-    except WorkerProfile.DoesNotExist:
-        team_name = None
+        teams = []
+        for team_name in all_team_names:
+            profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+            team_data = []
+            for profile in profiles:
+                team_data.append({
+                    'first_name': profile.user.first_name,
+                    'last_name': profile.user.last_name,
+                    'total_days': profile._get_total_leave_days(),
+                    'used_days': profile.used_leave_days,
+                    'remaining_days': profile.get_leave_days(),
+                })
+            teams.append({
+                'team_name': team_name,
+                'team_data': team_data,
+            })
 
-    # Pobierz wszystkich pracowników z tego samego zespołu
-    if team_name:
-        team_profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+        context = {
+            'teams': teams,
+            'is_hr': True,
+        }
+
     else:
-        team_profiles = []
+        # Manager widzi tylko swój zespół
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            team_name = my_profile.team
+        except WorkerProfile.DoesNotExist:
+            team_name = None
 
-    team_data = []
-    for profile in team_profiles:
-        team_data.append({
-            'first_name': profile.user.first_name,
-            'last_name': profile.user.last_name,
-            'total_days': profile._get_total_leave_days(),
-            'used_days': profile.used_leave_days,
-            'remaining_days': profile.get_leave_days(),
-        })
+        team_data = []
+        if team_name:
+            profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+            for profile in profiles:
+                team_data.append({
+                    'first_name': profile.user.first_name,
+                    'last_name': profile.user.last_name,
+                    'total_days': profile._get_total_leave_days(),
+                    'used_days': profile.used_leave_days,
+                    'remaining_days': profile.get_leave_days(),
+                })
 
-    context = {
-        'team_name': team_name,
-        'team_data': team_data,
-    }
+        context = {
+            'teams': [{'team_name': team_name, 'team_data': team_data}],
+            'is_hr': False,
+        }
+
     return render(request, 'leaves/team_leave_balance.html', context)
 
 
