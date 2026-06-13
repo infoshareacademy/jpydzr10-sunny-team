@@ -97,14 +97,14 @@ def all_requests_list(request):
     if date_from_str:
         try:
             date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
-            qs = qs.filter(start_date__gte=date_from)
+            qs = qs.filter(end_date__gte=date_from)
         except ValueError:
             pass
 
     if date_to_str:
         try:
             date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
-            qs = qs.filter(end_date__lte=date_to)
+            qs = qs.filter(start_date__lte=date_to)
         except ValueError:
             pass
 
@@ -540,14 +540,14 @@ def export_requests_csv(request):
     if date_from_str:
         try:
             date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
-            qs = qs.filter(start_date__gte=date_from)
+            qs = qs.filter(end_date__gte=date_from)
         except ValueError:
             pass  # zignoruj jeśli data jest nieprawidłowa
 
     if date_to_str:
         try:
             date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
-            qs = qs.filter(end_date__lte=date_to)
+            qs = qs.filter(start_date__lte=date_to)
         except ValueError:
             pass    # zignoruj jeśli data jest nieprawidłowa
 
@@ -565,12 +565,11 @@ def export_requests_csv(request):
     ])
 
     # dane z bazy
-    requests = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
-    for req in requests:
+    for req in qs:
         writer.writerow([
             req.id,
-            {req.employee.first_name},
-            {req.employee.last_name},
+            req.employee.first_name,
+            req.employee.last_name,
             req.start_date,
             req.end_date,
             req.amount_days,
