@@ -75,13 +75,21 @@ def dashboard(request):
 
 @login_required
 def all_requests_list(request):
-
     status_filter = request.GET.get('status', '').lower()
     date_from_str = request.GET.get('date_from', '')
     date_to_str = request.GET.get('date_to', '')
+    active_role = request.session.get('active_role', request.user.role)
 
-    # pobieram wnioski z bazy zamiast load_leave_requests()
     qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+
+    # Manager widzi tylko swój zespół
+    if active_role == 'Manager':
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            team_members = WorkerProfile.objects.filter(team=my_profile.team).values_list('user', flat=True)
+            qs = qs.filter(employee__in=team_members)
+        except WorkerProfile.DoesNotExist:
+            qs = qs.none()
 
     if status_filter and status_filter in LeaveRequest.Status.values:
         qs = qs.filter(status=status_filter)
@@ -108,7 +116,6 @@ def all_requests_list(request):
     }
 
     return render(request, 'leaves/all_requests_list.html', context)
-
 
 @login_required
 def my_vacations(request):
@@ -159,28 +166,61 @@ def my_vacations(request):
 @login_required
 @require_POST
 def approve_request(request, request_id):
+    leave_request = get_object_or_404(LeaveRequest, pk=request_id)
+    active_role = request.session.get('active_role', request.user.role)
+    today = date.today()
 
-    leave_requests = load_leave_requests()
-
-    if request_id not in leave_requests:
-        messages.error(request, 'Nie znaleziono wniosku')
-        return redirect('all_requests_list')
-
-    req = leave_requests[request_id]
-
-    """Sprawdzamy czy użytkownik ma uprawnienia do akceptacji wniosku"""
-    user_role = getattr(request.user, 'role', None)
-    if not user_role:
-        user_role = "Admin" # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
-
-    if not Permission.verifyPermission(user_role, 'can_approve_request'):
+    if not Permission.verifyPermission(active_role, 'can_approve_request'):
         messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
         return redirect('all_requests_list')
 
+    # Pobierz zespół pracownika składającego wniosek
     try:
-        req.approve(who_confirmed=request.user.username)
-        save_leave_requests(leave_requests)
-        messages.success(request, f'Wniosek od {req.first_name} {req.last_name} został zatwierdzony.')
+        employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
+        employee_team = employee_profile.team
+    except WorkerProfile.DoesNotExist:
+        messages.error(request, 'Pracownik nie ma przypisanego zespołu.')
+        return redirect('all_requests_list')
+
+    if active_role == 'Manager':
+        # Manager może zatwierdzać tylko swój zespół
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            if my_profile.team != employee_team:
+                messages.error(request, 'Możesz zatwierdzać tylko wnioski swojego zespołu.')
+                return redirect('all_requests_list')
+        except WorkerProfile.DoesNotExist:
+            messages.error(request, 'Nie masz przypisanego zespołu.')
+            return redirect('all_requests_list')
+
+    elif active_role == 'HR':
+        # HR może zatwierdzać tylko jeśli manager zespołu jest na urlopie
+        try:
+            team_manager = WorkerProfile.objects.select_related('user').get(
+                team=employee_team,
+                user__role='Manager'
+            )
+            manager_on_leave = LeaveRequest.objects.filter(
+                employee=team_manager.user,
+                status=LeaveRequest.Status.APPROVED,
+                start_date__lte=today,
+                end_date__gte=today,
+            ).exists()
+
+            if not manager_on_leave:
+                messages.error(request, f'Manager zespołu {employee_team} jest dostępny. HR może zatwierdzać tylko gdy manager jest na urlopie.')
+                return redirect('all_requests_list')
+        except WorkerProfile.DoesNotExist:
+            pass  # jeśli brak managera w zespole, HR może zatwierdzać
+
+    try:
+        leave_request.approve(who=request.user)
+        try:
+            profile = WorkerProfile.objects.get(user=leave_request.employee)
+            profile.subtract_leave_days(leave_request.amount_days)
+        except WorkerProfile.DoesNotExist:
+            pass
+        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
     except Exception as e:
         messages.error(request, f'Błąd podczas zatwierdzania: {e}')
 
@@ -189,32 +229,20 @@ def approve_request(request, request_id):
 @login_required
 @require_POST
 def reject_request(request, request_id):
-    leave_requests = load_leave_requests()
+    leave_request = get_object_or_404(LeaveRequest, pk=request_id)
 
-    if request_id not in leave_requests:
-        messages.error(request, 'Nie znaleziono wniosku')
-        return redirect('all_requests_list')
-
-    req = leave_requests[request_id]
-
-    """Sprawdzamy czy użytkownik ma uprawnienia do odrzucania wniosku"""
-    user_role = getattr(request.user, 'role', None)
-    if not user_role:
-        user_role = "Admin" # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
-
-    if not Permission.verifyPermission(user_role, 'can_reject_request'):
+    active_role = request.session.get('active_role', request.user.role)
+    if not Permission.verifyPermission(active_role, 'can_reject_request'):
         messages.error(request, 'Nie masz uprawnień do odrzucania wniosków urlopowych.')
         return redirect('all_requests_list')
 
     try:
-        req.rejected(who_confirmed=request.user.username)
-        save_leave_requests(leave_requests)
-        messages.success(request, f'Wniosek od {req.first_name} {req.last_name} został odrzucony.')
+        leave_request.reject(who=request.user)
+        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.')
     except Exception as e:
-        messages.error(request, f'Błąd podczas odrzucania {e}')
+        messages.error(request, f'Błąd podczas odrzucania: {e}')
 
     return redirect('all_requests_list')
-
 
 class LeaveRequestView(LoginRequiredMixin, CreateView):
     """
