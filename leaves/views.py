@@ -665,6 +665,16 @@ def add_user(request):
         form = AddUserForm(request.POST)
         if form.is_valid():
             user = form.save()
+            team = form.cleaned_data.get('team')
+            hire_date = form.cleaned_data.get('hire_date') or date.today()
+
+            if team:
+                WorkerProfile.objects.create(
+                    user=user,
+                    team=team,
+                    hire_date=hire_date,
+                )
+
             # Logowanie akcji
             app_log.add_new_change(
                 user_id=request.user.id,
@@ -672,7 +682,7 @@ def add_user(request):
                 object_type='user',
             )
             messages.success(request, f'Użytkownik {user.username} został pomyślnie dodany.')
-            return redirect('all_requests_list')
+            return redirect('user_list')
     else:
         form = AddUserForm()
 

@@ -98,6 +98,18 @@
             {{ form.password2.errors }}
         </div>
 
+        <div class="form-group">
+            <label>Zespół:</label>
+            {{ form.team }}
+            {{ form.team.errors }}
+        </div>
+
+        <div class="form-group">
+            <label>Data zatrudnienia:</label>
+            {{ form.hire_date }}
+            {{ form.hire_date.errors }}
+        </div>
+
         <button type="submit" style="background:#007bff; color:white; padding:12px 24px; border:none; border-radius:6px; width:100%;">
             Dodaj użytkownika
         </button>
