@@ -41,6 +41,8 @@ from django.views.generic import View
 @login_required
 def dashboard(request):
 
+    active_role = request.session.get('active_role', request.user.role)
+
     try:
         profile = WorkerProfile.objects.get(user=request.user)
         total_days = profile._get_total_leave_days()
@@ -56,7 +58,21 @@ def dashboard(request):
         progress_percent = 0
 
     my_requests = LeaveRequest.objects.filter(employee=request.user)
-    recent_requests = LeaveRequest.objects.select_related('employee').order_by('-created_at')[:5]
+
+    recent_requests_qs = LeaveRequest.objects.select_related('employee').order_by('-created_at')
+
+    if active_role == 'Manager':
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            team_members = WorkerProfile.objects.filter(team=my_profile.team).values_list('user', flat=True)
+            recent_requests_qs = recent_requests_qs.filter(employee__in=team_members)
+        except WorkerProfile.DoesNotExist:
+            recent_requests_qs = recent_requests_qs.none()
+    elif active_role == 'Worker':
+        recent_requests_qs = recent_requests_qs.filter(employee=request.user)
+
+    recent_requests = recent_requests_qs[:5]
+
     active_count = my_requests.exclude(status=LeaveRequest.Status.CANCELED).count()
     pending_count = my_requests.filter(status=LeaveRequest.Status.PENDING).count()
 
@@ -69,6 +85,7 @@ def dashboard(request):
         'active_count': active_count,
         'pending_count': pending_count,
         'recent_requests': recent_requests,
+        'active_role': active_role,
     }
 
     return render(request, 'leaves/dashboard.html', context)
