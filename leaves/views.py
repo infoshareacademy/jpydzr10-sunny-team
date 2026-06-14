@@ -560,18 +560,26 @@ def team_leave_balance(request):
 @login_required
 def export_requests_csv(request):
     # tylko Manager i HR mają dostęp
-    if request.user.role not in ['Manager', 'HR', 'Admin']:
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Manager', 'HR', 'Admin']:
         return render(request, 'leaves/access_denied.html')
 
-    from leaves.models import LeaveRequest
-
     # filtry z adresu URL
-    status_filter = request.GET.get('status', '')
+    status_filter = request.GET.get('status', '').lower()
     date_from_str = request.GET.get('date_from', '')
     date_to_str = request.GET.get('date_to', '')
 
     # punkt wyjścia - wszystkie wnioski
     qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+
+    # Manager widzi tylko swój zespół — tak samo jak all_requests_list
+    if active_role == 'Manager':
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            team_members = WorkerProfile.objects.filter(team=my_profile.team).values_list('user', flat=True)
+            qs = qs.filter(employee__in=team_members)
+        except WorkerProfile.DoesNotExist:
+            qs = qs.none()
 
     # filtruję po statusie
     if status_filter and status_filter in LeaveRequest.Status.values:
@@ -607,6 +615,11 @@ def export_requests_csv(request):
 
     # dane z bazy
     for req in qs:
+        try:
+            team = req.employee.worker_profile.team
+        except Exception:
+            team = ''
+
         writer.writerow([
             req.id,
             req.employee.first_name,
