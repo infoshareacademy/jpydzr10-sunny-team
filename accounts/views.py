@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import User
 from .permission import Permission
 from accounts.permission import role_required
-
+from logs.models import ChangeLog
 
 @login_required
 def deactivate_user(request, pk):
@@ -45,8 +45,19 @@ def switch_role(request):
     if new_role in ALLOWED_ROLES.get(request.user.role, []):
         request.session['active_role'] = new_role
         messages.success(request,"Rola została zmieniona poprawnie!")
+        ChangeLog.objects.create(
+            who=request.user,
+            action='switch_choice',
+            object_type='user',
+        )
         return redirect('dashboard')
     else:
         messages.error(request, 'Nie masz uprawnień do tej roli')
+        ChangeLog.objects.create(
+            who=request.user,
+            action='403',
+            object_type='user',
+            details=f"Proba zmiany roli na: {new_role}"
+        )
         return redirect('dashboard')
 

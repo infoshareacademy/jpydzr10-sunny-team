@@ -112,6 +112,13 @@ def role_required(action):
         def wrapper(request, *args, **kwargs):
             active_role = request.session.get('active_role', request.user.role)
             if not Permission.verifyPermission(active_role, action):
+                from logs.models import ChangeLog
+                ChangeLog.objects.create(
+                    who=request.user,
+                    action='403',
+                    object_type='user',
+                    details=action,
+                )
                 return redirect('dashboard')
             return view_func(request, *args, **kwargs)
         return wrapper
