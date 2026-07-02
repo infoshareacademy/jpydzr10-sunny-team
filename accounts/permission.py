@@ -1,7 +1,7 @@
 from functools import wraps
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from logs.utils import get_client_ip
 class Permission:
     """
     System uprawnień aplikacji urlopowej.
@@ -118,6 +118,7 @@ def role_required(action):
                     action='403',
                     object_type='user',
                     details=action,
+                    ip_address=get_client_ip(request)
                 )
                 return redirect('dashboard')
             return view_func(request, *args, **kwargs)

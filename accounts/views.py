@@ -5,7 +5,7 @@ from .models import User
 from .permission import Permission
 from accounts.permission import role_required
 from logs.models import ChangeLog
-
+from logs.utils import get_client_ip
 @login_required
 def deactivate_user(request, pk):
     target_user = get_object_or_404(User, pk=pk)
@@ -57,7 +57,8 @@ def switch_role(request):
             who=request.user,
             action='403',
             object_type='user',
-            details=f"Proba zmiany roli na: {new_role}"
+            details=f"Proba zmiany roli na: {new_role}",
+            ip_address = get_client_ip(request)
         )
         return redirect('dashboard')
 
