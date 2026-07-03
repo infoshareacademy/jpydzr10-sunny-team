@@ -5,6 +5,8 @@
 {% block content %}
 <div style="max-width: 900px; margin: 30px auto; padding: 20px;">
     <h1>Raporty</h1>
-    <p>Sekcja w budowie.</p>
+    <ul>
+        <li><a href="{% url 'users_per_role_report' %}">Liczba użytkowników wg roli, % aktywnych</a></li>
+    </ul>
 </div>
 {% endblock %}
