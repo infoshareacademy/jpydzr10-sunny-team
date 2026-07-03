@@ -1,0 +1,23 @@
+% extends 'emails/base_email.html' %}
+
+{% block title %}Twój wniosek urlopowy został odrzucony{% endblock %}
+
+{% block content %}
+    <h2 style="color: #dc3545;">✕ Wniosek odrzucony</h2>
+
+    <p>Cześć {{ first_name }},</p>
+
+    <p>Niestety Twój wniosek urlopowy został odrzucony:</p>
+
+    <ul>
+        <li><strong>Od:</strong> {{ start_date }}</li>
+        <li><strong>Do:</strong> {{ end_date }}</li>
+        <li><strong>Liczba dni:</strong> {{ days }}</li>
+    </ul>
+
+    <p>Odrzucił: <strong>{{ rejected_by }}</strong></p>
+
+    <p>Jeśli masz pytania, skontaktuj się z działem HR lub przełożonym.</p>
+
+    <a href="127.0.0.1/leaves/my-vacations/" class="button">Sprawdź swoje wnioski</a>
+{% endblock %}
