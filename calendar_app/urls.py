@@ -25,5 +25,6 @@ urlpatterns = [
     path('admin_panel/',include('admin_panel.urls')),
     path('logs/',include('logs.urls')),
     path('login/',include('login.urls')),
+    path('reports/', include('reports.urls')),
     path('', log_views.home, name='home'),
 ]
