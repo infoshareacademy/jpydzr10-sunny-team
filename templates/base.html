@@ -23,7 +23,9 @@
                 <li><a href="{% url 'dashboard' %}">Pulpit</a></li>
                 <li><a href="{% url 'my_vacations' %}">Moje Urlopy</a></li>
                 <li><a href="{% url 'new_request' %}">Nowy Wniosek</a></li>
-                <li><a href="{% url 'reports_index' %}">Raporty</a></li>
+                {% if active_role == 'HR' or active_role == 'Manager' or active_role == 'Admin' %}
+                    <li><a href="{% url 'reports_index' %}">Raporty</a></li>
+                {% endif %}
             </ul>
 
             <div class="user-section">
