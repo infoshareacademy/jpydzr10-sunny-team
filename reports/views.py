@@ -135,3 +135,80 @@ def export_leave_usage_csv(request):
         ])
 
     return response
+
+
+def _team_rows(request, active_role):
+    """
+    Agreguje _leave_usage_rows per zespół: liczba osób, suma przydzielonych/
+    wykorzystanych/pozostałych dni i % wykorzystania dla całego zespołu.
+    """
+    profiles = _leave_usage_profiles(request, active_role)
+    user_rows = _leave_usage_rows(profiles)
+
+    teams = {}
+    for row in user_rows:
+        team_name = row['team']
+        agg = teams.setdefault(team_name, {
+            'team': team_name,
+            'members': 0,
+            'total': 0,
+            'used': 0,
+            'remaining': 0,
+        })
+        agg['members'] += 1
+        agg['total'] += row['total']
+        agg['used'] += row['used']
+        agg['remaining'] += row['remaining']
+
+    report_rows = []
+    for team_name in sorted(teams.keys()):
+        agg = teams[team_name]
+        agg['percent_used'] = round(agg['used'] / agg['total'] * 100, 1) if agg['total'] else 0
+        report_rows.append(agg)
+
+    return report_rows
+
+
+@login_required
+def team_report(request):
+    active_role = request.session.get('active_role', request.user.role)
+
+    if active_role not in ['Admin', 'Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    context = {
+        'report_rows': _team_rows(request, active_role),
+    }
+    return render(request, 'reports/team_report.html', context)
+
+
+@login_required
+def export_team_report_csv(request):
+    active_role = request.session.get('active_role', request.user.role)
+
+    if active_role not in ['Admin', 'Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    report_rows = _team_rows(request, active_role)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="raport_per_zespol.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'Zespół', 'Liczba osób',
+        'Przydzielone dni (suma)', 'Wykorzystane dni (suma)',
+        'Pozostałe dni (suma)', '% wykorzystania',
+    ])
+
+    for row in report_rows:
+        writer.writerow([
+            row['team'],
+            row['members'],
+            row['total'],
+            row['used'],
+            row['remaining'],
+            row['percent_used'],
+        ])
+
+    return response
