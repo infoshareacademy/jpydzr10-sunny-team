@@ -30,17 +30,19 @@
 
             <div class="user-section">
                 Witaj {{ user.first_name }} {{ user.last_name }} ({{ active_role }}) !
-                <label for="Role">Wybierz role:</label>
 
+                {% if available_roles|length > 1 %}
+                <label for="Role">Wybierz role:</label>
                 <form action="{% url 'switch_role' %}" method="post" class="d-inline">
-                {% csrf_token %}
-                <select name="role">
-                    <option value="Manager">Manager</option>
-                    <option value="HR">HR</option>
-                    <option value="Worker">Worker</option>
-                </select>
-                <button type="submit" class="btn btn-secondary">Przełącz</button>
+                    {% csrf_token %}
+                    <select name="role">
+                        {% for role in available_roles %}
+                        <option value="{{ role }}" {% if role == active_role %}selected{% endif %}>{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-secondary">Przełącz</button>
                 </form>
+                {% endif %}
 
                 <form action="{% url 'logout' %}" method="post" class="d-inline">
                     {% csrf_token %}

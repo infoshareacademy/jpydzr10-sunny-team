@@ -48,12 +48,8 @@ def user_list(request):
 
 @login_required
 def switch_role(request):
-    ALLOWED_ROLES = {
-        'Manager': ['Manager', 'Worker'],
-        'HR': ['HR', 'Worker'],
-        'Admin': ['Admin'],
-        'Worker': ['Worker'],
-    }
+    from accounts.context_processors import ALLOWED_ROLES
+
     new_role = request.POST.get("role")
     if new_role in ALLOWED_ROLES.get(request.user.role, []):
         request.session['active_role'] = new_role
