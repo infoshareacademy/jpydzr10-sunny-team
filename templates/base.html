@@ -23,21 +23,26 @@
                 <li><a href="{% url 'dashboard' %}">Pulpit</a></li>
                 <li><a href="{% url 'my_vacations' %}">Moje Urlopy</a></li>
                 <li><a href="{% url 'new_request' %}">Nowy Wniosek</a></li>
+                {% if active_role == 'HR' or active_role == 'Manager' or active_role == 'Admin' %}
+                    <li><a href="{% url 'reports_index' %}">Raporty</a></li>
+                {% endif %}
             </ul>
 
             <div class="user-section">
                 Witaj {{ user.first_name }} {{ user.last_name }} ({{ active_role }}) !
-                <label for="Role">Wybierz role:</label>
 
+                {% if available_roles|length > 1 %}
+                <label for="Role">Wybierz role:</label>
                 <form action="{% url 'switch_role' %}" method="post" class="d-inline">
-                {% csrf_token %}
-                <select name="role">
-                    <option value="Manager">Manager</option>
-                    <option value="HR">HR</option>
-                    <option value="Worker">Worker</option>
-                </select>
-                <button type="submit" class="btn btn-secondary">Przełącz</button>
+                    {% csrf_token %}
+                    <select name="role">
+                        {% for role in available_roles %}
+                        <option value="{{ role }}" {% if role == active_role %}selected{% endif %}>{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-secondary">Przełącz</button>
                 </form>
+                {% endif %}
 
                 <form action="{% url 'logout' %}" method="post" class="d-inline">
                     {% csrf_token %}
