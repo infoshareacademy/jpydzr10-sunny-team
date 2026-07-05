@@ -111,6 +111,14 @@
         text-overflow: ellipsis;
         max-width: 100%;
     }
+
+    /* ── Chipsy oczekujące (wyszarzone) ── */
+    .leave-chip.pending {
+        background: #adb5bd;
+        border: 1px dashed #6c757d;
+        color: white;
+        opacity: 0.75;
+    }
  
     /* 10 kolorów dla różnych pracowników */
     .color-0  { background: #3b82f6; }
@@ -199,6 +207,10 @@
                         <span>{{ member.name }}</span>
                     </div>
                 {% endfor %}
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#adb5bd; border: 1px dashed #6c757d;"></div>
+                    <span>Oczekujący</span>
+                </div>
             </div>
  
             {# Tabela z dniami #}
@@ -238,6 +250,14 @@
                                                 </span>
                                             {% endif %}
                                         {% endfor %}
+                                    {% endfor %}
+
+                                    {# Chipsy wniosków oczekujących (wyszarzone) #}
+                                    {% for name in cell.pending %}
+                                        <span class="leave-chip pending"
+                                              title="{{ name }} (oczekujący)">
+                                            {{ name }}
+                                        </span>
                                     {% endfor %}
  
                                 </td>
