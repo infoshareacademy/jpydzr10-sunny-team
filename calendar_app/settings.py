@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'accounts',
     'logs',
     'admin_panel',
-    'login'
+    'login',
+    'reports',
 
 ]
 AUTH_USER_MODEL = 'accounts.User'

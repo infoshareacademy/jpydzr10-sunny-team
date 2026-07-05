@@ -22,6 +22,8 @@ from django.core.exceptions import PermissionDenied
 @login_required
 def dashboard(request):
 
+    active_role = request.session.get('active_role', request.user.role)
+
     try:
         profile = WorkerProfile.objects.get(user=request.user)
         total_days = profile._get_total_leave_days()
@@ -37,7 +39,21 @@ def dashboard(request):
         progress_percent = 0
 
     my_requests = LeaveRequest.objects.filter(employee=request.user)
-    recent_requests = LeaveRequest.objects.select_related('employee').order_by('-created_at')[:5]
+
+    recent_requests_qs = LeaveRequest.objects.select_related('employee').order_by('-created_at')
+
+    if active_role == 'Manager':
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            team_members = WorkerProfile.objects.filter(team=my_profile.team).values_list('user', flat=True)
+            recent_requests_qs = recent_requests_qs.filter(employee__in=team_members)
+        except WorkerProfile.DoesNotExist:
+            recent_requests_qs = recent_requests_qs.none()
+    elif active_role == 'Worker':
+        recent_requests_qs = recent_requests_qs.filter(employee=request.user)
+
+    recent_requests = recent_requests_qs[:5]
+
     active_count = my_requests.exclude(status=LeaveRequest.Status.CANCELED).count()
     pending_count = my_requests.filter(status=LeaveRequest.Status.PENDING).count()
 
@@ -50,6 +66,7 @@ def dashboard(request):
         'active_count': active_count,
         'pending_count': pending_count,
         'recent_requests': recent_requests,
+        'active_role': active_role,
     }
 
     return render(request, 'leaves/dashboard.html', context)
@@ -79,21 +96,32 @@ def all_requests_list(request):
     if date_from_str:
         try:
             date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
-            qs = qs.filter(start_date__gte=date_from)
+            qs = qs.filter(end_date__gte=date_from)
         except ValueError:
             pass
 
     if date_to_str:
         try:
             date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
-            qs = qs.filter(end_date__lte=date_to)
+            qs = qs.filter(start_date__lte=date_to)
         except ValueError:
             pass
 
     if active_role == 'HR':
+        all_team_names = (
+            WorkerProfile.objects
+            .values_list('team', flat=True)
+            .distinct()
+            .order_by('team')
+        )
+        teams = []
+        for team_name in all_team_names:
+            teams.append({
+                'team_name': team_name,
+                'requests': qs.filter(employee__worker_profile__team=team_name),
+            })
         context = {
-            'qs_a': qs.filter(employee__worker_profile__team='a'),
-            'qs_b': qs.filter(employee__worker_profile__team='b'),
+            'teams': teams,
             'is_hr': True,
             'status_filter': status_filter,
             'date_from': date_from_str,
@@ -459,48 +487,94 @@ def log_history(request):
 @login_required
 @role_required("can_see_team_balance")
 def team_leave_balance(request):
-    try:
-        my_profile = WorkerProfile.objects.get(user=request.user)
-        team_name = my_profile.team
-    except WorkerProfile.DoesNotExist:
-        team_name = None
+    # Tylko Manager i HR mają dostęp
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
 
-    # Pobierz wszystkich pracowników z tego samego zespołu
-    if team_name:
-        team_profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+    if active_role == 'HR':
+        # HR widzi wszystkie zespoły
+        all_team_names = (
+            WorkerProfile.objects
+            .values_list('team', flat=True)
+            .distinct()
+            .order_by('team')
+        )
+
+        teams = []
+        for team_name in all_team_names:
+            profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+            team_data = []
+            for profile in profiles:
+                team_data.append({
+                    'first_name': profile.user.first_name,
+                    'last_name': profile.user.last_name,
+                    'total_days': profile._get_total_leave_days(),
+                    'used_days': profile.used_leave_days,
+                    'remaining_days': profile.get_leave_days(),
+                })
+            teams.append({
+                'team_name': team_name,
+                'team_data': team_data,
+            })
+
+        context = {
+            'teams': teams,
+            'is_hr': True,
+        }
+
     else:
-        team_profiles = []
+        # Manager widzi tylko swój zespół
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            team_name = my_profile.team
+        except WorkerProfile.DoesNotExist:
+            team_name = None
 
-    team_data = []
-    for profile in team_profiles:
-        team_data.append({
-            'first_name': profile.user.first_name,
-            'last_name': profile.user.last_name,
-            'total_days': profile._get_total_leave_days(),
-            'used_days': profile.used_leave_days,
-            'remaining_days': profile.get_leave_days(),
-        })
+        team_data = []
+        if team_name:
+            profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
+            for profile in profiles:
+                team_data.append({
+                    'first_name': profile.user.first_name,
+                    'last_name': profile.user.last_name,
+                    'total_days': profile._get_total_leave_days(),
+                    'used_days': profile.used_leave_days,
+                    'remaining_days': profile.get_leave_days(),
+                })
 
-    context = {
-        'team_name': team_name,
-        'team_data': team_data,
-    }
+        context = {
+            'teams': [{'team_name': team_name, 'team_data': team_data}],
+            'is_hr': False,
+        }
+
     return render(request, 'leaves/team_leave_balance.html', context)
 
 
 @login_required
 @role_required("can_export_requests")
 def export_requests_csv(request):
-
-    from leaves.models import LeaveRequest
+    # tylko Manager i HR mają dostęp
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Manager', 'HR', 'Admin']:
+        return render(request, 'leaves/access_denied.html')
 
     # filtry z adresu URL
-    status_filter = request.GET.get('status', '')
+    status_filter = request.GET.get('status', '').lower()
     date_from_str = request.GET.get('date_from', '')
     date_to_str = request.GET.get('date_to', '')
 
     # punkt wyjścia - wszystkie wnioski
     qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+
+    # Manager widzi tylko swój zespół — tak samo jak all_requests_list
+    if active_role == 'Manager':
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            team_members = WorkerProfile.objects.filter(team=my_profile.team).values_list('user', flat=True)
+            qs = qs.filter(employee__in=team_members)
+        except WorkerProfile.DoesNotExist:
+            qs = qs.none()
 
     # filtruję po statusie
     if status_filter and status_filter in LeaveRequest.Status.values:
@@ -510,14 +584,14 @@ def export_requests_csv(request):
     if date_from_str:
         try:
             date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
-            qs = qs.filter(start_date__gte=date_from)
+            qs = qs.filter(end_date__gte=date_from)
         except ValueError:
             pass  # zignoruj jeśli data jest nieprawidłowa
 
     if date_to_str:
         try:
             date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
-            qs = qs.filter(end_date__lte=date_to)
+            qs = qs.filter(start_date__lte=date_to)
         except ValueError:
             pass    # zignoruj jeśli data jest nieprawidłowa
 
@@ -535,12 +609,16 @@ def export_requests_csv(request):
     ])
 
     # dane z bazy
-    requests = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
-    for req in requests:
+    for req in qs:
+        try:
+            team = req.employee.worker_profile.team
+        except Exception:
+            team = ''
+
         writer.writerow([
             req.id,
-            {req.employee.first_name},
-            {req.employee.last_name},
+            req.employee.first_name,
+            req.employee.last_name,
             req.start_date,
             req.end_date,
             req.amount_days,
@@ -558,6 +636,16 @@ def add_user(request):
         form = AddUserForm(request.POST)
         if form.is_valid():
             user = form.save()
+            team = form.cleaned_data.get('team')
+            hire_date = form.cleaned_data.get('hire_date') or date.today()
+
+            if team:
+                WorkerProfile.objects.create(
+                    user=user,
+                    team=team,
+                    hire_date=hire_date,
+                )
+
             # Logowanie akcji
             app_log.add_new_change(
                 user_id=request.user.id,
@@ -565,7 +653,7 @@ def add_user(request):
                 object_type='user',
             )
             messages.success(request, f'Użytkownik {user.username} został pomyślnie dodany.')
-            return redirect('all_requests_list')
+            return redirect('user_list')
     else:
         form = AddUserForm()
 
@@ -661,6 +749,13 @@ def team_calendar(request):
         end_date__gte=first_day,  # kończy się po początku miesiąca
     ).select_related('employee')
 
+    pending_leaves = LeaveRequest.objects.filter(
+        employee__id__in=team_user_ids,
+        status=LeaveRequest.Status.PENDING,
+        start_date__lte=last_day,
+        end_date__gte=first_day,
+    ).select_related('employee')
+
     # słownik urlopowiczów z danego mc-a
     leave_map = {}
 
@@ -680,6 +775,24 @@ def team_calendar(request):
 
             current += timedelta(days=1)
 
+    pending_map = {}
+
+    for leave in pending_leaves:
+        current = max(leave.start_date, first_day)
+        end = min(leave.end_date, last_day)
+
+        while current <= end:
+            day_num = current.day
+
+            if day_num not in pending_map:
+                pending_map[day_num] = []
+
+            name = f"{leave.employee.last_name} {leave.employee.first_name}"
+            if name not in pending_map[day_num]:
+                pending_map[day_num].append(name)
+
+            current += timedelta(days=1)
+
     # miesięczny widok kalendarze
     # monthcalendar(rok, miesiąc) zwraca listę tygodni,
     # każdy tydzień to lista 7 liczb (0 = ten dzień należy do innego miesiąca)
@@ -693,11 +806,12 @@ def team_calendar(request):
         for day_num in week:
             if day_num == 0:
                 # dzień spoza miesiąca — pusta komórka
-                week_row.append({'day': 0, 'leaves': [], 'is_today': False})
+                week_row.append({'day': 0, 'leaves': [], 'pending': [], 'is_today': False})
             else:
                 week_row.append({
                     'day': day_num,
                     'leaves': leave_map.get(day_num, []),  # [] jeśli brak urlopów
+                    'pending': pending_map.get(day_num, []),
                     'is_today': date(year, month, day_num) == today,
                 })
         weeks.append(week_row)
