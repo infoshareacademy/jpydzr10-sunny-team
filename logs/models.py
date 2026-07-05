@@ -14,7 +14,9 @@ class ChangeLog(models.Model):
         ('login','Login'),
         ('logout', 'Logout'),
         ('login_failed','Login_failed'),
-        ('403','Forbidden_403')
+        ('403','Forbidden_403'),
+        ('switch_choice','Switch_choice'),
+
     ]
 
     OBJECT_TYPE_CHOICES = [
@@ -38,6 +40,7 @@ class ChangeLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     severity = models.CharField(max_length=10,choices=SEVERITY_CHOICES,default='info')
+    details = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.who} - {self.action} - {self.object_type} - {self.created_at} - {self.ip_address} -  "
