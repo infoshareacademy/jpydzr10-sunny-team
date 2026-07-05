@@ -10,7 +10,11 @@ class ChangeLog(models.Model):
         ('zatwierdz', 'Zatwierdz'),
         ('odrzuc', 'Odrzuc'),
         ('anuluj','Anuluj'),
-        ('reset_hasla','Reset_hasla')
+        ('reset_hasla','Reset_hasla'),
+        ('login','Login'),
+        ('logout', 'Logout'),
+        ('login_failed','Login_failed'),
+        ('403','Forbidden_403')
     ]
 
     OBJECT_TYPE_CHOICES = [
@@ -23,9 +27,17 @@ class ChangeLog(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
+    SEVERITY_CHOICES = [
+        ('info', 'Info'),
+        ('warning', 'Warning'),
+        ('critical', 'Critical')
+    ]
+
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     object_type = models.CharField(max_length=20,choices=OBJECT_TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    severity = models.CharField(max_length=10,choices=SEVERITY_CHOICES,default='info')
 
     def __str__(self):
-        return f"{self.who} - {self.action} - {self.object_type} - {self.created_at} "
+        return f"{self.who} - {self.action} - {self.object_type} - {self.created_at} - {self.ip_address} -  "
