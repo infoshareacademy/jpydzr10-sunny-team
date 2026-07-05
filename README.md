@@ -61,7 +61,6 @@ mysql -u root -p -e "CREATE DATABASE calendar_db CHARACTER SET utf8mb4;"
 ```
 
 Dane logowania do bazy są zdefiniowane w `calendar_app/settings.py` (sekcja `DATABASES`).
-Domyślnie projekt oczekuje użytkownika `root` z hasłem `12345678` na `127.0.0.1:3306`.
 Jeśli Twoja lokalna instalacja MySQL ma inne dane dostępowe, podmień je w tym pliku
 (`USER`, `PASSWORD`, `HOST`, `PORT`) przed przejściem dalej.
 
