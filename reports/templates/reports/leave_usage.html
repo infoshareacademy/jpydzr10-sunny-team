@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Raport: wykorzystanie urlopów{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 30px auto; padding: 20px;">
+    <h1>Wykorzystanie urlopów per użytkownik</h1>
+
+    <p>
+        <a href="{% url 'export_leave_usage_csv' %}" class="btn btn-secondary">
+            Eksportuj do CSV
+        </a>
+    </p>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr style="background: #0d6efd; color: white;">
+                <th style="padding: 12px; text-align: left;">Pracownik</th>
+                <th style="padding: 12px; text-align: left;">Zespół</th>
+                <th style="padding: 12px; text-align: center;">Przydzielone</th>
+                <th style="padding: 12px; text-align: center;">Wykorzystane</th>
+                <th style="padding: 12px; text-align: center;">Pozostałe</th>
+                <th style="padding: 12px; text-align: center;">% wykorzystania</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in report_rows %}
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 12px;">{{ row.first_name }} {{ row.last_name }}</td>
+                <td style="padding: 12px;">{{ row.team }}</td>
+                <td style="padding: 12px; text-align: center;">{{ row.total }}</td>
+                <td style="padding: 12px; text-align: center;">{{ row.used }}</td>
+                <td style="padding: 12px; text-align: center; color: #28a745; font-weight: bold;">{{ row.remaining }}</td>
+                <td style="padding: 12px; text-align: center;">
+                    <div style="background: #e9ecef; border-radius: 8px; height: 10px;">
+                        <div style="background: #0d6efd; width: {{ row.percent_used }}%; height: 10px; border-radius: 8px;"></div>
+                    </div>
+                    {{ row.percent_used }}%
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 12px; text-align: center;">Brak danych.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p style="margin-top: 20px;">
+        <a href="{% url 'reports_index' %}">&laquo; Wróć do raportów</a>
+    </p>
+</div>
+{% endblock %}

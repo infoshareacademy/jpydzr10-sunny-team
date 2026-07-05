@@ -30,17 +30,26 @@ def deactivate_user(request, pk):
 @login_required
 @role_required('can_view_user_list')
 def user_list(request):
-    users = User.objects.all()
+    from django.db.models import Case, When, IntegerField
+
+    role_order = Case(
+        When(role='Admin', then=0),
+        When(role='Manager', then=1),
+        When(role='HR', then=2),
+        When(role='Worker', then=3),
+        default=4,
+        output_field=IntegerField(),
+    )
+    users = User.objects.exclude(role='Admin').exclude(is_superuser=True).annotate(role_order=role_order).order_by(
+        '-is_active', 'role_order', 'last_name', 'first_name'
+    )
+
     return render(request, 'accounts/user_list.html', {'users': users})
 
 @login_required
 def switch_role(request):
-    ALLOWED_ROLES = {
-        'Manager': ['Manager', 'Worker'],
-        'HR': ['HR', 'Worker'],
-        'Admin': ['Admin'],
-        'Worker': ['Worker'],
-    }
+    from accounts.context_processors import ALLOWED_ROLES
+
     new_role = request.POST.get("role")
     if new_role in ALLOWED_ROLES.get(request.user.role, []):
         request.session['active_role'] = new_role
