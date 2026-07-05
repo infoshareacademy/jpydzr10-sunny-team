@@ -1,33 +1,15 @@
-import csv
-from datetime import date
-
-from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
-from django.views.decorators.http import require_POST
-
 from accounts.forms import AddUserForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from leave_requests.display_vacations import vacations
 from datetime import date, datetime, timedelta
-
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_POST
 from django.views.generic import  CreateView, UpdateView
-from database.leave_requests_db import load_leave_requests, save_leave_requests
 from django.contrib import messages
-from accounts.permission import Permission
-from database.leave_requests_db import load_leave_requests, save_leave_requests
-from leave_requests.display_vacations import vacations
+from accounts.permission import Permission, role_required, RoleRequiredMixin
 from leaves.models import LeaveRequest, WorkerProfile
 from logs.models import ChangeLog
 from logs_old.log_history import app_log
-
-# from .services import count_leave_days_service
-from leaves.models import LeaveRequest
 import csv
 from django.http import HttpResponse
 import calendar
@@ -35,8 +17,7 @@ from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-
-
+from django.core.exceptions import PermissionDenied
 
 @login_required
 def dashboard(request):
@@ -91,6 +72,7 @@ def dashboard(request):
     return render(request, 'leaves/dashboard.html', context)
 
 @login_required
+@role_required("can_see_all_requests")
 def all_requests_list(request):
     status_filter = request.GET.get('status', '').lower()
     date_from_str = request.GET.get('date_from', '')
@@ -154,9 +136,9 @@ def all_requests_list(request):
         }
 
     return render(request, 'leaves/all_requests_list.html', context)
-    
 
 @login_required
+@role_required("can_see_own_requests")
 def my_vacations(request):
     today = date.today()
 
@@ -202,16 +184,14 @@ def my_vacations(request):
     }
     return render(request, 'leaves/my_vacations.html', context)
 
+
 @login_required
+@role_required("can_approve_request")
 @require_POST
 def approve_request(request, request_id):
     leave_request = get_object_or_404(LeaveRequest, pk=request_id)
     active_role = request.session.get('active_role', request.user.role)
     today = date.today()
-
-    if not Permission.verifyPermission(active_role, 'can_approve_request'):
-        messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
-        return redirect('all_requests_list')
 
     # Pobierz zespół pracownika składającego wniosek
     try:
@@ -265,15 +245,12 @@ def approve_request(request, request_id):
 
     return redirect('all_requests_list')
 
+
 @login_required
+@role_required("can_reject_request")
 @require_POST
 def reject_request(request, request_id):
     leave_request = get_object_or_404(LeaveRequest, pk=request_id)
-
-    active_role = request.session.get('active_role', request.user.role)
-    if not Permission.verifyPermission(active_role, 'can_reject_request'):
-        messages.error(request, 'Nie masz uprawnień do odrzucania wniosków urlopowych.')
-        return redirect('all_requests_list')
 
     try:
         leave_request.reject(who=request.user)
@@ -283,11 +260,12 @@ def reject_request(request, request_id):
 
     return redirect('all_requests_list')
 
-class LeaveRequestView(LoginRequiredMixin, CreateView):
+class LeaveRequestView(RoleRequiredMixin, CreateView):
     """
      Widok odpowiedzialny za tworzenie nowego wniosku urlopowego.
      Wymaga zalogowania użytkownika.
     """
+    required_action = "can_submit_request"
     model = LeaveRequest
     form_class = LeaveRequestForm
     template_name = 'leaves/new_request.html'
@@ -351,28 +329,31 @@ class LeaveRequestView(LoginRequiredMixin, CreateView):
 
         return context
 
-class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
+class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
     """
     Widok odpowiedzialny za edycję istniejącego wniosku urlopowego.
     Zawiera walidację uprawnień oraz stanu wniosku.
     """
+    required_action = "can_change_request"
     model = LeaveRequest
     form_class = LeaveRequestForm
     template_name = 'leaves/edit_request.html'
     success_url = reverse_lazy('my_vacations')
 
     def dispatch(self, request, *args, **kwargs):
+
         """
         Główna metoda kontrolująca dostęp do widoku. Sprawdza:
          1. Czy rola użytkownika pozwala ogólnie na modyfikację wniosków.
          2. Czy wniosek ma status "PENDING" (oczekujący) – tylko takie można edytować.
          3. Czy pracownik  próbuje edytować swój własny wniosek, a nie cudzy.
         """
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
 
-        # Sprawdzenie uprawnień globalnych dla roli
         active_role = request.session.get('active_role', request.user.role)
-        if not Permission.verifyPermission(active_role, 'can_change_request'):
-            return redirect('dashboard')
+        if not Permission.verifyPermission(active_role, self.required_action):
+            raise PermissionDenied
 
         obj = self.get_object()
 
@@ -447,22 +428,17 @@ class LeaveRequestUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 @method_decorator(require_POST, name='dispatch')
-class CancelLeaveView(LoginRequiredMixin, View):
+class CancelLeaveView(RoleRequiredMixin, View):
+    required_action = "can_cancel_request"
 
     def post(self, request, pk):
         leave_request = get_object_or_404(LeaveRequest, pk=pk)
+        active_role = request.session.get('active_role', request.user.role)
 
-        # sprawdź uprawnienie roli
-        if not Permission.verifyPermission(request.user.role, 'can_cancel_request'):
-            messages.error(request, "Nie masz uprawnień do anulowania wniosków.")
-            return redirect('dashboard')
-
-        # Worker tylko własne
-        if request.user.role == 'Worker' and leave_request.employee != request.user:
+        if active_role == 'Worker' and leave_request.employee != request.user:
             messages.error(request, "Możesz anulować tylko własne wnioski.")
             return redirect('my_vacations')
 
-        # tylko pending
         if leave_request.status != LeaveRequest.Status.PENDING:
             messages.error(request, "Można anulować tylko wnioski oczekujące.")
             return redirect('my_vacations')
@@ -470,12 +446,12 @@ class CancelLeaveView(LoginRequiredMixin, View):
         leave_request.cancel_request(who=request.user)
         messages.success(request, "Wniosek został anulowany.")
 
-        # Worker wraca do swoich, reszta do listy wszystkich
-        if request.user.role == 'Worker':
+        if active_role == 'Worker':
             return redirect('my_vacations')
         return redirect('all_requests_list')
 
 @login_required
+@role_required("can_view_logs")
 def log_history(request):
 
     logs = ChangeLog.objects.all().order_by('-created_at')
@@ -509,6 +485,7 @@ def log_history(request):
 
 
 @login_required
+@role_required("can_see_team_balance")
 def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
@@ -575,6 +552,7 @@ def team_leave_balance(request):
 
 
 @login_required
+@role_required("can_export_requests")
 def export_requests_csv(request):
     # tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
@@ -652,15 +630,8 @@ def export_requests_csv(request):
     return response
 
 @login_required
+@role_required("can_add_user")
 def add_user(request):
-    user_role = getattr(request.user, 'role', None)
-    if not user_role:
-        user_role = "Admin"  # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
-
-    if user_role not in ['Admin', 'HR']:
-        messages.error(request, 'Nie masz uprawnień do dodawania użytkowników')
-        return redirect('all_requests_list')
-
     if request.method == 'POST':
         form = AddUserForm(request.POST)
         if form.is_valid():
@@ -689,15 +660,8 @@ def add_user(request):
     return render(request, 'leaves/add_user.html', {'form': form})
 
 @login_required
+@role_required("can_reset_password")
 def reset_password(request):
-    user_role = getattr(request.user, 'role', None)
-    if not user_role:
-        user_role = "Admin"  # Tymczasowo, bo nie ma loginu utworzonego i logujemy sie jako admin
-
-    if user_role not in ['Admin', 'HR']:
-        messages.error(request, "Nie masz uprawnień do resetowania haseł.")
-        return redirect('all_requests_list')
-
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         new_password = request.POST.get('new_password')
@@ -738,12 +702,9 @@ def reset_password(request):
     return render(request, 'leaves/reset_password.html', {'users': users})
 
 @login_required
+@role_required("can_see_team_calendar")
 def team_calendar(request):
     # miesięczny kalendarz urlopów dla całego zespołu
-
-    if request.user.role not in ['Manager', 'HR']:
-        return render(request, 'leaves/access_denied.html')
-
     # jeśli w url jest rok/mc to pobieram
     # jeśli brak to bieżący
     today = date.today()
