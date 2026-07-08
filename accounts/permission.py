@@ -1,6 +1,7 @@
 from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
 from logs.utils import get_client_ip
 class Permission:
     """

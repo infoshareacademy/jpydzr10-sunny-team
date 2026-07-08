@@ -490,7 +490,7 @@ def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
     if active_role not in ['Manager', 'HR']:
-        return render(request, 'leaves/access_denied.html')
+        return redirect('/leaves/dashboard/')
 
     if active_role == 'HR':
         # HR widzi wszystkie zespoły
