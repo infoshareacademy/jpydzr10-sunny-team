@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-09 20:40+0200\n"
+"POT-Creation-Date: 2026-07-09 20:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,10 +17,51 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
 #: calendar_app/settings.py:135
 msgid "Polski"
 msgstr ""
 
 #: calendar_app/settings.py:136
 msgid "English"
+msgstr ""
+
+#: templates/base.html:23
+msgid "Pulpit"
+msgstr ""
+
+#: templates/base.html:24
+msgid "Moje Urlopy"
+msgstr ""
+
+#: templates/base.html:25
+msgid "Nowy Wniosek"
+msgstr ""
+
+#: templates/base.html:27
+msgid "Raporty"
+msgstr ""
+
+#: templates/base.html:31
+#, python-format
+msgid ""
+"\n"
+"            Witaj %(first)s %(last)s (%(role)s) !\n"
+"            "
+msgstr ""
+
+#: templates/base.html:35
+msgid "Wybierz rolę:"
+msgstr ""
+
+#: templates/base.html:43
+msgid "Przełącz"
+msgstr ""
+
+#: templates/base.html:49
+msgid "Wyloguj się"
+msgstr ""
+
+#: templates/base.html:69
+msgid "© 2026 SunnyTeam"
 msgstr ""
