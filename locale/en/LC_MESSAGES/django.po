@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-09 20:48+0200\n"
+"POT-Creation-Date: 2026-07-12 19:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +18,45 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: calendar_app/settings.py:135
+#: calendar_app/settings.py:136
 msgid "Polski"
 msgstr "Polish"
 
-#: calendar_app/settings.py:136
+#: calendar_app/settings.py:137
 msgid "English"
 msgstr "English"
+
+#: login/templates/login.html:7
+msgid "Logowanie – Sunny"
+msgstr "Login - Sunny"
+
+#: login/templates/login.html:208
+msgid "System zarządzania urlopami"
+msgstr "Leave management system"
+
+#: login/templates/login.html:213
+msgid "Witaj z powrotem 👋"
+msgstr "Welcome back 👋"
+
+#: login/templates/login.html:214
+msgid "Zaloguj się do swojego konta"
+msgstr "Log in to your account"
+
+#: login/templates/login.html:227
+msgid "Nazwa użytkownika"
+msgstr "Username"
+
+#: login/templates/login.html:238
+msgid "Hasło"
+msgstr "Password"
+
+#: login/templates/login.html:248
+msgid "Zaloguj się"
+msgstr "Log in"
+
+#: login/templates/login.html:252 templates/base.html:77
+msgid "© 2026 SunnyTeam"
+msgstr "© 2026 SunnyTeam"
 
 #: templates/base.html:23
 msgid "Pulpit"
@@ -61,10 +93,6 @@ msgstr "Select a role:"
 msgid "Przełącz"
 msgstr "Switch"
 
-#: templates/base.html:49
+#: templates/base.html:57
 msgid "Wyloguj się"
 msgstr "Log out"
-
-#: templates/base.html:69
-msgid "© 2026 SunnyTeam"
-msgstr "© 2026 SunnyTeam"
