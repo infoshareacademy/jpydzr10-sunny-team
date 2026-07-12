@@ -273,6 +273,17 @@
                 </button>
             </form>
 
+            <div style="margin-top: auto; display: flex; justify-content: center; padding-top: 1rem;">
+                <form action="{% url 'set_language' %}" method="post">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.path }}">
+                    <select name="language" onchange="this.form.submit()">
+                        <option value="pl" {% if LANGUAGE_CODE == 'pl' %}selected{% endif %}>Polski</option>
+                        <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+                    </select>
+                </form>
+            </div>
+
             <div class="login-footer">{% trans "© 2026 SunnyTeam" %}</div>
         </div>
 
