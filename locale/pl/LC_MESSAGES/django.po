@@ -22,27 +22,27 @@ msgstr ""
 
 #: calendar_app/settings.py:135
 msgid "Polski"
-msgstr ""
+msgstr "Polski"
 
 #: calendar_app/settings.py:136
 msgid "English"
-msgstr ""
+msgstr "Angielski"
 
 #: templates/base.html:23
 msgid "Pulpit"
-msgstr ""
+msgstr "Pulpit"
 
 #: templates/base.html:24
 msgid "Moje Urlopy"
-msgstr ""
+msgstr "Moje Urlopy"
 
 #: templates/base.html:25
 msgid "Nowy Wniosek"
-msgstr ""
+msgstr "Nowy Wniosek"
 
 #: templates/base.html:27
 msgid "Raporty"
-msgstr ""
+msgstr "Raporty"
 
 #: templates/base.html:31
 #, python-format
@@ -51,19 +51,22 @@ msgid ""
 "            Witaj %(first)s %(last)s (%(role)s) !\n"
 "            "
 msgstr ""
+"\n"
+"            Witaj %(first)s %(last)s (%(role)s) !\n"
+"            "
 
 #: templates/base.html:35
 msgid "Wybierz rolę:"
-msgstr ""
+msgstr "Wybierz rolę:"
 
 #: templates/base.html:43
 msgid "Przełącz"
-msgstr ""
+msgstr "Przełącz"
 
 #: templates/base.html:49
 msgid "Wyloguj się"
-msgstr ""
+msgstr "Wyloguj się"
 
 #: templates/base.html:69
 msgid "© 2026 SunnyTeam"
-msgstr ""
+msgstr "© 2026 SunnyTeam"
