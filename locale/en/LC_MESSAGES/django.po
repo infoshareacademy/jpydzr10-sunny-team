@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 19:45+0200\n"
+"POT-Creation-Date: 2026-07-12 19:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,31 +30,31 @@ msgstr "English"
 msgid "Logowanie – Sunny"
 msgstr "Login - Sunny"
 
-#: login/templates/login.html:208
+#: login/templates/login.html:233
 msgid "System zarządzania urlopami"
 msgstr "Leave management system"
 
-#: login/templates/login.html:213
+#: login/templates/login.html:237
 msgid "Witaj z powrotem 👋"
 msgstr "Welcome back 👋"
 
-#: login/templates/login.html:214
+#: login/templates/login.html:238
 msgid "Zaloguj się do swojego konta"
 msgstr "Log in to your account"
 
-#: login/templates/login.html:227
+#: login/templates/login.html:251
 msgid "Nazwa użytkownika"
 msgstr "Username"
 
-#: login/templates/login.html:238
+#: login/templates/login.html:262
 msgid "Hasło"
 msgstr "Password"
 
-#: login/templates/login.html:248
+#: login/templates/login.html:272
 msgid "Zaloguj się"
 msgstr "Log in"
 
-#: login/templates/login.html:252 templates/base.html:77
+#: login/templates/login.html:276 templates/base.html:77
 msgid "© 2026 SunnyTeam"
 msgstr "© 2026 SunnyTeam"
 
