@@ -34,7 +34,6 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.12);
         }
 
-        /* === LEWA STRONA – grafika === */
         .login-visual {
             flex: 1;
             background: lightskyblue;
@@ -106,7 +105,6 @@
             width: 100%;
         }
 
-        /* === PRAWA STRONA – formularz === */
         .login-form-side {
             width: 360px;
             background: white;
@@ -198,17 +196,43 @@
 <div class="login-wrapper">
     <div class="login-card">
 
-        <!-- LEWA: grafika -->
         <div class="login-visual">
-            <!-- SVG bez zmian -->
-            ...
+
+            <svg class="birds" width="70" height="24" viewBox="0 0 70 24" fill="none">
+                <path d="M0 12 Q6 4 12 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M18 8 Q24 0 30 8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M42 14 Q48 6 54 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+
+            <svg class="palm-left" width="90" height="160" viewBox="0 0 90 160">
+                <rect x="36" y="70" width="10" height="90" rx="5" fill="#5a8a3a"/>
+                <ellipse cx="41" cy="72" rx="34" ry="11" fill="#4a7a2a" transform="rotate(-25 41 72)"/>
+                <ellipse cx="41" cy="66" rx="30" ry="10" fill="#5a8a3a" transform="rotate(10 41 66)"/>
+                <ellipse cx="41" cy="63" rx="26" ry="9" fill="#4a7a2a" transform="rotate(-38 41 63)"/>
+                <ellipse cx="41" cy="68" rx="24" ry="9" fill="#5a8a3a" transform="rotate(28 41 68)"/>
+                <ellipse cx="41" cy="60" rx="20" ry="8" fill="#4a7a2a" transform="rotate(-52 41 60)"/>
+            </svg>
+
+            <svg class="palm-right" width="90" height="160" viewBox="0 0 90 160">
+                <rect x="36" y="70" width="10" height="90" rx="5" fill="#5a8a3a"/>
+                <ellipse cx="41" cy="72" rx="34" ry="11" fill="#4a7a2a" transform="rotate(-25 41 72)"/>
+                <ellipse cx="41" cy="66" rx="30" ry="10" fill="#5a8a3a" transform="rotate(10 41 66)"/>
+                <ellipse cx="41" cy="63" rx="26" ry="9" fill="#4a7a2a" transform="rotate(-38 41 63)"/>
+                <ellipse cx="41" cy="68" rx="24" ry="9" fill="#5a8a3a" transform="rotate(28 41 68)"/>
+                <ellipse cx="41" cy="60" rx="20" ry="8" fill="#4a7a2a" transform="rotate(-52 41 60)"/>
+            </svg>
+
+            <svg class="mountains" viewBox="0 0 500 130" preserveAspectRatio="none">
+                <polygon points="0,130 80,50 170,95 260,25 350,75 440,35 500,60 500,130" fill="rgba(255,255,255,0.12)"/>
+                <polygon points="0,130 60,70 150,105 240,50 330,90 420,55 500,75 500,130" fill="rgba(255,255,255,0.08)"/>
+                <rect x="0" y="105" width="500" height="25" fill="rgba(255,255,255,0.18)"/>
+            </svg>
 
             <i class="bi bi-sun-fill sun-icon"></i>
             <div class="brand-name">Sunny</div>
             <div class="brand-tagline">{% trans "System zarządzania urlopami" %}</div>
         </div>
 
-        <!-- PRAWA: formularz -->
         <div class="login-form-side">
             <div class="form-title">{% trans "Witaj z powrotem 👋" %}</div>
             <div class="form-subtitle">{% trans "Zaloguj się do swojego konta" %}</div>
