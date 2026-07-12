@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 19:56+0200\n"
+"POT-Creation-Date: 2026-07-12 20:42+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,6 +27,114 @@ msgstr "Polski"
 #: calendar_app/settings.py:137
 msgid "English"
 msgstr "Angielski"
+
+#: leaves/templates/leaves/dashboard.html:3
+#: leaves/templates/leaves/dashboard.html:77
+msgid "Dashboard Urlopowy"
+msgstr "Pulpit Urlopowy"
+
+#: leaves/templates/leaves/dashboard.html:81
+msgid "Dostępne dni urlopu"
+msgstr "Dostępne dni urlopu"
+
+#: leaves/templates/leaves/dashboard.html:84
+#, python-format
+msgid ""
+"\n"
+"                    <p>z %(total)s dni w 2026 roku</p>\n"
+"                "
+msgstr ""
+"\n"
+"                    <p>z %(total)s dni w 2026 roku</p>\n"
+"                "
+
+#: leaves/templates/leaves/dashboard.html:90
+#, python-format
+msgid ""
+"\n"
+"                    <small style=\"color: #888;\">%(percent)s%% "
+"wykorzystano</small>\n"
+"                "
+msgstr ""
+"\n"
+"                    <small style=\"color: #888;\">%(percent)s%% "
+"wykorzystano</small>\n"
+"                "
+
+#: leaves/templates/leaves/dashboard.html:95
+msgid "Brak profilu pracownika"
+msgstr "Brak profilu pracownika"
+
+#: leaves/templates/leaves/dashboard.html:100
+msgid "Aktywne wnioski"
+msgstr "Aktywne wnioski"
+
+#: leaves/templates/leaves/dashboard.html:102
+#, python-format
+msgid ""
+"\n"
+"                <p>%(count)s oczekujący na decyzję</p>\n"
+"            "
+msgstr ""
+"\n"
+"                <p>%(count)s oczekujący na decyzję</p>\n"
+"            "
+
+#: leaves/templates/leaves/dashboard.html:108
+msgid "Wykorzystane w tym roku"
+msgstr "Wykorzystane w tym roku"
+
+#: leaves/templates/leaves/dashboard.html:114
+msgid "dni urlopu"
+msgstr "dni urlopu"
+
+#: leaves/templates/leaves/dashboard.html:120
+msgid "Zarządzanie zespołem"
+msgstr "Zarządzanie zespołem"
+
+#: leaves/templates/leaves/dashboard.html:121
+msgid "Zobacz wnioski zespołu"
+msgstr "Zobacz wnioski zespołu"
+
+#: leaves/templates/leaves/dashboard.html:122
+msgid "Bilans urlopów zespołu"
+msgstr "Bilans urlopów zespołu"
+
+#: leaves/templates/leaves/dashboard.html:124
+msgid "Kalendarz zespołu"
+msgstr "Kalendarz zespołu"
+
+#: leaves/templates/leaves/dashboard.html:129
+msgid "Moje wnioski"
+msgstr "Moje wnioski"
+
+#: leaves/templates/leaves/dashboard.html:130
+msgid "Zobacz moje urlopy"
+msgstr "Zobacz moje urlopy"
+
+#: leaves/templates/leaves/dashboard.html:131
+msgid "Złóż nowy wniosek"
+msgstr "Złóż nowy wniosek"
+
+#: leaves/templates/leaves/dashboard.html:137
+msgid "Zarządzanie użytkownikami"
+msgstr "Zarządzanie użytkownikami"
+
+#: leaves/templates/leaves/dashboard.html:138
+msgid "Dodaj użytkownika"
+msgstr "Dodaj użytkkownika"
+
+#: leaves/templates/leaves/dashboard.html:139
+msgid "Lista użytkowników"
+msgstr "Lista użytkowników"
+
+#: leaves/templates/leaves/dashboard.html:144
+msgid "Ostatnie akcje"
+msgstr "Ostatnie akcje"
+
+#: leaves/templates/leaves/dashboard.html:154
+msgid "Brak ostatnich akcji."
+msgstr "Brak ostatnich akcji."
 
 #: login/templates/login.html:7
 msgid "Logowanie – Sunny"
@@ -56,7 +164,7 @@ msgstr "Hasło"
 msgid "Zaloguj się"
 msgstr "Zaloguj się"
 
-#: login/templates/login.html:276 templates/base.html:77
+#: login/templates/login.html:287 templates/base.html:77
 msgid "© 2026 SunnyTeam"
 msgstr "© 2026 SunnyTeam"
 
