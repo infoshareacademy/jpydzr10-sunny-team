@@ -37,7 +37,7 @@
                 {% csrf_token %}
                 <select name="role">
                     {% for role in available_roles %}
-                    <option value="{{ role }}" {% if role== active_role %}selected{% endif %}>{{ role }}</option>
+                    <option value="{{ role }}" {% if role == active_role %}selected{% endif %}>{{ role }}</option>
                     {% endfor %}
                 </select>
                 <button type="submit" class="btn btn-secondary">{% trans "Przełącz" %}</button>
