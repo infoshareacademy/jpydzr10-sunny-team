@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 20:42+0200\n"
+"POT-Creation-Date: 2026-07-12 23:05+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -136,6 +136,97 @@ msgstr "Ostatnie akcje"
 msgid "Brak ostatnich akcji."
 msgstr "Brak ostatnich akcji."
 
+#: leaves/templates/leaves/my_vacations.html:3
+#: leaves/templates/leaves/my_vacations.html:47 templates/base.html:24
+msgid "Moje Urlopy"
+msgstr "Moje Urlopy"
+
+#: leaves/templates/leaves/my_vacations.html:50
+msgid "Aktualne (trwające)"
+msgstr "Aktualne (trwające)"
+
+#: leaves/templates/leaves/my_vacations.html:55
+#: leaves/templates/leaves/my_vacations.html:95
+#: leaves/templates/leaves/my_vacations.html:150
+msgid "Data rozpoczęcia"
+msgstr "Data rozpoczęcia"
+
+#: leaves/templates/leaves/my_vacations.html:56
+#: leaves/templates/leaves/my_vacations.html:96
+#: leaves/templates/leaves/my_vacations.html:151
+msgid "Data zakończenia"
+msgstr "Data zakończenia"
+
+#: leaves/templates/leaves/my_vacations.html:57
+#: leaves/templates/leaves/my_vacations.html:97
+#: leaves/templates/leaves/my_vacations.html:152
+msgid "Liczba dni"
+msgstr "Liczba dni"
+
+#: leaves/templates/leaves/my_vacations.html:58
+#: leaves/templates/leaves/my_vacations.html:98
+#: leaves/templates/leaves/my_vacations.html:153
+msgid "Status"
+msgstr "Status"
+
+#: leaves/templates/leaves/my_vacations.html:69
+#: leaves/templates/leaves/my_vacations.html:110
+#: leaves/templates/leaves/my_vacations.html:164
+msgid "Zatwierdzony"
+msgstr "Zatwierdzony"
+
+#: leaves/templates/leaves/my_vacations.html:71
+#: leaves/templates/leaves/my_vacations.html:112
+msgid "Oczekujący"
+msgstr "Oczekujący"
+
+#: leaves/templates/leaves/my_vacations.html:73
+#: leaves/templates/leaves/my_vacations.html:166
+msgid "Odrzucony"
+msgstr "Odrzucony"
+
+#: leaves/templates/leaves/my_vacations.html:75
+#: leaves/templates/leaves/my_vacations.html:114
+#: leaves/templates/leaves/my_vacations.html:168
+msgid "Anulowany"
+msgstr "Anulowany"
+
+#: leaves/templates/leaves/my_vacations.html:85
+msgid "Brak aktualnych urlopów."
+msgstr "Brak aktualnych urlopów."
+
+#: leaves/templates/leaves/my_vacations.html:90
+msgid "Planowane"
+msgstr "Planowane"
+
+#: leaves/templates/leaves/my_vacations.html:99
+msgid "Akcje"
+msgstr "Akcje"
+
+#: leaves/templates/leaves/my_vacations.html:122
+msgid "Edytuj"
+msgstr "Edytuj"
+
+#: leaves/templates/leaves/my_vacations.html:129
+msgid "Czy na pewno chcesz anulować?"
+msgstr "Czy na pewno chcesz anulować?"
+
+#: leaves/templates/leaves/my_vacations.html:130
+msgid "Anuluj"
+msgstr "Anuluj"
+
+#: leaves/templates/leaves/my_vacations.html:140
+msgid "Brak planowanych urlopów."
+msgstr "Brak planowanych urlopów."
+
+#: leaves/templates/leaves/my_vacations.html:145
+msgid "Archiwalne"
+msgstr "Archiwalne"
+
+#: leaves/templates/leaves/my_vacations.html:178
+msgid "Brak archiwalnych urlopów."
+msgstr "Brak archiwalnych urlopów."
+
 #: login/templates/login.html:7
 msgid "Logowanie – Sunny"
 msgstr "Logowanie – Sunny"
@@ -171,10 +262,6 @@ msgstr "© 2026 SunnyTeam"
 #: templates/base.html:23
 msgid "Pulpit"
 msgstr "Pulpit"
-
-#: templates/base.html:24
-msgid "Moje Urlopy"
-msgstr "Moje Urlopy"
 
 #: templates/base.html:25
 msgid "Nowy Wniosek"
