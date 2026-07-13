@@ -1,10 +1,15 @@
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
-from logs.models import AuthLog, EmailVerificationCode
 from logs.utils import get_client_ip, get_lockout_until, reset_failed_attempts, log_failed_attempt
-from django.core.mail import send_mail
+from django.utils import timezone
+from datetime import timedelta
 import random
+from logs.models import AuthLog, EmailVerificationCode
+from django.core.mail import send_mail
+
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_WINDOW_MINUTES = 5
 
 User = get_user_model()
 
@@ -43,7 +48,6 @@ def login_view(request):
                 username=form.cleaned_data['username'],
                 password=form.cleaned_data['password'],
             )
-
             if user is None:
                 # Login poprawny pod kątem formy, ale hasło błędne. Przekazujemy dopasowanego użytkownika.
                 new_lockout = log_failed_attempt(existing_user, username, ip_address)
@@ -68,9 +72,8 @@ def login_view(request):
                     severity='info',
                     details='Poprawne uwierzytelnienie hasłem. Rozpoczęto procedurę 2FA.'
                 )
-
-                # Udane logowanie hasłem - czyścimy próby dla IP
-                reset_failed_attempts(ip_address)
+                # Udane logowanie - unieważniamy poprzednie nieudane proby 
+                reset_failed_attempts(username, ip_address)
                 code = str(random.randint(100000, 999999))
                 EmailVerificationCode.objects.create(user=user, code=code)
                 request.session['2fa_user_id'] = user.id
@@ -83,7 +86,7 @@ def login_view(request):
                 # )
                 return redirect('verify_2fa')
         else:
-            # Formularz nie przeszedł walidacji (np. nieistniejący użytkownik)
+            # Formularz nie przeszedł walidacji (np. puste hasło lub nieistniejący user)
             new_lockout = log_failed_attempt(existing_user, username, ip_address)
             if new_lockout is not None:
                 return render(request, 'login.html', {
@@ -93,7 +96,6 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
-
 
 def logout_view(request):
     if request.user.is_authenticated:

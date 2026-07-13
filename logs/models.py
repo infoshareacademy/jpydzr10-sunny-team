@@ -31,6 +31,12 @@ class ActivityLog(models.Model):
         null=True,
         related_name='activity_logs',
     )
+    SEVERITY_CHOICES = [
+        ('info', 'Info'),
+        ('warning', 'Warning'),
+        ('critical', 'Critical')
+    ]
+
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     object_type = models.CharField(max_length=20, choices=OBJECT_TYPE_CHOICES)
     object_id = models.PositiveIntegerField(null=True, blank=True)

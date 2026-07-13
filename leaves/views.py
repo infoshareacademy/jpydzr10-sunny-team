@@ -193,14 +193,15 @@ def approve_request(request, request_id):
         messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
         return redirect('all_requests_list')
 
+    # 1. Pobierz zespół pracownika składającego wniosek
     try:
         employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
         employee_team = employee_profile.team
     except WorkerProfile.DoesNotExist:
         messages.error(request, _('Pracownik nie ma przypisanego zespołu.'))
-
         return redirect('all_requests_list')
 
+    # 2. Walidacja uprawnień per rola
     if active_role == 'Manager':
         # Manager może zatwierdzać tylko swój zespół
         try:
@@ -209,15 +210,17 @@ def approve_request(request, request_id):
                 messages.error(request, _('Możesz zatwierdzać tylko wnioski swojego zespołu.'))
                 return redirect('all_requests_list')
         except WorkerProfile.DoesNotExist:
-            messages.error(request,_('Nie masz przypisanego zespołu.'))
+            messages.error(request, _('Nie masz przypisanego zespołu.'))
             return redirect('all_requests_list')
 
     elif active_role == 'HR':
+        # Pobieramy wszystkich managerów z tego zespołu
         team_managers_profiles = WorkerProfile.objects.select_related('user').filter(
             team=employee_team,
             user__role='Manager'
         )
         team_managers_users = [p.user for p in team_managers_profiles]
+
         if team_managers_users:
             managers_on_leave_count = LeaveRequest.objects.filter(
                 employee__in=team_managers_users,
@@ -226,14 +229,16 @@ def approve_request(request, request_id):
                 end_date__gte=today,
             ).distinct().count()
 
+            # HR może zatwierdzić TYLKO gdy wszyscy managerowie zespołu są na urlopie
             if managers_on_leave_count < len(team_managers_users):
                 messages.error(
                     request,
-                    f'W zespole {employee_team} przynajmniej jeden manager jest dostępny. '
-                    f'HR może zatwierdzać tylko, gdy wszyscy managerowie zespołu są na urlopie.'
+                    _('W zespole %(team)s przynajmniej jeden manager jest dostępny. HR może zatwierdzać tylko, gdy wszyscy managerowie zespołu są na urlopie.')
+                    % {'team': employee_team}
                 )
                 return redirect('all_requests_list')
 
+    # 3. PROCES ZATWIERDZANIA (Wspólny dla każdej roli, wyciągnięty na zewnątrz!)
     try:
         leave_request.approve(who=request.user)
         try:
@@ -243,14 +248,16 @@ def approve_request(request, request_id):
             pass
 
         # --- WYŚLIJ MAIL DO PRACOWNIKA ---
-        send_approval_notification(
-            employee_email=leave_request.employee.email,
-            employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
-            request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
-            site_url=settings.SITE_URL,
-        )
+        try:
+            send_approval_notification(
+                employee_email=leave_request.employee.email,
+                employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
+                request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
+                site_url=settings.SITE_URL,
+            )
+        except Exception as mail_error:
+            print(f"Błąd wysyłki powiadomienia e-mail: {mail_error}")
 
-        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
     except Exception as e:
         messages.error(request, _(f'Błąd podczas zatwierdzania: {e}'))
 
@@ -265,6 +272,7 @@ def reject_request(request, request_id):
     active_role = request.session.get('active_role', request.user.role)
     today = date.today()
 
+    # 1. Pobierz zespół pracownika składającego wniosek
     try:
         employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
         employee_team = employee_profile.team
@@ -272,7 +280,9 @@ def reject_request(request, request_id):
         messages.error(request, 'Pracownik nie ma przypisanego zespołu.')
         return redirect('all_requests_list')
 
+    # 2. Walidacja dla Managera
     if active_role == 'Manager':
+        # Manager może odrzucać tylko swój zespół
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
             if my_profile.team != employee_team:
@@ -282,7 +292,9 @@ def reject_request(request, request_id):
             messages.error(request, 'Nie masz przypisanego zespołu.')
             return redirect('all_requests_list')
 
+    # 3. Walidacja dla HR (obsługująca wielu managerów)
     elif active_role == 'HR':
+        # HR może odrzucić tylko jeśli wszyscy managerowie zespołu są na urlopie
         team_managers_profiles = WorkerProfile.objects.select_related('user').filter(
             team=employee_team,
             user__role='Manager'
@@ -305,19 +317,22 @@ def reject_request(request, request_id):
                 )
                 return redirect('all_requests_list')
 
+    # 4. Proces odrzucania wniosku
     try:
         leave_request.reject(who=request.user)
-
-        # --- WYŚLIJ MAIL DO PRACOWNIKA ---
-        send_reject_notification(
-            employee_email=leave_request.employee.email,
-            employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
-            request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
-            rejection_reason=None,
-            site_url=settings.SITE_URL,
-        )
-
         messages.success(request, _(f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.'))
+
+        try:
+            send_reject_notification(
+                employee_email=leave_request.employee.email,
+                employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
+                request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
+                rejection_reason=None,
+                site_url=settings.SITE_URL,
+            )
+        except Exception as mail_error:
+            print(f"Błąd wysyłki powiadomienia e-mail o odrzuceniu: {mail_error}")
+
     except Exception as e:
         messages.error(request, _(f'Błąd podczas odrzucania: {e}'))
 
@@ -621,7 +636,8 @@ def export_requests_csv(request):
     date_from_str = request.GET.get('date_from', '')
     date_to_str = request.GET.get('date_to', '')
 
-    qs = LeaveRequest.objects.select_related('employee', 'employee__worker_profile', 'who_confirmed').all()
+    # punkt wyjścia - wszystkie wnioski
+    qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
 
     # Manager widzi tylko swój zespół
     if active_role == 'Manager':
@@ -660,6 +676,7 @@ def export_requests_csv(request):
         'Liczba dni', 'Status', 'Potwierdził', 'Data złożenia'
     ])
 
+    # dane z bazy
     for req in qs:
         try:
             team = req.employee.worker_profile.team
