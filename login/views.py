@@ -86,7 +86,7 @@ def logout_view(request):
     if request.user.is_authenticated:
         AuthLog.objects.create(
             user=request.user,
-            username='-',
+            username=None,
             ip_address=get_client_ip(request),
             action='logout',
             severity='info',

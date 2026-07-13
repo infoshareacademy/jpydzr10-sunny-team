@@ -214,6 +214,17 @@
 
     <section class="filters">
         <form method="get">
+
+            <div class="filter-group">
+                <label for="id_user">Użytkownik:</label>
+                <select name="user" id="id_user">
+                    <option value="">Wszyscy</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}" {% if user_filter == u.id|stringformat:"i" %}selected{% endif %}>{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <div class="filter-group">
                 <label for="id_action">Akcja:</label>
                 <select name="action" id="id_action">
