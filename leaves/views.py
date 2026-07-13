@@ -1,5 +1,3 @@
-from django.contrib.auth import get_user_model
-from accounts.forms import AddUserForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import date, datetime, timedelta
@@ -8,8 +6,6 @@ from django.views.generic import  CreateView, UpdateView
 from django.contrib import messages
 from accounts.permission import Permission, role_required, RoleRequiredMixin
 from leaves.models import LeaveRequest, WorkerProfile
-from logs.models import ChangeLog
-from logs_old.log_history import app_log
 import csv
 from django.http import HttpResponse
 import calendar
@@ -212,25 +208,34 @@ def approve_request(request, request_id):
             messages.error(request, 'Nie masz przypisanego zespołu.')
             return redirect('all_requests_list')
 
+
     elif active_role == 'HR':
-        # HR może zatwierdzać tylko jeśli manager zespołu jest na urlopie
-        try:
-            team_manager = WorkerProfile.objects.select_related('user').get(
-                team=employee_team,
-                user__role='Manager'
-            )
-            manager_on_leave = LeaveRequest.objects.filter(
-                employee=team_manager.user,
+        # 1. Pobieramy wszystkich managerów z tego zespołu
+        team_managers_profiles = WorkerProfile.objects.select_related('user').filter(
+            team=employee_team,
+            user__role='Manager'
+        )
+        # Wyciągamy samych użytkowników (obiekty User) do późniejszego filtrowania
+        team_managers_users = [p.user for p in team_managers_profiles]
+        if team_managers_users:
+            # 2. Sprawdzamy, ilu z tych managerów MA zatwierdzony urlop na dzisiejszy dzień
+            managers_on_leave_count = LeaveRequest.objects.filter(
+                employee__in=team_managers_users,
                 status=LeaveRequest.Status.APPROVED,
                 start_date__lte=today,
                 end_date__gte=today,
-            ).exists()
-
-            if not manager_on_leave:
-                messages.error(request, f'Manager zespołu {employee_team} jest dostępny. HR może zatwierdzać tylko gdy manager jest na urlopie.')
+            ).distinct().count()
+            # 3. HR może zatwierdzić TYLKO jeśli liczba managerów na urlopie
+            # jest równa całkowitej liczbie managerów w tym zespole (czyli wszyscy są nieobecni)
+            if managers_on_leave_count < len(team_managers_users):
+                messages.error(
+                    request,
+                    f'W zespole {employee_team} przynajmniej jeden manager jest dostępny. '
+                    f'HR może zatwierdzać tylko, gdy wszyscy managerowie zespołu są na urlopie.'
+                )
                 return redirect('all_requests_list')
-        except WorkerProfile.DoesNotExist:
-            pass  # jeśli brak managera w zespole, HR może zatwierdzać
+        # Jeśli w zespole w ogóle nie ma żadnego managera (len == 0),
+        # warunek nie przejdzie przez `if` i HR bez problemu zatwierdzi wniosek.
 
     try:
         leave_request.approve(who=request.user)
@@ -251,7 +256,55 @@ def approve_request(request, request_id):
 @require_POST
 def reject_request(request, request_id):
     leave_request = get_object_or_404(LeaveRequest, pk=request_id)
+    active_role = request.session.get('active_role', request.user.role)
+    today = date.today()
 
+    # 1. Pobierz zespół pracownika składającego wniosek
+    try:
+        employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
+        employee_team = employee_profile.team
+    except WorkerProfile.DoesNotExist:
+        messages.error(request, 'Pracownik nie ma przypisanego zespołu.')
+        return redirect('all_requests_list')
+
+    # 2. Walidacja dla Managera
+    if active_role == 'Manager':
+        # Manager może odrzucać tylko swój zespół
+        try:
+            my_profile = WorkerProfile.objects.get(user=request.user)
+            if my_profile.team != employee_team:
+                messages.error(request, 'Możesz odrzucać tylko wnioski swojego zespołu.')
+                return redirect('all_requests_list')
+        except WorkerProfile.DoesNotExist:
+            messages.error(request, 'Nie masz przypisanego zespołu.')
+            return redirect('all_requests_list')
+
+    # 3. Walidacja dla HR (obsługująca wielu managerów)
+    elif active_role == 'HR':
+        # HR może odrzucić tylko jeśli wszyscy managerowie zespołu są na urlopie
+        team_managers_profiles = WorkerProfile.objects.select_related('user').filter(
+            team=employee_team,
+            user__role='Manager'
+        )
+        team_managers_users = [p.user for p in team_managers_profiles]
+
+        if team_managers_users:
+            managers_on_leave_count = LeaveRequest.objects.filter(
+                employee__in=team_managers_users,
+                status=LeaveRequest.Status.APPROVED,
+                start_date__lte=today,
+                end_date__gte=today,
+            ).distinct().count()
+
+            if managers_on_leave_count < len(team_managers_users):
+                messages.error(
+                    request,
+                    f'W zespole {employee_team} przynajmniej jeden manager jest dostępny. '
+                    f'HR może odrzucać tylko, gdy wszyscy managerowie zespołu są na urlopie.'
+                )
+                return redirect('all_requests_list')
+
+    # 4. Proces odrzucania wniosku
     try:
         leave_request.reject(who=request.user)
         messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.')
@@ -451,46 +504,12 @@ class CancelLeaveView(RoleRequiredMixin, View):
         return redirect('all_requests_list')
 
 @login_required
-@role_required("can_view_logs")
-def log_history(request):
-
-    logs = ChangeLog.objects.all().order_by('-created_at')
-
-    # Filtry
-    action_filter = request.GET.get('action', '')
-    object_type_filter = request.GET.get('object_type', '')
-    date_from = request.GET.get('date_from', '')
-    date_to = request.GET.get('date_to', '')
-
-    if action_filter:
-        logs = logs.filter(action=action_filter)
-
-    if object_type_filter:
-        logs = logs.filter(object_type=object_type_filter)
-
-    if date_from:
-        logs = logs.filter(created_at__date__gte=date_from)
-    if date_to:
-        logs = logs.filter(created_at__date__lte=date_to)
-
-    context = {
-        'logs': logs,
-        'action_filter': action_filter,
-        'object_type_filter': object_type_filter,
-        'date_from': date_from,
-        'date_to': date_to,
-    }
-
-    return render(request, 'leaves/log_history.html', context)
-
-
-@login_required
 @role_required("can_see_team_balance")
 def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
     if active_role not in ['Manager', 'HR']:
-        return render(request, 'leaves/access_denied.html')
+        return redirect('dashboard')
 
     if active_role == 'HR':
         # HR widzi wszystkie zespoły
@@ -557,7 +576,7 @@ def export_requests_csv(request):
     # tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
     if active_role not in ['Manager', 'HR', 'Admin']:
-        return render(request, 'leaves/access_denied.html')
+        return redirect('dashboard')
 
     # filtry z adresu URL
     status_filter = request.GET.get('status', '').lower()
@@ -628,78 +647,6 @@ def export_requests_csv(request):
         ])
 
     return response
-
-@login_required
-@role_required("can_add_user")
-def add_user(request):
-    if request.method == 'POST':
-        form = AddUserForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            team = form.cleaned_data.get('team')
-            hire_date = form.cleaned_data.get('hire_date') or date.today()
-
-            if team:
-                WorkerProfile.objects.create(
-                    user=user,
-                    team=team,
-                    hire_date=hire_date,
-                )
-
-            # Logowanie akcji
-            app_log.add_new_change(
-                user_id=request.user.id,
-                action='dodaj',
-                object_type='user',
-            )
-            messages.success(request, f'Użytkownik {user.username} został pomyślnie dodany.')
-            return redirect('user_list')
-    else:
-        form = AddUserForm()
-
-    return render(request, 'leaves/add_user.html', {'form': form})
-
-@login_required
-@role_required("can_reset_password")
-def reset_password(request):
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        new_password = request.POST.get('new_password')
-
-        if not user_id or not new_password:
-            messages.error(request, "Brak ID użytkownika lub hasła.")
-            return redirect('reset_password')
-
-        try:
-            User = get_user_model()
-            user = User.objects.get(id=user_id)
-
-            if len(new_password) < 6:
-                messages.error(request, 'Hasło musi mieć conajmniej 6 znaków.')
-                return redirect('reset_password')
-
-            user.set_password(new_password)
-            user.save()
-
-            # Logowanie akcji
-            app_log.add_new_change(
-            user_id=request.user.id,
-            action='reset_hasla',
-            object_type='user'
-            )
-
-            messages.success(request, f'Hasło dla użytkownika {user.username} zostało zresetowane.')
-            return redirect('all_requests_list')
-
-        except User.DoesNotExist:
-            messages.error(request, 'Nie znaleziono użytkownika.')
-        except Exception as e:
-            messages.error(request, f'Błąd podczas resetowania hasła: {e}')
-
-    User = get_user_model()
-    users = User.objects.all()
-
-    return render(request, 'leaves/reset_password.html', {'users': users})
 
 @login_required
 @role_required("can_see_team_calendar")

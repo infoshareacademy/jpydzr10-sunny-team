@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% block title %}Historia Aktywności{% endblock %}
+
+{% block content %}
+<style>
+    /* Główny kontener z elastycznym marginesem bocznym */
+    .logs-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    /* Sekcja główna - ukrywa wszystko co wystaje poza zaokrąglone brzegi */
+    .logs-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    /* Kontener responsywny dla tabeli wewnątrz sekcji */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover td {
+        background-color: #f7fafc;
+    }
+
+    /* Filtry - Responsywny układ Flexbox */
+    .filters {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        border: 1px solid #cbd5e0;
+    }
+    .filters form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-grow: 1;
+        min-width: 220px;
+    }
+    .filter-group label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2d3748;
+        white-space: nowrap;
+    }
+    .filters select, .filters input[type="date"] {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        background-color: #fff;
+        color: #1a202c;
+        font-size: 0.95rem;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    .filters select:focus, .filters input[type="date"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    /* Grupa przycisków akcji */
+    .actions-group {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+    }
+    @media (max-width: 992px) {
+        .actions-group {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+
+    .btn-filter {
+        padding: 10px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-filter:hover {
+        background: #0056b3;
+    }
+    .btn-reset {
+        padding: 10px 24px;
+        background: #fff;
+        color: #4a5568;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-align: center;
+    }
+    .btn-reset:hover {
+        background: #edf2f7;
+        color: #1a202c;
+    }
+    .auth-link {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Pigułki statusów (Badges) */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    /* Kolory dla akcji z historii aktywności */
+    .badge-create { background-color: #def7ec; color: #03543f; }
+    .badge-update { background-color: #e1effe; color: #1e429f; }
+    .badge-approve { background-color: #fef3c7; color: #92400e; }
+    .badge-reject { background-color: #fde8e8; color: #9b1c1c; }
+    .badge-cancel { background-color: #f3f4f6; color: #4b5563; }
+    .badge-delete { background-color: #fde8e8; color: #9b1c1c; }
+    .badge-password_reset { background-color: #f3e8ff; color: #6b21a8; }
+    .badge-role_change { background-color: #fce7f3; color: #9d174d; }
+    .badge-default { background-color: #edf2f7; color: #4a5568; }
+
+    /* Paginacja */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 30px;
+    }
+    .pagination a, .pagination span {
+        padding: 10px 16px;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #2d3748;
+        font-size: 0.95rem;
+        font-weight: 600;
+        background: #fff;
+    }
+    .pagination .current {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+
+<div class="logs-wrapper mt-4">
+    <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">Historia Aktywności</h1>
+    <p style="margin-bottom: 30px;"><a href="{% url 'auth_log' %}" class="auth-link">Zobacz logi logowań i dostępu &rarr;</a></p>
+
+    <section class="filters">
+        <form method="get">
+            <div class="filter-group">
+                <label for="id_action">Akcja:</label>
+                <select name="action" id="id_action">
+                    <option value="">Wszystkie</option>
+                    {% for value, label in action_choices %}
+                    <option value="{{ value }}" {% if action_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_object_type">Typ obiektu:</label>
+                <select name="object_type" id="id_object_type">
+                    <option value="">Wszystkie</option>
+                    {% for value, label in object_type_choices %}
+                    <option value="{{ value }}" {% if object_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_from">Od:</label>
+                <input type="date" name="date_from" id="id_date_from" value="{{ date_from }}">
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_to">Do:</label>
+                <input type="date" name="date_to" id="id_date_to" value="{{ date_to }}">
+            </div>
+
+            <div class="actions-group">
+                <button type="submit" class="btn-filter">Filtruj</button>
+                <a href="{% url 'activity_log' %}" class="btn-reset">Reset</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="logs-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Data i godzina</th>
+                        <th style="width: 15%;">Użytkownik</th>
+                        <th style="width: 15%;">Akcja</th>
+                        <th style="width: 20%;">Obiekt</th>
+                        <th>Szczegóły</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="color: #4a5568; font-weight: 500; white-space: nowrap;">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                        <td style="font-weight: 700; color: #1a202c;">{{ log.who|default:"&mdash;" }}</td>
+                        <td>
+                            <span class="badge badge-{{ log.action|default:'default' }}">
+                                {{ log.get_action_display|default:log.action }}
+                            </span>
+                        </td>
+                        <td style="color: #2d3748; font-weight: 500;">
+                            {{ log.get_object_type_display|default:log.object_type }}{% if log.object_id %} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>{% endif %}
+                        </td>
+                        <td style="color: #2d3748; line-height: 1.5; min-width: 250px; word-wrap: break-word;">{{ log.details|default:"&mdash;" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">Brak wpisów w historii dla wybranych filtrów.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if logs.has_other_pages %}
+        <nav class="pagination" aria-label="Nawigacja stronami">
+            {% if logs.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; Pierwsza</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.previous_page_number }}">&lsaquo; Poprzednia</a>
+            {% endif %}
+
+            {% for num in logs.paginator.page_range %}
+                {% if num == logs.number %}
+                    <span class="current" aria-current="page">{{ num }}</span>
+                {% elif num > logs.number|add:'-3' and num < logs.number|add:'3' %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if logs.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.next_page_number }}">Następna &rsaquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.paginator.num_pages }}">Ostatnia &raquo;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from leaves.models import WorkerProfile
 import csv
 
+@login_required
 def reports_index(request):
     return render(request, 'reports/index.html')
 

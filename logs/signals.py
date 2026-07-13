@@ -1,14 +1,13 @@
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from leaves.models import LeaveRequest
-from logs.models import ChangeLog
-from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
-from logs.utils import get_client_ip
+from logs.models import ActivityLog
+
 # Słownik
 STATUS_TO_ACTION = {
-    LeaveRequest.Status.APPROVED: 'zatwierdz',
-    LeaveRequest.Status.REJECTED: 'odrzuc',
-    LeaveRequest.Status.CANCELED: 'anuluj',
+    LeaveRequest.Status.APPROVED: 'approve',
+    LeaveRequest.Status.REJECTED: 'reject',
+    LeaveRequest.Status.CANCELED: 'cancel',
 }
 
 # Sygnał PRE-SAVE: Wywołuje się przed zapisaniem obiektu w bazie danych
@@ -33,13 +32,15 @@ def remember_old_status(sender, instance, **kwargs):
 def log_leave_request_change(sender, instance, created, **kwargs):
     # Obiekt został właśnie utworzony
     if created:
-        ChangeLog.objects.create(
+        ActivityLog.objects.create(
             who=instance.employee,
-            action='dodaj',
+            action='create',
             object_type='leave_request',
+            object_id=instance.id,
+            details=f'Złożono wniosek: {instance.start_date} – {instance.end_date}',
         )
-
         return
+
 
     # Pobieramy stary status zapamiętany w pre_save (jeśli nie istnieje, domyślnie None) i pobieramy nowy w new_status
     old_status = getattr(instance, '_old_status', None)
@@ -47,12 +48,15 @@ def log_leave_request_change(sender, instance, created, **kwargs):
 
     # Wniosek był oczekujący i nadal pozostał oczekujący (np. zmiana daty)
     if old_status == new_status == LeaveRequest.Status.PENDING:
-        ChangeLog.objects.create(
+        ActivityLog.objects.create(
             who=instance.employee,
-            action='edytuj',
+            action='update',
             object_type='leave_request',
+            object_id=instance.id,
+            details=f'Zmieniono wniosek: {instance.start_date} – {instance.end_date}',
         )
         return
+
 
     # Nastąpiła zmiana statusu wniosku (np. z oczekującego na zatwierdzony)
     if old_status != new_status:
@@ -67,33 +71,11 @@ def log_leave_request_change(sender, instance, created, **kwargs):
         who = instance.who_confirmed if instance.who_confirmed else instance.employee
 
         # Tworzymy końcowy log o zmianie statusu
-        ChangeLog.objects.create(
+        ActivityLog.objects.create(
             who=who,
             action=action,
             object_type='leave_request',
+            object_id=instance.id,
+            details=f'Zmieniono status wniosku na {instance.get_status_display()}',
         )
 
-@receiver(user_logged_in)
-def log_user_login(sender, request, user, **kwargs):
-    ChangeLog.objects.create(
-        who=user,
-        action='login',
-        object_type='user',
-        ip_address=get_client_ip(request)
-    )
-@receiver(user_logged_out)
-def log_user_logout(sender, request, user, **kwargs):
-    ChangeLog.objects.create(
-        who=user,
-        action='logout',
-        object_type='user',
-        ip_address=get_client_ip(request)
-    )
-@receiver(user_login_failed)
-def log_user_login_failed(sender, credentials, request, **kwargs):
-    ChangeLog.objects.create(
-        who=None,
-        action='login_failed',
-        object_type='user',
-        ip_address=get_client_ip(request)
-    )

@@ -1,6 +1,8 @@
 from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
+from logs.models import AuthLog
 from logs.utils import get_client_ip
 class Permission:
     """
@@ -79,7 +81,7 @@ class Permission:
             "can_deactivate_staff":     False,
             "can_deactivate_worker":    False,
             "can_view_user_list":       True,
-            "can_view_logs":            True,
+            "can_view_logs":            False,
             "can_see_team_balance":     True,
             "can_export_requests":      True,
             "can_see_team_calendar":    True,
@@ -124,13 +126,13 @@ def role_required(action):
         def wrapper(request, *args, **kwargs):
             active_role = request.session.get('active_role', request.user.role)
             if not Permission.verifyPermission(active_role, action):
-                from logs.models import ChangeLog
-                ChangeLog.objects.create(
-                    who=request.user,
+                AuthLog.objects.create(
+                    user=request.user,
+                    username='-',
                     action='403',
-                    object_type='user',
-                    details=action,
-                    ip_address=get_client_ip(request)
+                    details=f'Brak permisji: {action}. Aktywna rola: {active_role}',
+                    ip_address=get_client_ip(request),
+                    severity = 'warning'
                 )
                 return redirect('dashboard')
             return view_func(request, *args, **kwargs)

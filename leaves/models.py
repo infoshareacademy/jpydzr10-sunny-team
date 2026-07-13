@@ -113,8 +113,6 @@ class LeaveRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data złożenia")
     updated_at = models.DateTimeField(auto_now=True,     verbose_name="Ostatnia zmiana")
 
-
-
     class Meta:
         ordering = ["-created_at"]
         verbose_name = "Wniosek urlopowy"
