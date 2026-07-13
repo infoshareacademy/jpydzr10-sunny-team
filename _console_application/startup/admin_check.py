@@ -1,5 +1,5 @@
-from models.admin import Admin
-from database.database import user_database,create_user
+from _console_application.models.admin import Admin
+from _console_application.database.database import user_database,create_user
 
 def admin_exist():
     if not (any(isinstance(user,Admin) for user in user_database.values())):

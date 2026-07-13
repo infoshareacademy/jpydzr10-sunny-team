@@ -1,6 +1,6 @@
-from auth.login import login
-from database.database import load_users
-from leave_requests.leave_request import LeaveRequest
+from _console_application.auth.login import login
+from _console_application.database.database import load_users
+from _console_application.leave_requests.leave_request import LeaveRequest
 from datetime import date
 
 db = load_users()
@@ -12,7 +12,7 @@ print("\n=== WORKER (ola) ===")
 ola = login("ola", "test123")
 print(f"Zalogowano: {ola.username}, rola: {ola.role}")
 
-req = LeaveRequest(2, ola.first_name, ola.last_name,
+req = LeaveRequest(ola.user_id, ola.first_name, ola.last_name,
                    date(2025, 8, 1), date(2025, 8, 10), 8)
 ola.add_leave_request(req)
 print(f"Wnioski urlopowe: {ola.get_leave_requests()}")

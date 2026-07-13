@@ -1,17 +1,17 @@
 from datetime import datetime
 
-from auth.login import login
-from startup.admin_check import admin_exist
-from models.admin import Admin
-from models.worker import Worker
-from models.manager import Manager
-from models.hr import HR
-from database.database import load_users, create_user, user_database, save_users
-from database.leave_requests_db import load_leave_requests, save_leave_requests
-from leave_requests.leave_request import LeaveRequest
-from leave_requests.display_vacations import display_vacations
-from logs_old.log_history import app_log
-from accounts.permission import Permission
+from _console_application.auth.login import login
+from _console_application.startup.admin_check import admin_exist
+from _console_application.models.admin import Admin
+from _console_application.models.worker import Worker
+from _console_application.models.manager import Manager
+from _console_application.models.hr import HR
+from _console_application.database.database import load_users, create_user, user_database, save_users
+from _console_application.database.leave_requests_db import load_leave_requests, save_leave_requests
+from _console_application.leave_requests.leave_request import LeaveRequest
+from _console_application.leave_requests.display_vacations import display_vacations
+from _console_application.logs.log_history import app_log
+from _console_application.perrmission_system.permission  import Permission
 
 
 # ──────────────────────────────────────────────
@@ -203,7 +203,7 @@ def admin_menu(admin):
         elif choice == "9":
             if not _check(role, "can_reset_password"):
                 continue
-            from auth.login import hash_password
+            from _console_application.auth.login import hash_password
             users = load_users()
             user = _pick_user(users)
             if user:

@@ -1,5 +1,5 @@
-from database.database import user_database
-from models.worker import Worker
+from _console_application.database.database import user_database
+from _console_application.models.worker import Worker
 
 def show_my_leave_balance(user):
     """Wyświetla wykorzystane i pozostałe dni urlopu zalogowanego użytkownika"""

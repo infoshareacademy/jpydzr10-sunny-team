@@ -1,6 +1,6 @@
 from datetime import date
-from models.user import User
-from utils.date_utils import Calendar_utils
+from _console_application.models.user import User
+from _console_application.utils.date_utils import Calendar_utils
 from dateutil.relativedelta import relativedelta
 
 class Worker(User):

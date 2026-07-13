@@ -1,4 +1,4 @@
-from database.database import create_user, load_users
+from _console_application.database.database import create_user, load_users
 
 print("Przed dodaniem:", len(load_users()))
 

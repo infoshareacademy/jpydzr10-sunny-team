@@ -3,10 +3,10 @@ import os
 from datetime import datetime
 from typing import Dict
 
-from models.worker import Worker
+from _console_application.models.worker import Worker
 
 DATA_FILE = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'startup', 'workers.csv')
+    os.path.join(os.path.dirname(__file__), '../..', '_console_application/startup', 'workers.csv')
 )
 
 

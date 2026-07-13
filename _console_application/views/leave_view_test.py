@@ -1,5 +1,5 @@
-from views.leave_view import show_team_leave_balance, show_my_leave_balance
-from database.database import user_database
+from _console_application.views.leave_view import show_team_leave_balance, show_my_leave_balance
+from _console_application.database.database import user_database
 # pokaz urlop zalogowanego pracownika
 user = user_database[13]  # ID przykładowego pracownika
 show_my_leave_balance(user)

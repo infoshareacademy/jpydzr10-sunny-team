@@ -3,15 +3,15 @@ import os
 import csv
 from typing import Dict
 
-from models.user import User
-from models.admin import Admin
-from models.worker import Worker
-from models.hr import HR
-from models.manager import Manager
-from database.workers_db import load_workers, save_workers
+from _console_application.models.user import User
+from _console_application.models.admin import Admin
+from _console_application.models.worker import Worker
+from _console_application.models.hr import HR
+from _console_application.models.manager import Manager
+from _console_application.database.workers_db import load_workers, save_workers
 
 """Scieżka do naszego pliku"""
-DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'startup', 'users.csv'))
+DATA_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', '_console_application/startup', 'users.csv'))
 
 def load_users():
     """Wczytuje użytkowników z pliku CSV, jeśli taki plik istnieje"""
@@ -116,7 +116,7 @@ user_database = load_users()
 
 
 def create_user(user_id: int, username: str, password: str, role: str, is_active: bool = True):
-    from auth.login import hash_password
+    from _console_application.auth.login import hash_password
     from datetime import date
 
     password_hash = hash_password(password)

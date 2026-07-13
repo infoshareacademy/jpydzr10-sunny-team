@@ -1,10 +1,10 @@
-from models.admin import Admin
-from auth.login import hash_password
+from _console_application.models.admin import Admin
+from _console_application.auth.login import hash_password
 from datetime import date
-from models.worker import Worker
-from database.database import save_users, user_database
-from models.user import User
-from database.workers_db import load_workers, save_workers
+from _console_application.models.worker import Worker
+from _console_application.database.database import save_users, user_database
+from _console_application.models.user import User
+from _console_application.database.workers_db import load_workers, save_workers
 
 
 def require_admin(current_user):
@@ -68,7 +68,7 @@ def update_user(current_user, user_id: int, **kwargs):
         user.username = kwargs["username"]
 
     if "password" in kwargs:
-        from auth.login import hash_password
+        from _console_application.auth.login import hash_password
         user.password_hash = hash_password(kwargs["password"])
 
     if "is_active" in kwargs:

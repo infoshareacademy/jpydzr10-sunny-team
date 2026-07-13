@@ -1,4 +1,4 @@
-from models.worker import Worker
+from _console_application.models.worker import Worker
 from datetime import date
 
 class HR(Worker):

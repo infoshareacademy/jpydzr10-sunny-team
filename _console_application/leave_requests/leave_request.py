@@ -17,7 +17,7 @@ class LeaveRequest:
                  end_date:date,
                  amount_days:int):
         """Klasa opisująca wniosek urlopowy pracownika"""
-        from database.database import load_users
+        from _console_application.database.database import load_users
 
         self.employee_id = employee_id
         self.first_name = first_name
