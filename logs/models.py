@@ -12,6 +12,7 @@ class ActivityLog(models.Model):
         ('cancel', 'Anuluj'),
         ('delete', 'Usuń'),
         ('password_reset', 'Reset hasła'),
+        ('new_account', 'Nowe Konto'),
         ('role_change', 'Zmiana roli'),
     ]
     OBJECT_TYPE_CHOICES = [

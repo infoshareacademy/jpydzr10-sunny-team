@@ -19,9 +19,19 @@ class AddUserForm(UserCreationForm):
         required=False,
     )
 
+    other_experience_years = forms.IntegerField(
+        label='Staż urlopowy (lata)',
+        required=False,
+    )
+
+    other_experience_days = forms.IntegerField(
+        label='Dopełnienie stażu (dni)',
+        required=False,
+    )
+
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'role',)
+        fields = ('username', 'first_name', 'last_name', 'email', 'role')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

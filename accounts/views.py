@@ -84,19 +84,25 @@ def add_user(request):
             user = form.save()
             team = form.cleaned_data.get('team')
             hire_date = form.cleaned_data.get('hire_date') or date.today()
+            other_experience_years= form.cleaned_data.get('other_experience_years')
+            other_experience_days = form.cleaned_data.get('other_experience_days')
 
             if team:
                 WorkerProfile.objects.create(
                     user=user,
                     team=team,
                     hire_date=hire_date,
+                    other_experience_days=other_experience_days,
+                    other_experience_years=other_experience_years,
                 )
 
             # Logowanie akcji
-            ActivityLog.add_new_change(
-                user_id=request.user.id,
-                action='dodaj',
+            ActivityLog.objects.create(
+                who=request.user,
+                action='new_account',
                 object_type='user',
+                object_id= user.id,
+                details=f'Utworzono nowego użytkownika: {user.username}'
             )
             messages.success(request, f'Użytkownik {user.username} został pomyślnie dodany.')
             return redirect('user_list')
@@ -128,14 +134,16 @@ def reset_password(request):
             user.save()
 
             # Logowanie akcji
-            ActivityLog.add_new_change(
-            user_id=request.user.id,
-            action='reset_hasla',
-            object_type='user'
+            ActivityLog.objects.create(
+                who=request.user,
+                action='password_reset',
+                object_type='user',
+                object_id= user_id,
+                details=f'Zresetowano hasło użytkownika: {user.username}',
             )
 
             messages.success(request, f'Hasło dla użytkownika {user.username} zostało zresetowane.')
-            return redirect('all_requests_list')
+            return redirect('user_list')
 
         except User.DoesNotExist:
             messages.error(request, 'Nie znaleziono użytkownika.')

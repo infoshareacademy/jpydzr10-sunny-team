@@ -49,6 +49,7 @@ class Permission:
             "can_see_team_balance":     True,
             "can_export_requests":      True,
             "can_see_team_calendar":    True,
+            "can_see_user_vacations":   True,
         },
         "HR": {
             "can_approve_request":      True,
@@ -67,6 +68,7 @@ class Permission:
             "can_see_team_balance":     True,
             "can_export_requests":      True,
             "can_see_team_calendar":    True,
+            "can_see_user_vacations":   True,
         },
         "Manager": {
             "can_approve_request":      True,
@@ -80,11 +82,12 @@ class Permission:
             "can_reset_password":       False,
             "can_deactivate_staff":     False,
             "can_deactivate_worker":    False,
-            "can_view_user_list":       True,
+            "can_view_user_list":       False,
             "can_view_logs":            False,
             "can_see_team_balance":     True,
             "can_export_requests":      True,
             "can_see_team_calendar":    True,
+            "can_see_user_vacations":   True,
         },
         "Worker": {
             "can_approve_request":      False,
@@ -103,6 +106,7 @@ class Permission:
             "can_see_team_balance":     False,
             "can_export_requests":      False,
             "can_see_team_calendar":    False,
+            "can_see_user_vacations":   False,
         },
     }
 
@@ -128,7 +132,7 @@ def role_required(action):
             if not Permission.verifyPermission(active_role, action):
                 AuthLog.objects.create(
                     user=request.user,
-                    username='-',
+                    username=None,
                     action='403',
                     details=f'Brak permisji: {action}. Aktywna rola: {active_role}',
                     ip_address=get_client_ip(request),
@@ -154,7 +158,7 @@ class RoleRequiredMixin(LoginRequiredMixin):
         
         active_role = request.session.get('active_role', request.user.role)
         if not Permission.verifyPermission(active_role, self.required_action):
-            raise PermissionDenied
+            return redirect('dashboard')
         return super().dispatch(request, *args, **kwargs)
 
 # use case:

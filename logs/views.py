@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.core.paginator import Paginator
 from datetime import datetime, time
+from django.utils import timezone as dj_timezone
 
 from accounts.forms import User
 from accounts.permission import role_required
@@ -34,10 +35,13 @@ def activity_log_history(request):
         logs = logs.filter(object_type=object_type_filter)
 
     if date_from:
-        logs = logs.filter(created_at__date__gte=date_from)
-
+        date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+        start = dj_timezone.make_aware(datetime.combine(date_from_obj, time.min))
+        logs = logs.filter(created_at__gte=start)
     if date_to:
-        logs = logs.filter(created_at__date__lte=date_to)
+        date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+        end = dj_timezone.make_aware(datetime.combine(date_to_obj, time.max))
+        logs = logs.filter(created_at__lte=end)
 
     paginator = Paginator(logs, 20)
     page_number = request.GET.get('page')
@@ -82,10 +86,12 @@ def auth_log_history(request):
         logs = logs.filter(severity=severity_filter)
     if date_from:
         date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-        logs = logs.filter(timestamp__gte=datetime.combine(date_from_obj, time.min))
+        start = dj_timezone.make_aware(datetime.combine(date_from_obj, time.min))
+        logs = logs.filter(timestamp__gte=start)
     if date_to:
         date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
-        logs = logs.filter(timestamp__lte=datetime.combine(date_to_obj, time.max))
+        end = dj_timezone.make_aware(datetime.combine(date_to_obj, time.max))
+        logs = logs.filter(timestamp__lte=end)
 
     paginator = Paginator(logs, 20)
     page_number = request.GET.get('page')
