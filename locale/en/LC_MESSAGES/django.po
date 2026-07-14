@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-12 23:05+0200\n"
+"POT-Creation-Date: 2026-07-14 23:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,6 +25,195 @@ msgstr "Polish"
 #: calendar_app/settings.py:137
 msgid "English"
 msgstr "English"
+
+#: leaves/templates/leaves/all_requests_list.html:3
+#: leaves/templates/leaves/all_requests_list.html:52
+msgid "Wszystkie wnioski urlopowe"
+msgstr "All leave requests"
+
+#: leaves/templates/leaves/all_requests_list.html:57
+msgid "Filtry:"
+msgstr "Filters:"
+
+#: leaves/templates/leaves/all_requests_list.html:59
+msgid "Wszystkie statusy"
+msgstr "All statuses"
+
+#: leaves/templates/leaves/all_requests_list.html:60
+msgid "Oczekujące"
+msgstr "Pending"
+
+#: leaves/templates/leaves/all_requests_list.html:61
+msgid "Zatwierdzone"
+msgstr "Approved"
+
+#: leaves/templates/leaves/all_requests_list.html:62
+msgid "Odrzucone"
+msgstr "Rejected"
+
+#: leaves/templates/leaves/all_requests_list.html:65
+msgid "Od:"
+msgstr "From:"
+
+#: leaves/templates/leaves/all_requests_list.html:68
+msgid "Do:"
+msgstr "To:"
+
+#: leaves/templates/leaves/all_requests_list.html:71
+msgid "Filtruj"
+msgstr "Filter"
+
+#: leaves/templates/leaves/all_requests_list.html:74
+msgid "Reset"
+msgstr "Reset"
+
+#: leaves/templates/leaves/all_requests_list.html:85
+msgid "Eksportuj do CSV"
+msgstr "Export to CSV"
+
+#: leaves/templates/leaves/all_requests_list.html:93
+#, python-format
+msgid "Zespół: %(name)s"
+msgstr "Team: %(name)s"
+
+#: leaves/templates/leaves/all_requests_list.html:96
+#: leaves/templates/leaves/all_requests_list.html:142
+msgid "Pracownik"
+msgstr "Employee"
+
+#: leaves/templates/leaves/all_requests_list.html:97
+#: leaves/templates/leaves/all_requests_list.html:143
+#: leaves/templates/leaves/my_vacations.html:55
+#: leaves/templates/leaves/my_vacations.html:95
+#: leaves/templates/leaves/my_vacations.html:150
+msgid "Data rozpoczęcia"
+msgstr "Start date"
+
+#: leaves/templates/leaves/all_requests_list.html:98
+#: leaves/templates/leaves/all_requests_list.html:144
+#: leaves/templates/leaves/my_vacations.html:56
+#: leaves/templates/leaves/my_vacations.html:96
+#: leaves/templates/leaves/my_vacations.html:151
+msgid "Data zakończenia"
+msgstr "End date"
+
+#: leaves/templates/leaves/all_requests_list.html:99
+#: leaves/templates/leaves/all_requests_list.html:145
+#: leaves/templates/leaves/my_vacations.html:57
+#: leaves/templates/leaves/my_vacations.html:97
+#: leaves/templates/leaves/my_vacations.html:152
+msgid "Liczba dni"
+msgstr "Number of days"
+
+#: leaves/templates/leaves/all_requests_list.html:100
+#: leaves/templates/leaves/all_requests_list.html:146
+#: leaves/templates/leaves/my_vacations.html:58
+#: leaves/templates/leaves/my_vacations.html:98
+#: leaves/templates/leaves/my_vacations.html:153
+msgid "Status"
+msgstr "Status"
+
+#: leaves/templates/leaves/all_requests_list.html:101
+#: leaves/templates/leaves/all_requests_list.html:147
+msgid "Kto zatwierdził"
+msgstr "Who approved"
+
+#: leaves/templates/leaves/all_requests_list.html:102
+#: leaves/templates/leaves/all_requests_list.html:148
+msgid "Data wniosku"
+msgstr "Application date"
+
+#: leaves/templates/leaves/all_requests_list.html:103
+#: leaves/templates/leaves/all_requests_list.html:149
+#: leaves/templates/leaves/my_vacations.html:99
+msgid "Akcje"
+msgstr "Actions"
+
+#: leaves/templates/leaves/all_requests_list.html:109
+#: leaves/templates/leaves/all_requests_list.html:155
+#, python-format
+msgid "Zespół: %(team)s"
+msgstr "Team: %(team)s"
+
+#: leaves/templates/leaves/all_requests_list.html:115
+#: leaves/templates/leaves/all_requests_list.html:161
+#: leaves/templates/leaves/my_vacations.html:69
+#: leaves/templates/leaves/my_vacations.html:110
+#: leaves/templates/leaves/my_vacations.html:164
+msgid "Zatwierdzony"
+msgstr "Approved"
+
+#: leaves/templates/leaves/all_requests_list.html:116
+#: leaves/templates/leaves/all_requests_list.html:162
+#: leaves/templates/leaves/my_vacations.html:71
+#: leaves/templates/leaves/my_vacations.html:112
+msgid "Oczekujący"
+msgstr "Pending"
+
+#: leaves/templates/leaves/all_requests_list.html:117
+#: leaves/templates/leaves/all_requests_list.html:163
+#: leaves/templates/leaves/my_vacations.html:73
+#: leaves/templates/leaves/my_vacations.html:166
+msgid "Odrzucony"
+msgstr "Rejected"
+
+#: leaves/templates/leaves/all_requests_list.html:125
+#: leaves/templates/leaves/all_requests_list.html:17
+msgid "Czy na pewno chcesz ZATWIERDZIĆ ten wniosek?"
+msgstr "Are you sure you want to APPROVE this request?"
+
+#: leaves/templates/leaves/all_requests_list.html:125
+#: leaves/templates/leaves/all_requests_list.html:171
+msgid "Zatwierdź"
+msgstr "Approve"
+
+#: leaves/templates/leaves/all_requests_list.html:128
+#: leaves/templates/leaves/all_requests_list.html:174
+msgid "Czy na pewno chcesz ODRZUCIĆ ten wniosek?"
+msgstr "Are you sure you want to REJECT this request?"
+
+#: leaves/templates/leaves/all_requests_list.html:128
+#: leaves/templates/leaves/all_requests_list.html:174
+msgid "Odrzuć"
+msgstr "Reject"
+
+#: leaves/templates/leaves/all_requests_list.html:130
+#: leaves/templates/leaves/all_requests_list.html:176
+msgid "Przetworzony"
+msgstr "Revised"
+
+#: leaves/templates/leaves/all_requests_list.html:133
+msgid "Brak wniosków."
+msgstr "No requests."
+
+#: leaves/templates/leaves/all_requests_list.html:179
+msgid "Brak wniosków urlopowych."
+msgstr "No vacation requests."
+
+#: leaves/templates/leaves/all_requests_list.html:183
+msgid "Poprzednia"
+msgstr "Previous"
+
+#: leaves/templates/leaves/all_requests_list.html:184
+msgid "Strona"
+msgstr "Page"
+
+#: leaves/templates/leaves/all_requests_list.html:185
+msgid "Następna"
+msgstr "Next"
+
+#: leaves/templates/leaves/all_requests_list.html:194
+msgid "Potwierdź akcję"
+msgstr "Confirm the action "
+
+#: leaves/templates/leaves/all_requests_list.html:197
+#: leaves/templates/leaves/my_vacations.html:130
+msgid "Anuluj"
+msgstr "Cancel"
+
+#: leaves/templates/leaves/all_requests_list.html:198
+msgid "Tak, wykonaj"
+msgstr "Yes, proceed"
 
 #: leaves/templates/leaves/dashboard.html:3
 #: leaves/templates/leaves/dashboard.html:77
@@ -143,46 +332,6 @@ msgstr "My Vacations"
 msgid "Aktualne (trwające)"
 msgstr "Current (ongoing)"
 
-#: leaves/templates/leaves/my_vacations.html:55
-#: leaves/templates/leaves/my_vacations.html:95
-#: leaves/templates/leaves/my_vacations.html:150
-msgid "Data rozpoczęcia"
-msgstr "Start date"
-
-#: leaves/templates/leaves/my_vacations.html:56
-#: leaves/templates/leaves/my_vacations.html:96
-#: leaves/templates/leaves/my_vacations.html:151
-msgid "Data zakończenia"
-msgstr "End date"
-
-#: leaves/templates/leaves/my_vacations.html:57
-#: leaves/templates/leaves/my_vacations.html:97
-#: leaves/templates/leaves/my_vacations.html:152
-msgid "Liczba dni"
-msgstr "Number of days"
-
-#: leaves/templates/leaves/my_vacations.html:58
-#: leaves/templates/leaves/my_vacations.html:98
-#: leaves/templates/leaves/my_vacations.html:153
-msgid "Status"
-msgstr "Status"
-
-#: leaves/templates/leaves/my_vacations.html:69
-#: leaves/templates/leaves/my_vacations.html:110
-#: leaves/templates/leaves/my_vacations.html:164
-msgid "Zatwierdzony"
-msgstr "Approved"
-
-#: leaves/templates/leaves/my_vacations.html:71
-#: leaves/templates/leaves/my_vacations.html:112
-msgid "Oczekujący"
-msgstr "Pending"
-
-#: leaves/templates/leaves/my_vacations.html:73
-#: leaves/templates/leaves/my_vacations.html:166
-msgid "Odrzucony"
-msgstr "Rejected"
-
 #: leaves/templates/leaves/my_vacations.html:75
 #: leaves/templates/leaves/my_vacations.html:114
 #: leaves/templates/leaves/my_vacations.html:168
@@ -197,10 +346,6 @@ msgstr "No current leave requests."
 msgid "Planowane"
 msgstr "Planned"
 
-#: leaves/templates/leaves/my_vacations.html:99
-msgid "Akcje"
-msgstr "Actions"
-
 #: leaves/templates/leaves/my_vacations.html:122
 msgid "Edytuj"
 msgstr "Edit"
@@ -208,10 +353,6 @@ msgstr "Edit"
 #: leaves/templates/leaves/my_vacations.html:129
 msgid "Czy na pewno chcesz anulować?"
 msgstr "Are you sure you want to cancel?"
-
-#: leaves/templates/leaves/my_vacations.html:130
-msgid "Anuluj"
-msgstr "Cancel"
 
 #: leaves/templates/leaves/my_vacations.html:140
 msgid "Brak planowanych urlopów."
