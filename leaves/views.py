@@ -9,6 +9,9 @@ from leaves.models import LeaveRequest, WorkerProfile
 import csv
 from django.http import HttpResponse
 import calendar
+
+from logs.models import AuthLog
+from logs.utils import get_client_ip
 from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -395,30 +398,32 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
 
-        """
-        Główna metoda kontrolująca dostęp do widoku. Sprawdza:
-         1. Czy rola użytkownika pozwala ogólnie na modyfikację wniosków.
-         2. Czy wniosek ma status "PENDING" (oczekujący) – tylko takie można edytować.
-         3. Czy pracownik  próbuje edytować swój własny wniosek, a nie cudzy.
-        """
         if not request.user.is_authenticated:
             return self.handle_no_permission()
 
         active_role = request.session.get('active_role', request.user.role)
         if not Permission.verifyPermission(active_role, self.required_action):
-            raise PermissionDenied
+            AuthLog.objects.create(
+                user=request.user,
+                username=None,
+                action='access_denied_403',
+                details=f'Brak permisji: {self.required_action}. Aktywna rola: {active_role}',
+                ip_address=get_client_ip(request),
+                severity='warning'
+            )
+            return redirect('dashboard')
 
         obj = self.get_object()
 
         # Blokada edycji wniosków, które zostały już zaakceptowane lub odrzucone
         if obj.status != LeaveRequest.Status.PENDING:
             messages.error(request, "Można edytować tylko wnioski oczekujące.")
-            return redirect('my_vacations')
+            return redirect('dashboard')
 
         # Pracownik nie może edytować wniosków innych osób
-        if obj.employee != request.user:
+        if active_role == 'Worker' and obj.employee != request.user:
             messages.error(request, "Możesz edytować tylko własne wnioski.")
-            return redirect('my_vacations')
+            return redirect('dashboard')
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -501,14 +506,14 @@ class CancelLeaveView(RoleRequiredMixin, View):
 
         if active_role == 'Worker':
             return redirect('my_vacations')
-        return redirect('all_requests_list')
+        return redirect('dashboard')
 
 @login_required
 @role_required("can_see_team_balance")
 def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
-    if active_role not in ['Manager', 'HR']:
+    if active_role not in ['Manager', 'HR', 'Admin']:
         return redirect('dashboard')
 
     if active_role == 'HR':

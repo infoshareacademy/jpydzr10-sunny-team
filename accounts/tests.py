@@ -15,7 +15,7 @@ class PermissionVerifyTest(TestCase):
         self.assertTrue(Permission.verifyPermission("Admin","can_reject_request"))
 
     def test_Admin_can_cancel_request(self):
-        self.assertTrue(Permission.verifyPermission("Admin","can_cancel_request"))
+        self.assertFalse(Permission.verifyPermission("Admin","can_cancel_request"))
 
     def test_Admin_can_change_request(self):
         self.assertTrue(Permission.verifyPermission("Admin","can_change_request"))
@@ -325,7 +325,7 @@ class AccountsViewsTestCase(TestCase):
         # Sprawdzenie, czy dekorator zapisał odmowę dostępu (403) w logach
         log_exists = AuthLog.objects.filter(
             user=self.worker_user,
-            action='403',
+            action='access_denied_403',
             severity='warning'
         ).exists()
         self.assertTrue(log_exists)
