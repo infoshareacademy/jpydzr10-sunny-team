@@ -3,6 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
 from logs.models import AuthLog, EmailVerificationCode
 from logs.utils import get_client_ip, get_lockout_until, reset_failed_attempts, log_failed_attempt
+from django.core.mail import send_mail
 import random
 
 User = get_user_model()
@@ -73,7 +74,13 @@ def login_view(request):
                 code = str(random.randint(100000, 999999))
                 EmailVerificationCode.objects.create(user=user, code=code)
                 request.session['2fa_user_id'] = user.id
-                print(f"KOD 2FA: {code}")  # tymczasowo zamiast maila
+                print(f"KOD 2FA: {code}") # DO ZMIANY NA MAILA JAK JUZ BEDZIE GOTOWY DO WYYSLEK :)
+                # send_mail(
+                # subject='Kod weryfikacyjny 2FA',
+                # message=f'Twój kod weryfikacyjny: {code}',
+                # from_email='noreply@sunnyteam.pl',
+                # recipient_list=[user.email],
+                # )
                 return redirect('verify_2fa')
         else:
             # Formularz nie przeszedł walidacji (np. nieistniejący użytkownik)
@@ -85,7 +92,6 @@ def login_view(request):
                 })
     else:
         form = AuthenticationForm()
-
     return render(request, 'login.html', {'form': form})
 
 
@@ -104,6 +110,8 @@ def logout_view(request):
 
 
 def home(request):
+    if request.user.is_authenticated:
+        pass
     return redirect('login')
 
 
@@ -131,5 +139,4 @@ def verify_2fa(request):
                 return render(request, 'verify_2fa.html', {'error': 'Nieprawidłowy kod.'})
         except User.DoesNotExist:
             return redirect('login')
-
     return render(request, 'verify_2fa.html')
