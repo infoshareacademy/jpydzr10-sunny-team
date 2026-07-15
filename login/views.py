@@ -3,7 +3,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from datetime import timedelta
-
+import random
+from logs.models import EmailVerificationCode
+from accounts.models import User
 from logs.models import LoginAttempt
 from logs.utils import get_client_ip
 
@@ -82,8 +84,11 @@ def login_view(request):
                 )
                 # Udane logowanie - unieważniamy poprzednie nieudane proby 
                 reset_failed_attempts(username, ip_address)
-                login(request, user)
-                return redirect('dashboard')
+                code = str(random.randint(100000, 999999))
+                EmailVerificationCode.objects.create(user=user, code=code)
+                request.session['2fa_user_id'] = user.id
+                print(f"KOD 2FA: {code}")  # tymczasowo zamiast maila
+                return redirect('verify_2fa')
         else:
             LoginAttempt.objects.create(
                 user=None,
@@ -105,3 +110,31 @@ def home(request):
     if request.user.is_authenticated:
         pass
     return redirect('login')
+
+
+def verify_2fa(request):
+    user_id = request.session.get('2fa_user_id')
+    if not user_id:
+        return redirect('login')
+
+    if request.method == 'POST':
+        code_input = request.POST.get('code')
+        try:
+            user = User.objects.get(id=user_id)
+            verification = EmailVerificationCode.objects.filter(
+                user=user,
+                is_used=False
+            ).last()
+
+            if verification and verification.code == code_input:
+                verification.is_used = True
+                verification.save()
+                del request.session['2fa_user_id']
+                login(request, user)
+                return redirect('dashboard')
+            else:
+                return render(request, 'verify_2fa.html', {'error': 'Nieprawidłowy kod.'})
+        except User.DoesNotExist:
+            return redirect('login')
+    
+    return render(request, 'verify_2fa.html')
