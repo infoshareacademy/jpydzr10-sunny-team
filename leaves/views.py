@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import date, datetime, timedelta
@@ -16,7 +17,7 @@ from django.views.generic import View
 from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-
+from django.utils.translation import gettext as _
 @login_required
 def dashboard(request):
     active_role = request.session.get('active_role', request.user.role)
@@ -196,7 +197,8 @@ def approve_request(request, request_id):
         employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
         employee_team = employee_profile.team
     except WorkerProfile.DoesNotExist:
-        messages.error(request, 'Pracownik nie ma przypisanego zespołu.')
+        messages.error(request, _('Pracownik nie ma przypisanego zespołu.'))
+
         return redirect('all_requests_list')
 
     if active_role == 'Manager':
@@ -204,10 +206,10 @@ def approve_request(request, request_id):
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
             if my_profile.team != employee_team:
-                messages.error(request, 'Możesz zatwierdzać tylko wnioski swojego zespołu.')
+                messages.error(request, _('Możesz zatwierdzać tylko wnioski swojego zespołu.'))
                 return redirect('all_requests_list')
         except WorkerProfile.DoesNotExist:
-            messages.error(request, 'Nie masz przypisanego zespołu.')
+            messages.error(request,_('Nie masz przypisanego zespołu.'))
             return redirect('all_requests_list')
 
     elif active_role == 'HR':
@@ -250,7 +252,7 @@ def approve_request(request, request_id):
 
         messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
     except Exception as e:
-        messages.error(request, f'Błąd podczas zatwierdzania: {e}')
+        messages.error(request, _(f'Błąd podczas zatwierdzania: {e}'))
 
     return redirect('all_requests_list')
 
@@ -315,9 +317,9 @@ def reject_request(request, request_id):
             site_url=settings.SITE_URL,
         )
 
-        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.')
+        messages.success(request, _(f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.'))
     except Exception as e:
-        messages.error(request, f'Błąd podczas odrzucania: {e}')
+        messages.error(request, _(f'Błąd podczas odrzucania: {e}'))
 
     return redirect('all_requests_list')
 
@@ -448,12 +450,12 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
 
         # Blokada edycji wniosków, które zostały już zaakceptowane lub odrzucone
         if obj.status != LeaveRequest.Status.PENDING:
-            messages.error(request, "Można edytować tylko wnioski oczekujące.")
+            messages.error(request, _("Można edytować tylko wnioski oczekujące."))
             return redirect('my_vacations')
 
         # Pracownik nie może edytować wniosków innych osób
         if obj.employee != request.user:
-            messages.error(request, "Możesz edytować tylko własne wnioski.")
+            messages.error(request, _("Możesz edytować tylko własne wnioski."))
             return redirect('my_vacations')
 
         return super().dispatch(request, *args, **kwargs)
@@ -525,15 +527,15 @@ class CancelLeaveView(RoleRequiredMixin, View):
         active_role = request.session.get('active_role', request.user.role)
 
         if active_role == 'Worker' and leave_request.employee != request.user:
-            messages.error(request, "Możesz anulować tylko własne wnioski.")
+            messages.error(request, _("Możesz anulować tylko własne wnioski."))
             return redirect('my_vacations')
 
         if leave_request.status != LeaveRequest.Status.PENDING:
-            messages.error(request, "Można anulować tylko wnioski oczekujące.")
+            messages.error(request, _("Można anulować tylko wnioski oczekujące."))
             return redirect('my_vacations')
 
         leave_request.cancel_request(who=request.user)
-        messages.success(request, "Wniosek został anulowany.")
+        messages.success(request, _("Wniosek został anulowany."))
 
         if active_role == 'Worker':
             return redirect('my_vacations')
@@ -619,10 +621,9 @@ def export_requests_csv(request):
     date_from_str = request.GET.get('date_from', '')
     date_to_str = request.GET.get('date_to', '')
 
-    # punkt wyjścia - wszystkie wnioski
-    qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
+    qs = LeaveRequest.objects.select_related('employee', 'employee__worker_profile', 'who_confirmed').all()
 
-    # Manager widzi tylko swój zespół — tak samo jak all_requests_list
+    # Manager widzi tylko swój zespół
     if active_role == 'Manager':
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
@@ -650,25 +651,26 @@ def export_requests_csv(request):
         except ValueError:
             pass
 
-
-    # odpowiedź HTTP jako plik CSV
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="wnioski_urlopowe.csv"'
 
     writer = csv.writer(response)
-
-    # nagłówki kolumn
     writer.writerow([
-        'ID', 'Imię', 'Nazwisko', 'Data od', 'Data do',
+        'ID', 'Imię', 'Nazwisko', 'Zespół', 'Data od', 'Data do',
         'Liczba dni', 'Status', 'Potwierdził', 'Data złożenia'
     ])
 
-    # dane z bazy
     for req in qs:
+        try:
+            team = req.employee.worker_profile.team
+        except Exception:
+            team = ''
+
         writer.writerow([
             req.id,
             req.employee.first_name,
             req.employee.last_name,
+            team,
             req.start_date,
             req.end_date,
             req.amount_days,
@@ -731,13 +733,13 @@ def team_calendar(request):
     # słownik urlopowiczów z danego mc-a
     leave_map = {}
     for leave in approved_leaves:
+        name = f"{leave.employee.last_name} {leave.employee.first_name}"
         current = max(leave.start_date, first_day)
         end = min(leave.end_date, last_day)
         while current <= end:
             day_num = current.day
             if day_num not in leave_map:
                 leave_map[day_num] = []
-            name = f"{leave.employee.last_name} {leave.employee.first_name}"
             if name not in leave_map[day_num]:
                 leave_map[day_num].append(name)
             current += timedelta(days=1)
