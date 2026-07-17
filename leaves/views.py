@@ -17,7 +17,7 @@ from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification
+from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
@@ -684,6 +684,8 @@ def add_user(request):
     if request.method == 'POST':
         form = AddUserForm(request.POST)
         if form.is_valid():
+            # Pobierz hasło z czystych danych (przed zahaszowaniem)
+            raw_password = form.cleaned_data.get('password1')
             user = form.save()
             team = form.cleaned_data.get('team')
             hire_date = form.cleaned_data.get('hire_date') or date.today()
@@ -694,6 +696,15 @@ def add_user(request):
                     team=team,
                     hire_date=hire_date,
                 )
+
+            # --- WYŚLIJ MAIL POWITALNY ---
+            send_welcome_email(
+                user_email=user.email,
+                user_name=f"{user.first_name} {user.last_name}",
+                username=user.username,
+                password=raw_password,  # przesyłamy czyste hasło
+                site_url=settings.SITE_URL,
+            )
 
             # Logowanie akcji
             app_log.add_new_change(
