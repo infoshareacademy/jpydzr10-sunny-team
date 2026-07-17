@@ -13,7 +13,7 @@ from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification
+from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
@@ -26,8 +26,10 @@ def dashboard(request):
         total_days = profile._get_total_leave_days()
         used_days = profile.used_leave_days
         remaining_days = profile.get_leave_days()
+        # pasek postępu: ile % urlopu wykorzystano (0-100)
         progress_percent = round((used_days / total_days) * 100) if total_days > 0 else 0
     except WorkerProfile.DoesNotExist:
+        # jeśli zalogowany user nie ma profilu (np. Admin bez profilu)
         total_days = None
         used_days = None
         remaining_days = None
@@ -75,6 +77,7 @@ def all_requests_list(request):
 
     qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
 
+    # Manager widzi tylko swój zespół
     if active_role == 'Manager':
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
@@ -149,14 +152,23 @@ def my_vacations(request):
             'status': req.status,
         }
 
+        # 1. Każdy oczekujący wniosek traktujemy jako "Planowany" (niezależnie od daty)
         if req.status == LeaveRequest.Status.PENDING:
             planned.append(entry)
+
+        # 2. Każdy odrzucony lub anulowany wniosek trafia od razu do historii
         elif req.status in [LeaveRequest.Status.CANCELED, LeaveRequest.Status.REJECTED]:
             archival.append(entry)
+
+        # 3. Zatwierdzony urlop, który trwa właśnie DZISIAJ
         elif req.start_date <= today <= req.end_date and req.status == LeaveRequest.Status.APPROVED:
             current.append(entry)
+
+        # 4. Zatwierdzony urlop, który odbędzie się w PRZYSZŁOŚCI (start_date > today)
         elif req.start_date > today and req.status == LeaveRequest.Status.APPROVED:
             planned.append(entry)
+
+        # 5. Wszystko inne (stare, zatwierdzone urlopy, które już minęły)
         else:
             archival.append(entry)
 
@@ -188,6 +200,7 @@ def approve_request(request, request_id):
         return redirect('all_requests_list')
 
     if active_role == 'Manager':
+        # Manager może zatwierdzać tylko swój zespół
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
             if my_profile.team != employee_team:
@@ -227,10 +240,7 @@ def approve_request(request, request_id):
         except WorkerProfile.DoesNotExist:
             pass
 
-<<<<<<< HEAD
-=======
         # --- WYŚLIJ MAIL DO PRACOWNIKA ---
->>>>>>> bd493d9 (Fix approve request email logic)
         send_approval_notification(
             employee_email=leave_request.employee.email,
             employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
@@ -296,6 +306,7 @@ def reject_request(request, request_id):
     try:
         leave_request.reject(who=request.user)
 
+        # --- WYŚLIJ MAIL DO PRACOWNIKA ---
         send_reject_notification(
             employee_email=leave_request.employee.email,
             employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
@@ -311,6 +322,10 @@ def reject_request(request, request_id):
     return redirect('all_requests_list')
 
 class LeaveRequestView(RoleRequiredMixin, CreateView):
+    """
+     Widok odpowiedzialny za tworzenie nowego wniosku urlopowego.
+     Wymaga zalogowania użytkownika.
+    """
     required_action = "can_submit_request"
     model = LeaveRequest
     form_class = LeaveRequestForm
@@ -318,16 +333,27 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
     success_url = reverse_lazy('my_vacations')
 
     def get_form_kwargs(self):
+        """
+        Przekazuje zalogowanego użytkownika do formularza jako dodatkowy argument (kwargs),
+        """
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
+        """
+        Obsługuje proces po poprawnym wypełnieniu formularza.
+         1. Jeśli wniosek nie został jeszcze potwierdzony w modalu (potwierdzenie dwuetapowe),
+            przerywa zapis i zwraca widok z parametrem show_modal=True.
+         2. Po ostatecznym potwierdzeniu, przypisuje wniosek do zalogowanego użytkownika i go zapisuje.
+        """
         is_confirmed = form.cleaned_data.get('confirmed') == 'true'
         if not is_confirmed:
+            # Użytkownik wysłał formularz po raz pierwszy, pokazujemy okno podsumowania (modal)
             context = self.get_context_data(form=form, show_modal=True)
             return self.render_to_response(context)
 
+        # Użytkownik potwierdził wniosek w modalu, zapisujemy w bazie
         obj = form.save(commit=False)
         obj.employee = self.request.user
         obj.amount_days = form.cleaned_data['amount_days']
@@ -364,15 +390,23 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
         return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
+        """
+        Rozbudowuje kontekst szablonu o dodatkowe dane:
+         - Dostępną liczbę dni urlopowych pracownika.
+         - Wyliczone dane z formularza (liczba dni, sformatowane daty), jeśli formularz jest poprawny.
+        """
+        from leaves.models import WorkerProfile
         context = super().get_context_data(**kwargs)
         form = context['form']
 
+        # Pobieranie puli dostępnych dni urlopowych profilu pracownika
         try:
             profile = WorkerProfile.objects.get(user=self.request.user)
             context['available_days'] = profile.get_leave_days()
         except WorkerProfile.DoesNotExist:
             context['available_days'] = None
 
+        # Formatowanie dat do wyświetlenia w podsumowaniu (modalu)
         if form.is_bound and form.is_valid():
             context['amount_days'] = form.cleaned_data.get('amount_days')
             context['start_date'] = form.cleaned_data.get('start_date').strftime('%d.%m.%Y')
@@ -384,7 +418,11 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
 
         return context
 
-class LeaveRequestUpdateView(RoleRequiredMixin, UpdateView):
+class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
+    """
+    Widok odpowiedzialny za edycję istniejącego wniosku urlopowego.
+    Zawiera walidację uprawnień oraz stanu wniosku.
+    """
     required_action = "can_change_request"
     model = LeaveRequest
     form_class = LeaveRequestForm
@@ -392,6 +430,13 @@ class LeaveRequestUpdateView(RoleRequiredMixin, UpdateView):
     success_url = reverse_lazy('my_vacations')
 
     def dispatch(self, request, *args, **kwargs):
+
+        """
+        Główna metoda kontrolująca dostęp do widoku. Sprawdza:
+         1. Czy rola użytkownika pozwala ogólnie na modyfikację wniosków.
+         2. Czy wniosek ma status "PENDING" (oczekujący) – tylko takie można edytować.
+         3. Czy pracownik  próbuje edytować swój własny wniosek, a nie cudzy.
+        """
         if not request.user.is_authenticated:
             return self.handle_no_permission()
 
@@ -401,10 +446,12 @@ class LeaveRequestUpdateView(RoleRequiredMixin, UpdateView):
 
         obj = self.get_object()
 
+        # Blokada edycji wniosków, które zostały już zaakceptowane lub odrzucone
         if obj.status != LeaveRequest.Status.PENDING:
             messages.error(request, "Można edytować tylko wnioski oczekujące.")
             return redirect('my_vacations')
 
+        # Pracownik nie może edytować wniosków innych osób
         if obj.employee != request.user:
             messages.error(request, "Możesz edytować tylko własne wnioski.")
             return redirect('my_vacations')
@@ -412,36 +459,52 @@ class LeaveRequestUpdateView(RoleRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
+        """
+        Przekazuje zalogowanego użytkownika do formularza edycji.
+        """
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
+        """
+        Obsługuje proces zapisu edytowanego wniosku.
+        Podobnie jak przy tworzeniu – najpierw wymusza potwierdzenie w modalu (`confirmed == 'true'`).
+        """
         is_confirmed = form.cleaned_data.get('confirmed') == 'true'
         if not is_confirmed:
             context = self.get_context_data(form=form, show_modal=True)
             return self.render_to_response(context)
 
+        # Zapis zaktualizowanych danych wniosku
         obj = form.save(commit=False)
         obj.amount_days = form.cleaned_data['amount_days']
         obj.save()
         return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
+        """
+        Rozbudowuje kontekst szablonu edycji. Oprócz aktualnie wprowadzanych danych i dostępnych dni,
+        dorzuca do kontekstu pierwotne daty wniosku (`existing_start`, `existing_end`) przed edycją.
+        """
+        from leaves.models import WorkerProfile
         context = super().get_context_data(**kwargs)
         form = context['form']
 
+        # Pobranie obecnych (starych) dat wniosku z bazy danych w celu wyświetlenia ich w szablonie
         pk = self.kwargs['pk']
         leave_request = LeaveRequest.objects.get(pk=pk)
         context['existing_start'] = leave_request.start_date.strftime('%d.%m.%Y')
         context['existing_end'] = leave_request.end_date.strftime('%d.%m.%Y')
 
+        # Pobranie puli dostępnych dni urlopowych
         try:
             profile = WorkerProfile.objects.get(user=self.request.user)
             context['available_days'] = profile.get_leave_days()
         except WorkerProfile.DoesNotExist:
             context['available_days'] = None
 
+        # Formatowanie nowo wpisywanych w formularzu dat
         if form.is_bound and form.is_valid():
             context['amount_days'] = form.cleaned_data.get('amount_days')
             context['start_date'] = form.cleaned_data.get('start_date').strftime('%d.%m.%Y')
@@ -479,11 +542,13 @@ class CancelLeaveView(RoleRequiredMixin, View):
 @login_required
 @role_required("can_see_team_balance")
 def team_leave_balance(request):
+    # Tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
     if active_role not in ['Manager', 'HR']:
         return redirect('dashboard')
 
     if active_role == 'HR':
+        # HR widzi wszystkie zespoły
         all_team_names = (
             WorkerProfile.objects
             .values_list('team', flat=True)
@@ -514,6 +579,7 @@ def team_leave_balance(request):
         }
 
     else:
+        # Manager widzi tylko swój zespół
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
             team_name = my_profile.team
@@ -543,16 +609,20 @@ def team_leave_balance(request):
 @login_required
 @role_required("can_export_requests")
 def export_requests_csv(request):
+    # tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
     if active_role not in ['Manager', 'HR', 'Admin']:
         return redirect('dashboard')
 
+    # filtry z adresu URL
     status_filter = request.GET.get('status', '').lower()
     date_from_str = request.GET.get('date_from', '')
     date_to_str = request.GET.get('date_to', '')
 
+    # punkt wyjścia - wszystkie wnioski
     qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
 
+    # Manager widzi tylko swój zespół — tak samo jak all_requests_list
     if active_role == 'Manager':
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
@@ -561,9 +631,11 @@ def export_requests_csv(request):
         except WorkerProfile.DoesNotExist:
             qs = qs.none()
 
+    # filtruję po statusie
     if status_filter and status_filter in LeaveRequest.Status.values:
         qs = qs.filter(status=status_filter)
 
+    # filtruję po datach
     if date_from_str:
         try:
             date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
@@ -578,15 +650,20 @@ def export_requests_csv(request):
         except ValueError:
             pass
 
+
+    # odpowiedź HTTP jako plik CSV
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="wnioski_urlopowe.csv"'
 
     writer = csv.writer(response)
+
+    # nagłówki kolumn
     writer.writerow([
         'ID', 'Imię', 'Nazwisko', 'Data od', 'Data do',
         'Liczba dni', 'Status', 'Potwierdził', 'Data złożenia'
     ])
 
+    # dane z bazy
     for req in qs:
         writer.writerow([
             req.id,
@@ -605,16 +682,21 @@ def export_requests_csv(request):
 @login_required
 @role_required("can_see_team_calendar")
 def team_calendar(request):
+    # miesięczny kalendarz urlopów dla całego zespołu
+    # jeśli w url jest rok/mc to pobieram
+    # jeśli brak to bieżący
     today = date.today()
     year = int(request.GET.get('year', today.year))
     month = int(request.GET.get('month', today.month))
 
+    # dane którego zespołu
     try:
         my_profile = WorkerProfile.objects.get(user=request.user)
         team_name = my_profile.team
     except WorkerProfile.DoesNotExist:
         team_name = None
 
+    # lista pracowników
     if team_name:
         team_profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
     else:
@@ -633,10 +715,10 @@ def team_calendar(request):
     team_user_ids = [m['id'] for m in team_members]
 
     approved_leaves = LeaveRequest.objects.filter(
-        employee__id__in=team_user_ids,
+        employee__id__in=team_user_ids,  # tylko ten zespół
         status=LeaveRequest.Status.APPROVED,
-        start_date__lte=last_day,
-        end_date__gte=first_day,
+        start_date__lte=last_day,  # zaczyna się przed końcem miesiąca
+        end_date__gte=first_day,  # kończy się po początku miesiąca
     ).select_related('employee')
 
     pending_leaves = LeaveRequest.objects.filter(
@@ -646,6 +728,7 @@ def team_calendar(request):
         end_date__gte=first_day,
     ).select_related('employee')
 
+    # słownik urlopowiczów z danego mc-a
     leave_map = {}
     for leave in approved_leaves:
         current = max(leave.start_date, first_day)
@@ -672,22 +755,30 @@ def team_calendar(request):
                 pending_map[day_num].append(name)
             current += timedelta(days=1)
 
+    # miesięczny widok kalendarze
+    # monthcalendar(rok, miesiąc) zwraca listę tygodni,
+    # każdy tydzień to lista 7 liczb (0 = ten dzień należy do innego miesiąca)
+    # Przykład: [[0, 0, 1, 2, 3, 4, 5], [6, 7, 8, ...], ...]
     cal = calendar.monthcalendar(year, month)
+
+    # zamieniam siatkę liczbową na siatkę słowników z datą i urlopami
     weeks = []
     for week in cal:
         week_row = []
         for day_num in week:
             if day_num == 0:
+                # dzień spoza miesiąca — pusta komórka
                 week_row.append({'day': 0, 'leaves': [], 'pending': [], 'is_today': False})
             else:
                 week_row.append({
                     'day': day_num,
-                    'leaves': leave_map.get(day_num, []),
+                    'leaves': leave_map.get(day_num, []),  # [] jeśli brak urlopów
                     'pending': pending_map.get(day_num, []),
                     'is_today': date(year, month, day_num) == today,
                 })
         weeks.append(week_row)
 
+    # poprzedni i następny miesiąc (do przycisków nawigacji)
     if month == 1:
         prev_year, prev_month = year - 1, 12
     else:
