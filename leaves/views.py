@@ -227,6 +227,10 @@ def approve_request(request, request_id):
         except WorkerProfile.DoesNotExist:
             pass
 
+<<<<<<< HEAD
+=======
+        # --- WYŚLIJ MAIL DO PRACOWNIKA ---
+>>>>>>> bd493d9 (Fix approve request email logic)
         send_approval_notification(
             employee_email=leave_request.employee.email,
             employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
