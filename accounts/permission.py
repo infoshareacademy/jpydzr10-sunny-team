@@ -2,6 +2,7 @@ from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
 from logs.utils import get_client_ip
+from django.shortcuts import redirect
 class Permission:
     """
     System uprawnień aplikacji urlopowej.
