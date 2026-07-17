@@ -46,3 +46,26 @@ def send_reject_notification(employee_email, employee_name, request_details, rej
         html_message=html_message,
         fail_silently=False,
     )
+
+def send_new_request_notification(
+    manager_emails, employee_name, request_details, submission_date, site_url=None):
+    if site_url is None:
+        site_url = settings.SITE_URL
+    subject = f"Nowy wniosek urlopowy od {employee_name}"
+    html_message = render_to_string(
+        "emails/new_request_notification.html",
+        {
+            "employee_name": employee_name,
+            "request_details": request_details,
+            "submission_date": submission_date,
+            "site_url": site_url,
+        },
+    )
+    send_mail(
+        subject,
+        "",
+        settings.DEFAULT_FROM_EMAIL,
+        manager_emails,
+        html_message=html_message,
+        fail_silently=False,
+    )
