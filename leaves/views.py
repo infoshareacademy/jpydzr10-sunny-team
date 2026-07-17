@@ -232,13 +232,13 @@ def approve_request(request, request_id):
         except WorkerProfile.DoesNotExist:
             pass
 
-            # --- WYŚLIJ MAIL DO PRACOWNIKA ---
-            send_approval_notification(
-                employee_email=leave_request.employee.email,
-                employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
-                request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
-                site_url=settings.SITE_URL,
-            )
+        # --- WYŚLIJ MAIL DO PRACOWNIKA ---
+        send_approval_notification(
+            employee_email=leave_request.employee.email,
+            employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
+            request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
+            site_url=settings.SITE_URL,
+        )
 
         messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
     except Exception as e:
