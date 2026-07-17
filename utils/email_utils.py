@@ -93,3 +93,23 @@ def send_welcome_email(user_email, user_name, username, password, site_url=None)
         html_message=html_message,
         fail_silently=False,
     )
+
+def send_deactivation_email(user_email, user_name, site_url=None):
+
+    # Wysyła mail do użytkownika informujący o dezaktywacji konta.
+    if site_url is None:
+        site_url = settings.SITE_URL
+
+    subject = 'Twoje konto w SunnyTeam zostało dezaktywowane'
+    html_message = render_to_string('emails/account_deactivated.html', {
+        'user_name': user_name,
+        'site_url': site_url,
+    })
+    send_mail(
+        subject,
+        '',
+        settings.DEFAULT_FROM_EMAIL,
+        [user_email],
+        html_message=html_message,
+        fail_silently=False,
+    )
