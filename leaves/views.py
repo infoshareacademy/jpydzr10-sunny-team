@@ -17,7 +17,7 @@ from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-from utils.email_utils import send_approval_notification, send_reject_notification
+from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
@@ -319,6 +319,34 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
         obj.amount_days = form.cleaned_data['amount_days']
         obj.save()
         self.object = obj
+
+        # --- WYŚLIJ MAIL DO MANAGERA/HR ---
+        from django.utils import timezone
+
+        # Pobierz adresy email wszystkich użytkowników z rolą Manager lub HR
+        User = get_user_model()
+        manager_emails = list(
+            User.objects.filter(role__in=["Manager", "HR"])
+            .values_list("email", flat=True)
+            .exclude(email="")  # pomiń puste adresy
+        )
+
+        if manager_emails:
+            try:
+                send_new_request_notification(
+                    manager_emails=manager_emails,
+                    employee_name=f"{self.request.user.first_name} {self.request.user.last_name}",
+                    request_details=f"{obj.start_date} – {obj.end_date} ({obj.amount_days} dni)",
+                    submission_date=timezone.now().strftime("%Y-%m-%d %H:%M"),
+                    site_url=settings.SITE_URL,
+                )
+            except Exception as e:
+                # Loguj błąd, ale nie przerywaj działania
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.error(f"Błąd wysyłki maila do managera: {e}")
+
         return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
