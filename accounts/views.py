@@ -1,7 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-
 from leaves.models import WorkerProfile
 from .models import User
 from .permission import Permission
@@ -11,6 +10,9 @@ from logs.utils import get_client_ip
 from django.contrib.auth import get_user_model
 from accounts.forms import AddUserForm
 from datetime import date
+
+from django.conf import settings
+from utils.email_utils import send_deactivation_email
 
 @login_required
 def deactivate_user(request, pk):
@@ -26,6 +28,15 @@ def deactivate_user(request, pk):
         target_user.is_active = False
         target_user.save()
         return redirect('user_list')
+
+    # --- WYŚLIJ MAIL O DEZAKTYWACJI ---
+    if target_user.email:
+        send_deactivation_email(
+            user_email=target_user.email,
+            user_name=f"{target_user.first_name} {target_user.last_name}",
+            site_url=settings.SITE_URL,
+        )
+
     return render(request, 'accounts/deactivate_user.html', {'target_user': target_user})
 
 
@@ -45,7 +56,6 @@ def user_list(request):
         '-is_active', 'role_order', 'last_name', 'first_name'
     )
     return render(request, 'accounts/user_list.html', {'users': users})
-
 
 @login_required
 def switch_role(request):
