@@ -254,11 +254,12 @@
 
                                     {# Chipsy wniosków oczekujących (wyszarzone) #}
                                     {% for name in cell.pending %}
-                                    {% blocktrans with n=name %}
+                                        {% blocktrans with n=name %}
                                         <span class="leave-chip pending"
                                               title="{{ name }} (oczekujący)">
-                                            {{ name }}
+                                            {{ n }}
                                         </span>
+                                        {% endblocktrans %}
                                     {% endfor %}
  
                                 </td>
