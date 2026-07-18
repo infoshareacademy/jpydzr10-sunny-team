@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 14:39+0200\n"
+"POT-Creation-Date: 2026-07-18 14:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -149,6 +149,7 @@ msgstr "Zatwierdzony"
 #: leaves/templates/leaves/all_requests_list.html:162
 #: leaves/templates/leaves/my_vacations.html:71
 #: leaves/templates/leaves/my_vacations.html:112
+#: leaves/templates/leaves/team_calendar.html:212
 msgid "Oczekujący"
 msgstr "Oczekujący"
 
@@ -381,6 +382,78 @@ msgstr "Wyślij wniosek"
 #: leaves/templates/leaves/new_request.html:9
 msgid "wysłać"
 msgstr "wysłać"
+
+#: leaves/templates/leaves/team_calendar.html:3
+msgid "Kalendarz urlopów zespołu"
+msgstr "Kalendarz urlopów zespołu"
+
+#: leaves/templates/leaves/team_calendar.html:183
+msgid "Poprzedni"
+msgstr "Poprzedni"
+
+#: leaves/templates/leaves/team_calendar.html:186
+#, python-format
+msgid "Kalendarz urlopów — %(month)s %(y)s"
+msgstr "Kalendarz urlopów — %(month)s %(y)s"
+
+#: leaves/templates/leaves/team_calendar.html:194
+msgid "Następny"
+msgstr "Następny"
+
+#: leaves/templates/leaves/team_calendar.html:220
+msgid "Pon"
+msgstr "Pon"
+
+#: leaves/templates/leaves/team_calendar.html:221
+msgid "Wt"
+msgstr "Wt"
+
+#: leaves/templates/leaves/team_calendar.html:222
+msgid "Śr"
+msgstr "Śr"
+
+#: leaves/templates/leaves/team_calendar.html:223
+msgid "Czw"
+msgstr "Czw"
+
+#: leaves/templates/leaves/team_calendar.html:224
+msgid "Pt"
+msgstr "Pt"
+
+#: leaves/templates/leaves/team_calendar.html:225
+msgid "Sob"
+msgstr "Sob"
+
+#: leaves/templates/leaves/team_calendar.html:226
+msgid "Nd"
+msgstr "Nd"
+
+#: leaves/templates/leaves/team_calendar.html:257
+#, python-format
+msgid ""
+"\n"
+"                                        <span class=\"leave-chip pending\"\n"
+"                                              title=\"%(name)s "
+"(oczekujący)\">\n"
+"                                            %(n)s\n"
+"                                        </span>\n"
+"                                        "
+msgstr ""
+"\n"
+"                                        <span class=\"leave-chip pending\"\n"
+"                                              title=\"%(name)s "
+"(oczekujący)\">\n"
+"                                            %(n)s\n"
+"                                        </span>\n"
+"                                        "
+
+#: leaves/templates/leaves/team_calendar.html:277
+msgid "Zespół"
+msgstr "Zespół:"
+
+#: leaves/templates/leaves/team_calendar.html:285
+msgid "Brak pracowników"
+msgstr "Brak pracowników"
 
 #: login/templates/login.html:7
 msgid "Logowanie – Sunny"
