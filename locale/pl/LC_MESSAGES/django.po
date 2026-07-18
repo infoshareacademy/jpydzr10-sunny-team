@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-14 23:44+0200\n"
+"POT-Creation-Date: 2026-07-18 14:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -210,6 +210,7 @@ msgstr "Potwierdź akcję"
 
 #: leaves/templates/leaves/all_requests_list.html:197
 #: leaves/templates/leaves/my_vacations.html:130
+#: templates/request_base.html:125
 msgid "Anuluj"
 msgstr "Anuluj"
 
@@ -368,6 +369,19 @@ msgstr "Archiwalne"
 msgid "Brak archiwalnych urlopów."
 msgstr "Brak archiwalnych urlopów."
 
+#: leaves/templates/leaves/new_request.html:3
+#: leaves/templates/leaves/new_request.html:4 templates/request_base.html:3
+msgid "Nowy wniosek"
+msgstr "Nowy wniosek"
+
+#: leaves/templates/leaves/new_request.html:7
+msgid "Wyślij wniosek"
+msgstr "Wyślij wniosek"
+
+#: leaves/templates/leaves/new_request.html:9
+msgid "wysłać"
+msgstr "wysłać"
+
 #: login/templates/login.html:7
 msgid "Logowanie – Sunny"
 msgstr "Logowanie – Sunny"
@@ -434,3 +448,31 @@ msgstr "Przełącz"
 #: templates/base.html:57
 msgid "Wyloguj się"
 msgstr "Wyloguj się"
+
+#: templates/request_base.html:109
+msgid "Button"
+msgstr "Przycisk"
+
+#: templates/request_base.html:117
+msgid "Potwierdzenie"
+msgstr "Potwierdzenie"
+
+#: templates/request_base.html:118
+msgid "Czy na pewno chcesz"
+msgstr "Czy na pewno chcesz"
+
+#: templates/request_base.html:118
+msgid "wniosek?"
+msgstr "wniosek?"
+
+#: templates/request_base.html:121
+msgid "Wnioskowane / Dostępne dni:"
+msgstr "Wnioskowane / Dostępne dni:"
+
+#: templates/request_base.html:122
+msgid "dni"
+msgstr "dni"
+
+#: templates/request_base.html:126
+msgid "Tak"
+msgstr "Tak"
