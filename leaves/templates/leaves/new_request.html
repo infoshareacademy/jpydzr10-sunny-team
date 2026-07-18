@@ -1,9 +1,9 @@
 {% extends 'request_base.html' %}
-
-{% block title %}Nowy wniosek{% endblock %}
-{% block top %}Nowy wniosek{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Nowy wniosek" %}{% endblock %}
+{% block top %}{% trans "Nowy wniosek" %}{% endblock %}
 
 {% block form_action %}{% url 'leave_request_add' %}{% endblock %}
+{% block button %}{% trans "Wyślij wniosek" %}{% endblock %}
 
-{% block button %}Wyślij wniosek{% endblock %}
-{% block approve %}wysłać{% endblock %}
+{% block approve %}{% trans "wysłać" %}{% endblock %}

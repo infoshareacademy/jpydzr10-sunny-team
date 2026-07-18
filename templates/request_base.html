@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-
-{% block title %}Nowy wniosek{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Nowy wniosek" %}{% endblock %}
 
 {% block content %}
 
@@ -106,7 +106,7 @@
         <form id="leave-form" method="post" novalidate>
             {% csrf_token %}
             {{ form.as_p }}
-            <button class="btn btn-primary" type="submit">{% block button %}Button{% endblock %}</button>
+            <button class="btn btn-primary" type="submit">{% block button %}{% trans "Button" %}{% endblock %}</button>
         </form>
     </div>
 </div>
@@ -114,16 +114,16 @@
 <div>
     <div id="popup-modal" class="popup-modal">
         <div class="modal-content-box">
-            <h2 class="top">Potwierdzenie</h2>
-            <p>Czy na pewno chcesz {% block approve %}{% endblock %} wniosek?<br>
-                <b>{{ start_date }} - {{ end_date}}</b></p>
+            <h2 class="top">{% trans "Potwierdzenie" %}</h2>
+            <p>{% blocktrans %}Czy na pewno chcesz {% block approve %}{% endblock %} wniosek?{% endblocktrans %}<br>
+                <b>{{ start_date }} - {{ end_date }}</b></p>
 
-            <p>Wnioskowane / Dostępne dni:<br>
-                <b>{{ amount_days }} / {{ available_days }} dni</b></p>
+            <p>{% trans "Wnioskowane / Dostępne dni:" %}<br>
+                <b>{{ amount_days }} / {{ available_days }} {% trans "dni" %}</b></p>
 
             <div class="modal-actions">
-                <button class="btn btn-danger" type="button" onclick="closeModal()">Anuluj</button>
-                <button class="btn btn-success" type="button" onclick="confirmAndSubmit()">Tak</button>
+                <button class="btn btn-danger" type="button" onclick="closeModal()">{% trans "Anuluj" %}</button>
+                <button class="btn btn-success" type="button" onclick="confirmAndSubmit()">{% trans "Tak" %}</button>
             </div>
         </div>
     </div>
