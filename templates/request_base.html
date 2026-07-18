@@ -115,7 +115,7 @@
     <div id="popup-modal" class="popup-modal">
         <div class="modal-content-box">
             <h2 class="top">{% trans "Potwierdzenie" %}</h2>
-            <p>{% blocktrans %}Czy na pewno chcesz {% block approve %}{% endblock %} wniosek?{% endblocktrans %}<br>
+            <p>{% trans "Czy na pewno chcesz" %} {% block approve %}{% endblock %} {% trans "wniosek?" %}<br>
                 <b>{{ start_date }} - {{ end_date }}</b></p>
 
             <p>{% trans "Wnioskowane / Dostępne dni:" %}<br>
