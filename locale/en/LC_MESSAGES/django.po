@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 14:56+0200\n"
+"POT-Creation-Date: 2026-07-19 02:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -72,12 +72,14 @@ msgid "Eksportuj do CSV"
 msgstr "Export to CSV"
 
 #: leaves/templates/leaves/all_requests_list.html:93
+#: leaves/templates/leaves/team_leave_balance.html:18
 #, python-format
 msgid "Zespół: %(name)s"
 msgstr "Team: %(name)s"
 
 #: leaves/templates/leaves/all_requests_list.html:96
 #: leaves/templates/leaves/all_requests_list.html:142
+#: leaves/templates/leaves/team_leave_balance.html:24
 msgid "Pracownik"
 msgstr "Employee"
 
@@ -452,6 +454,42 @@ msgstr "Team:"
 #: leaves/templates/leaves/team_calendar.html:285
 msgid "Brak pracowników"
 msgstr "No employees"
+
+#: leaves/templates/leaves/team_leave_balance.html:3
+msgid "Saldo urlopu zespołu"
+msgstr "Team vacation balance"
+
+#: leaves/templates/leaves/team_leave_balance.html:9
+msgid "Bilans urlopów — zespół %(name)s"
+msgstr "Vacation balance - team %(name)s"
+
+#: leaves/templates/leaves/team_leave_balance.html:11
+msgid "Bilans urlopów"
+msgstr "Team vacation balance"
+
+#: leaves/templates/leaves/team_leave_balance.html:25
+msgid "Całkowity"
+msgstr "Whole"
+
+#: leaves/templates/leaves/team_leave_balance.html:26
+msgid "Wykorzystany"
+msgstr "Used"
+
+#: leaves/templates/leaves/team_leave_balance.html:27
+msgid "Pozostały"
+msgstr "Remaining"
+
+#: leaves/templates/leaves/team_leave_balance.html:28
+msgid "Postęp"
+msgstr "Progress"
+
+#: leaves/templates/leaves/team_leave_balance.html:48
+msgid "Brak pracowników w zespole lub brak przypisanego zespołu."
+msgstr "No employees in team or no assigned team"
+
+#: leaves/templates/leaves/team_leave_balance.html:52
+msgid "Brak danych do wyświetlenia."
+msgstr "No data to show."
 
 #: login/templates/login.html:7
 msgid "Logowanie – Sunny"
