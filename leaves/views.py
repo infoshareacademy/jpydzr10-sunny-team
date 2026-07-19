@@ -17,6 +17,8 @@ from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import View
+from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
 @login_required
@@ -240,7 +242,16 @@ def approve_request(request, request_id):
             profile.subtract_leave_days(leave_request.amount_days)
         except WorkerProfile.DoesNotExist:
             pass
-        messages.success(request, _(f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.'))
+
+        # --- WYŚLIJ MAIL DO PRACOWNIKA ---
+        send_approval_notification(
+            employee_email=leave_request.employee.email,
+            employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
+            request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
+            site_url=settings.SITE_URL,
+        )
+
+        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
     except Exception as e:
         messages.error(request, _(f'Błąd podczas zatwierdzania: {e}'))
 
@@ -255,7 +266,17 @@ def reject_request(request, request_id):
 
     try:
         leave_request.reject(who=request.user)
-        messages.success(request, _(f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.'))
+
+        # --- WYŚLIJ MAIL DO PRACOWNIKA ---
+        send_reject_notification(
+            employee_email=leave_request.employee.email,
+            employee_name=f"{leave_request.employee.first_name} {leave_request.employee.last_name}",
+            request_details=f"{leave_request.start_date} – {leave_request.end_date} ({leave_request.amount_days} dni)",
+            rejection_reason=None,
+            site_url=settings.SITE_URL,
+        )
+
+        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.')
     except Exception as e:
         messages.error(request, _(f'Błąd podczas odrzucania: {e}'))
 
@@ -299,6 +320,34 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
         obj.amount_days = form.cleaned_data['amount_days']
         obj.save()
         self.object = obj
+
+        # --- WYŚLIJ MAIL DO MANAGERA/HR ---
+        from django.utils import timezone
+
+        # Pobierz adresy email wszystkich użytkowników z rolą Manager lub HR
+        User = get_user_model()
+        manager_emails = list(
+            User.objects.filter(role__in=["Manager", "HR"])
+            .values_list("email", flat=True)
+            .exclude(email="")  # pomiń puste adresy
+        )
+
+        if manager_emails:
+            try:
+                send_new_request_notification(
+                    manager_emails=manager_emails,
+                    employee_name=f"{self.request.user.first_name} {self.request.user.last_name}",
+                    request_details=f"{obj.start_date} – {obj.end_date} ({obj.amount_days} dni)",
+                    submission_date=timezone.now().strftime("%Y-%m-%d %H:%M"),
+                    site_url=settings.SITE_URL,
+                )
+            except Exception as e:
+                # Loguj błąd, ale nie przerywaj działania
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.error(f"Błąd wysyłki maila do managera: {e}")
+
         return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -636,6 +685,8 @@ def add_user(request):
     if request.method == 'POST':
         form = AddUserForm(request.POST)
         if form.is_valid():
+            # Pobierz hasło z czystych danych (przed zahaszowaniem)
+            raw_password = form.cleaned_data.get('password1')
             user = form.save()
             team = form.cleaned_data.get('team')
             hire_date = form.cleaned_data.get('hire_date') or date.today()
@@ -646,6 +697,15 @@ def add_user(request):
                     team=team,
                     hire_date=hire_date,
                 )
+
+            # --- WYŚLIJ MAIL POWITALNY ---
+            send_welcome_email(
+                user_email=user.email,
+                user_name=f"{user.first_name} {user.last_name}",
+                username=user.username,
+                password=raw_password,  # przesyłamy czyste hasło
+                site_url=settings.SITE_URL,
+            )
 
             # Logowanie akcji
             app_log.add_new_change(

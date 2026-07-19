@@ -1,0 +1,10 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+    <h2 style="color:#dc3545;"> Konto dezaktywowane</h2>
+    <p><strong>Witaj {{ user_name }},</strong></p>
+    <p>Twoje konto w systemie <strong>SunnyTeam</strong> zostało <strong style="color:#dc3545;">dezaktywowane</strong>.</p>
+    <p>Oznacza to, że nie masz już dostępu do panelu i nie możesz składać wniosków urlopowych.</p>
+    <p>Jeśli uważasz, że to pomyłka, skontaktuj się z administratorem systemu.</p>
+    <p style="margin-top:20px;">Z poważaniem,<br>Zespół SunnyTeam</p>
+{% endblock %}
