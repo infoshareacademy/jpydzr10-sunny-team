@@ -9,6 +9,7 @@ from accounts.models import User
 from logs.models import LoginAttempt
 from logs.utils import get_client_ip
 from django.core.mail import send_mail
+
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_WINDOW_MINUTES = 5
 
