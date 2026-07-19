@@ -10,7 +10,7 @@ class AddUserForm(UserCreationForm):
     """ Formularz tworzenia uzytkownika przez admina / HR """
     team = forms.ChoiceField(
         label='Zespół',
-        choices=[],  # wypełniane dynamicznie w __init__
+        choices=[],
         required=False,
     )
     hire_date = forms.DateField(
@@ -18,12 +18,10 @@ class AddUserForm(UserCreationForm):
         widget=forms.DateInput(attrs={'type': 'date'}),
         required=False,
     )
-
     other_experience_years = forms.IntegerField(
         label='Staż urlopowy (lata)',
         required=False,
     )
-
     other_experience_days = forms.IntegerField(
         label='Dopełnienie stażu (dni)',
         required=False,
@@ -33,10 +31,12 @@ class AddUserForm(UserCreationForm):
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'role')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, allowed_roles=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['password1'].widget.attrs.update({'class': "form-control"}) # Pole na hasło
-        self.fields['password2'].widget.attrs.update({'class': "form-control"}) # Pole do potwierdzenia hasła
+        self.allowed_roles = allowed_roles or []
+
+        self.fields['password1'].widget.attrs.update({'class': "form-control"})
+        self.fields['password2'].widget.attrs.update({'class': "form-control"})
 
         teams = (
             WorkerProfile.objects
@@ -44,12 +44,20 @@ class AddUserForm(UserCreationForm):
             .distinct()
             .order_by('team')
         )
-        choices = [('', '— brak —')] + [(t, t) for t in teams]
-        self.fields['team'].choices = choices
+        self.fields['team'].choices = [('', '— brak —')] + [(t, t) for t in teams]
 
+        self.fields['role'].choices = [
+            c for c in self.fields['role'].choices if c[0] in self.allowed_roles
+        ]
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role not in self.allowed_roles:
+            raise forms.ValidationError('Nie masz uprawnień do nadania tej roli.')
+        return role
 
     def save(self, commit=True):
-            user = super().save(commit=False)
-            if commit:
-                user.save()
-            return user
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+        return user

@@ -204,11 +204,10 @@
 
 <div class="logs-wrapper mt-4">
     <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">Historia Logowań i Dostępu</h1>
-    <p style="margin-bottom: 30px;"><a href="{% url 'activity_log' %}" class="auth-link">Zobacz historię aktywności &rarr;</a></p>
+    <p style="margin-bottom: 30px;"><a href="{% url 'activity_log' %}" class="auth-link">Zobacz historię aktywności</a></p>
 
     <section class="filters">
         <form method="get">
-
             <div class="filter-group">
                 <label for="id_user">Użytkownik:</label>
                 <select name="user" id="id_user">
@@ -274,11 +273,23 @@
                     {% for log in logs %}
                     <tr>
                         <td style="color: #4a5568; font-weight: 500; white-space: nowrap;">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
-                        <td style="font-weight: 700; color: #1a202c;">{{ log.user|default:"&mdash;" }}</td>
+                        <td style="font-weight: 700; color: #1a202c;">
+                            {% if log.user %}
+                                <a href="{% url 'profile' user_id=log.user.id %}"
+                                   style="color: #1a202c; text-decoration: none;"
+                                   onmouseover="this.style.textDecoration='underline'"
+                                   onmouseout="this.style.textDecoration='none'">
+                                    {{ log.user }}
+                                </a>
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
                         <td>
                             <span class="badge badge-{{ log.action|default:'default'|cut:'.' }}">
                                 {{ log.get_action_display|default:log.action }}
                             </span>
+                        </td>
                         <td style="color: #2d3748; font-weight: 500;">{{ log.username|default:"&mdash;" }}</td>
                         <td>
                             <span class="badge badge-{{ log.severity|default:'default' }}">

@@ -3,72 +3,415 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}SunnyTeamProject{% endblock %}</title>
-     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        .mynavbar {
+            background-color: #87cefa;
+            border-bottom: 3px solid #87cefa;
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1.6rem;
+            font-weight: 1000;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .brand-logo:hover {
+            transform: scale(1.1);
+        }
+        .brand-logo i {
+            color: #ffdf22;
+            animation: spin 20s linear infinite;
+            display: inline-block;
+        }
+        .brand-logo span {
+            color: #ffdf22 !important;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        .mynavbar .nav-link {
+            color: #f8fafc !important;
+            font-weight: 600;
+            font-size: 1.15rem;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+        }
+        .mynavbar .nav-link i {
+            font-size: 1.4rem;
+            color: #ffffff;
+            transition: color 0.2s ease;
+        }
+        .mynavbar .nav-link:hover,
+        .mynavbar .nav-link.active,
+        .mynavbar .nav-link:hover i,
+        .mynavbar .nav-link.active i {
+            color: #ffdf22 !important;
+        }
+        .mynavbar .dropdown-menu {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            z-index: 1050;
+        }
+        .mynavbar .dropdown-item {
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s;
+        }
+        .mynavbar .dropdown-item:hover {
+            background-color: #ffdf22 !important;
+            color: #ffffff !important;
+        }
+        .mynavbar .dropdown-item:hover i {
+            color: #ffffff !important;
+        }
+        .profile-wrapper .profile-trigger {
+            background: #ffffff !important;
+            border: 2px solid #ffffff !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            width: 46px;
+            height: 46px;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s ease-in-out !important;
+        }
+        .profile-wrapper .profile-trigger i {
+            color: #87cefa !important;
+            transition: none !important;
+        }
+        .profile-wrapper .profile-trigger:hover,
+        .profile-wrapper .profile-trigger[aria-expanded="true"] {
+            background-color: #ffdf22 !important;
+            border-color: #ffdf22 !important;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .profile-wrapper .profile-trigger:hover i,
+        .profile-wrapper .profile-trigger[aria-expanded="true"] i {
+            color: #87cefa !important;
+        }
+        .profile-wrapper .profile-trigger::after {
+            display: none !important;
+        }
 
+        .profile-form-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            width: 100%;
+            text-align: left;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .profile-form-btn:hover {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+        .profile-form-btn:hover i {
+            color: #ffffff !important;
+        }
+        .my-footer {
+            background-color: #f8fafc;
+            border-top: 2px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+        .my-footer .footer-title {
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .my-footer a {
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .my-footer a:hover {
+            color: #87cefa;
+            padding-left: 4px;
+        }
+        .my-footer .social-icons a {
+            font-size: 1.4rem;
+            color: #64748b;
+            transition: transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        .my-footer .social-icons a:hover {
+            color: #87cefa;
+            transform: scale(1.1);
+            padding-left: 0;
+        }
+        .isa-footer-logo {
+            height: 24px;
+            width: auto;
+            object-fit: contain;
+            filter: grayscale(100%);
+            transition: filter 0.2s ease;
+        }
+        .my-footer .social-icons a:hover .isa-footer-logo {
+            filter: grayscale(0%);
+        }
+        .footer-bottom {
+            background-color: #f8fafc;
+            font-size: 0.85rem;
+        }
+        .btn-footer-top {
+            width: 40px;
+            height: 40px;
+            background-color: #e2e8f0;
+            color: #64748b;
+            border: none;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .btn-footer-top:hover {
+            background-color: #ffdf22;
+            color: #ffffff;
+            transform: translateY(-3px);
+        }
+        .toast-box-container {
+            position: fixed;
+            top: 130px;
+            right: 20px;
+            z-index: 9999;
+            width: 320px;
+        }
+        .toast-mini {
+            background: #ffffff;
+            color: #2d3748;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .toast-mini.show { opacity: 1; }
+    </style>
+    {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 {% block nav %}
-    <nav class="mynavbar">
-        <div class="nav-container">
-            <a class="brand-logo">
-                <i class="bi bi-sun-fill"></i>
-                <span>Sunny</span>
-            </a>
+    <nav class="navbar navbar-expand mynavbar">
+        <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center flex-wrap gap-3">
+                <a class="brand-logo" href="{% url 'home' %}">
+                    <i class="bi bi-sun-fill"></i>
+                    <span class="d-none d-md-inline">Sunny</span>
+                </a>
+                {% if user.is_authenticated %}
+                <ul class="navbar-nav d-flex flex-row align-items-center gap-3 gap-md-4 ms-md-4 m-0 p-0 flex-wrap">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-postcard-fill"></i>
+                            <span class="d-none d-xxl-inline">Wnioski Urlopowe</span>
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            {% if active_role == 'Worker' %}
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'new_request' %}"><i class="bi bi-file-earmark-plus-fill text-muted"></i> Nowy wniosek</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'my_vacations' %}"><i class="bi bi-sunglasses text-muted"></i> Moje urlopy</a></li>
+                            {% else %}
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'all_requests_list' %}"><i class="bi bi-file-text-fill text-muted"></i> Lista wniosków</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'team_calendar' %}"><i class="bi bi-calendar2-week-fill text-muted"></i> Kalendarz zespołowy</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% if active_role in 'Manager,HR,Admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bar-chart-line-fill"></i>
+                            <span class="d-none d-xxl-inline">Raporty & Statystyki</span>
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'leave_usage_report' %}"><i class="bi bi-person-fill text-muted"></i> Pracownicy</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'team_report' %}"><i class="bi bi-people-fill text-muted"></i> Zespoły</a></li>
+                            {% if active_role in 'HR,Admin' %}
+                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'users_per_role_report' %}"><i class="bi bi-person-lines-fill text-muted"></i> Role</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% if active_role == 'HR' or active_role == 'Admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-terminal-fill"></i>
+                            <span class="d-none d-xxl-inline">Logi Systemowe</span>
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'activity_log' %}"><i class="bi bi-keyboard-fill text-muted"></i> Aktywności</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'auth_log' %}"><i class="bi bi-key-fill text-muted"></i> Autoryzacja</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% if active_role == 'HR' or active_role == 'Admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-gear-wide-connected"></i>
+                            <span class="d-none d-xxl-inline">Panel Sterowania</span>
+                        </a>
+                        <ul class="dropdown-menu shadow-sm">
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'user_list' %}"><i class="bi bi-building-fill text-muted"></i> Użytkownicy</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'add_user' %}"><i class="bi bi-person-plus-fill text-muted"></i> Dodaj użytkownika</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% endif %}
+            </div>
             {% if user.is_authenticated %}
-            <ul class="nav-links">
-                <li><a href="{% url 'dashboard' %}">Pulpit</a></li>
-                <li><a href="{% url 'my_vacations' %}">Moje Urlopy</a></li>
-                <li><a href="{% url 'new_request' %}">Nowy Wniosek</a></li>
-                {% if active_role == 'HR' or active_role == 'Manager' or active_role == 'Admin' %}
-                    <li><a href="{% url 'reports_index' %}">Raporty</a></li>
-                {% endif %}
-            </ul>
-
-            <div class="user-section">
-                Witaj {{ user.first_name }} {{ user.last_name }} ({{ active_role }}) !
-
-                {% if available_roles|length > 1 %}
-                <label for="Role">Wybierz role:</label>
-                <form action="{% url 'switch_role' %}" method="post" class="d-inline">
-                    {% csrf_token %}
-                    <select name="role">
-                        {% for role in available_roles %}
-                        <option value="{{ role }}" {% if role == active_role %}selected{% endif %}>{{ role }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="btn btn-secondary">Przełącz</button>
-                </form>
-                {% endif %}
-
-                <form action="{% url 'logout' %}" method="post" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-warning">
-                        Wyloguj się
-                    </button>
-                </form>
+            <div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
+                <span class="navbar-text text-light fs-5 fw-bold text-nowrap">
+                    <span class="d-none d-md-inline">Rola: </span><strong style="color: #ffdf22;">{{ active_role }}</strong>
+                </span>
+                <div class="dropdown profile-wrapper">
+                    <a class="nav-link dropdown-toggle profile-trigger" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-fill fs-4"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" style="min-width: 260px;">
+                        <div class="px-3 py-3 bg-white rounded-top border-bottom">
+                            <div class="fw-bold text-dark fs-5 text-nowrap">{{ user.first_name }} {{ user.last_name }}</div>
+                        </div>
+                        <li><a class="dropdown-item d-flex align-items-center gap-2 py-2 text-nowrap" href="{% url 'profile' user.id %}"><i class="bi bi-info-square-fill text-secondary"></i> Szczegóły profilu</a></li>
+                        {% if available_roles|length == 1 %}
+                            <li>
+                                <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-single" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="role" value="{{ available_roles.0 }}">
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-nowrap" href="#" onclick="document.getElementById('switch-role-form-single').submit(); return false;">
+                                        <i class="bi bi-compass-fill text-secondary"></i> Zmień rolę: {{ available_roles.0 }}
+                                    </a>
+                                </form>
+                            </li>
+                        {% elif available_roles|length > 1 %}
+                            <li>
+                                <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-select" class="m-0">
+                                    {% csrf_token %}
+                                    <div class="dropdown-item d-flex align-items-center gap-2 py-2 text-nowrap" style="background: none; cursor: default;">
+                                        <i class="bi bi-compass-fill text-secondary"></i>
+                                        <span class="text-dark me-1">Zmień rolę:</span>
+                                        <select name="role" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                            <option value="" disabled selected>Wybierz...</option>
+                                            {% for role in available_roles %}
+                                                <option value="{{ role }}">{{ role }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                            </li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{% url 'logout' %}" method="post" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="profile-form-btn d-flex align-items-center gap-2 text-danger text-nowrap fw-semibold">
+                                    <i class="bi bi-door-open-fill"></i> Wyloguj się
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
             {% endif %}
         </div>
     </nav>
 {% endblock %}
-    <main>
+
+    <main class="container-fluid px-4 my-5 flex-grow-1">
         {% if messages %}
-        {% for message in messages %}
-            <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} mb-0">{{ message }}</div>
-        {% endfor %}
+        <div class="toast-box-container">
+            {% for message in messages %}
+            <div class="toast-mini" id="msg-{{ forloop.index }}">
+                <span>{{ message }}</span>
+                <button style="background:none; border:none; color:#a0aec0; cursor:pointer; font-size:1.3rem; padding:0 0 0 15px; line-height:1;" onclick="this.parentElement.remove()">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                document.querySelectorAll('.toast-mini').forEach((toast) => {
+                    setTimeout(() => toast.classList.add('show'), 50);
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 200);
+                    }, 4000);
+                });
+            });
+        </script>
         {% endif %}
-    {% block content %}{% endblock %}
+        {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer text-center">
-  <div>
-    © 2026 SunnyTeam
-  </div>
-
-</footer>
+    <footer class="my-footer pt-5 mt-auto">
+        <div class="container pb-4">
+            <div class="row g-4">
+                <div class="col-12 col-md-5">
+                    <h5 class="footer-title mb-3 fs-3">Sunny ☀️</h5>
+                    <p class="text-muted pe-md-4 mb-0">
+                        Intuicyjna platforma do zarządzania wnioskami urlopowymi, planowania pracy zespołowej oraz automatyzacji procesów wewnętrznych w firmie. Z nami zaplanujesz słoneczny wypoczynek.
+                    </p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h5 class="footer-title mb-3">Nawigacja</h5>
+                    <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+                        <li><a href="{% url 'home' %}"><i class="bi bi-chevron-right small me-1"></i> Strona główna</a></li>
+                        {% if user.is_authenticated %}
+                            <li><a href="{% url 'profile' user.id %}"><i class="bi bi-chevron-right small me-1"></i> Twój profil</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="footer-title mb-3">Wsparcie</h5>
+                            <ul class="list-unstyled d-flex flex-column gap-2 text-muted mb-3">
+                                <li><i class="bi bi-envelope-fill text-secondary me-2"></i> pomoc@sunnyteam.com</li>
+                                <li><i class="bi bi-telephone-fill text-secondary me-2"></i> +48 123 456 789</li>
+                            </ul>
+                            <div class="social-icons d-flex align-items-center gap-3">
+                                <a href="https://infoshareacademy.com" target="_blank" title="infoShare Academy – kursy IT">
+                                    <img src="{% static 'images/InfoShare_Academy.svg' %}" alt="infoShare Academy" class="isa-footer-logo">
+                                </a>
+                                <a href="https://github.com/infoshareacademy/jpydzr10-sunny-team" target="_blank" title="Repozytorium GitHub"><i class="bi bi-github"></i></a>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-footer-top ms-2" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Wróć na górę">
+                            <i class="bi bi-arrow-up fs-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom py-3 text-center">
+            <div class="container text-muted">
+                &copy; 2026 SunnyTeam
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

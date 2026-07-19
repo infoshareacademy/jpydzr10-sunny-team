@@ -18,7 +18,6 @@ class ActivityLog(models.Model):
     OBJECT_TYPE_CHOICES = [
         ('user', 'Użytkownik'),
         ('leave_request', 'Wniosek urlopowy'),
-        ('system_settings', 'Ustawienia systemu'),
     ]
     SEVERITY_CHOICES = [
         ('info', 'Info'),
