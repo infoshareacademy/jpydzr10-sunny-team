@@ -20,7 +20,7 @@ from django.views.generic import View
 from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-
+from django.utils.translation import gettext as _
 @login_required
 def dashboard(request):
 
@@ -200,7 +200,8 @@ def approve_request(request, request_id):
         employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
         employee_team = employee_profile.team
     except WorkerProfile.DoesNotExist:
-        messages.error(request, 'Pracownik nie ma przypisanego zespołu.')
+        messages.error(request, _('Pracownik nie ma przypisanego zespołu.'))
+
         return redirect('all_requests_list')
 
     if active_role == 'Manager':
@@ -208,10 +209,10 @@ def approve_request(request, request_id):
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
             if my_profile.team != employee_team:
-                messages.error(request, 'Możesz zatwierdzać tylko wnioski swojego zespołu.')
+                messages.error(request, _('Możesz zatwierdzać tylko wnioski swojego zespołu.'))
                 return redirect('all_requests_list')
         except WorkerProfile.DoesNotExist:
-            messages.error(request, 'Nie masz przypisanego zespołu.')
+            messages.error(request,_('Nie masz przypisanego zespołu.'))
             return redirect('all_requests_list')
 
     elif active_role == 'HR':
@@ -229,7 +230,7 @@ def approve_request(request, request_id):
             ).exists()
 
             if not manager_on_leave:
-                messages.error(request, f'Manager zespołu {employee_team} jest dostępny. HR może zatwierdzać tylko gdy manager jest na urlopie.')
+                messages.error(request, _(f'Manager zespołu {employee_team} jest dostępny. HR może zatwierdzać tylko gdy manager jest na urlopie.'))
                 return redirect('all_requests_list')
         except WorkerProfile.DoesNotExist:
             pass  # jeśli brak managera w zespole, HR może zatwierdzać
@@ -252,7 +253,7 @@ def approve_request(request, request_id):
 
         messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
     except Exception as e:
-        messages.error(request, f'Błąd podczas zatwierdzania: {e}')
+        messages.error(request, _(f'Błąd podczas zatwierdzania: {e}'))
 
     return redirect('all_requests_list')
 
@@ -277,7 +278,7 @@ def reject_request(request, request_id):
 
         messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.')
     except Exception as e:
-        messages.error(request, f'Błąd podczas odrzucania: {e}')
+        messages.error(request, _(f'Błąd podczas odrzucania: {e}'))
 
     return redirect('all_requests_list')
 
@@ -408,12 +409,12 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
 
         # Blokada edycji wniosków, które zostały już zaakceptowane lub odrzucone
         if obj.status != LeaveRequest.Status.PENDING:
-            messages.error(request, "Można edytować tylko wnioski oczekujące.")
+            messages.error(request, _("Można edytować tylko wnioski oczekujące."))
             return redirect('my_vacations')
 
         # Pracownik nie może edytować wniosków innych osób
         if obj.employee != request.user:
-            messages.error(request, "Możesz edytować tylko własne wnioski.")
+            messages.error(request, _("Możesz edytować tylko własne wnioski."))
             return redirect('my_vacations')
 
         return super().dispatch(request, *args, **kwargs)
@@ -485,15 +486,15 @@ class CancelLeaveView(RoleRequiredMixin, View):
         active_role = request.session.get('active_role', request.user.role)
 
         if active_role == 'Worker' and leave_request.employee != request.user:
-            messages.error(request, "Możesz anulować tylko własne wnioski.")
+            messages.error(request, _("Możesz anulować tylko własne wnioski."))
             return redirect('my_vacations')
 
         if leave_request.status != LeaveRequest.Status.PENDING:
-            messages.error(request, "Można anulować tylko wnioski oczekujące.")
+            messages.error(request, _("Można anulować tylko wnioski oczekujące."))
             return redirect('my_vacations')
 
         leave_request.cancel_request(who=request.user)
-        messages.success(request, "Wniosek został anulowany.")
+        messages.success(request, _("Wniosek został anulowany."))
 
         if active_role == 'Worker':
             return redirect('my_vacations')
@@ -712,7 +713,7 @@ def add_user(request):
                 action='dodaj',
                 object_type='user',
             )
-            messages.success(request, f'Użytkownik {user.username} został pomyślnie dodany.')
+            messages.success(request, _(f'Użytkownik {user.username} został pomyślnie dodany.'))
             return redirect('user_list')
     else:
         form = AddUserForm()
@@ -727,7 +728,7 @@ def reset_password(request):
         new_password = request.POST.get('new_password')
 
         if not user_id or not new_password:
-            messages.error(request, "Brak ID użytkownika lub hasła.")
+            messages.error(request, _("Brak ID użytkownika lub hasła."))
             return redirect('reset_password')
 
         try:
@@ -735,7 +736,7 @@ def reset_password(request):
             user = User.objects.get(id=user_id)
 
             if len(new_password) < 6:
-                messages.error(request, 'Hasło musi mieć conajmniej 6 znaków.')
+                messages.error(request, _('Hasło musi mieć conajmniej 6 znaków.'))
                 return redirect('reset_password')
 
             user.set_password(new_password)
@@ -748,13 +749,13 @@ def reset_password(request):
             object_type='user'
             )
 
-            messages.success(request, f'Hasło dla użytkownika {user.username} zostało zresetowane.')
+            messages.success(request, _(f'Hasło dla użytkownika {user.username} zostało zresetowane.'))
             return redirect('all_requests_list')
 
         except User.DoesNotExist:
-            messages.error(request, 'Nie znaleziono użytkownika.')
+            messages.error(request, _('Nie znaleziono użytkownika.'))
         except Exception as e:
-            messages.error(request, f'Błąd podczas resetowania hasła: {e}')
+            messages.error(request, _(f'Błąd podczas resetowania hasła: {e}'))
 
     User = get_user_model()
     users = User.objects.all()
