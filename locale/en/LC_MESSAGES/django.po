@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-19 02:13+0200\n"
+"POT-Creation-Date: 2026-07-19 02:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -328,6 +328,24 @@ msgstr "Last actions"
 #: leaves/templates/leaves/dashboard.html:154
 msgid "Brak ostatnich akcji."
 msgstr "No last action"
+
+#: leaves/templates/leaves/edit_request.html:4
+msgid "Edycja wniosku"
+msgstr "Edit request"
+
+#: leaves/templates/leaves/edit_request.html:5
+#: leaves/templates/leaves/edit_request.html:6
+#: leaves/templates/leaves/edit_request.html:8
+msgid "Edytuj wniosek"
+msgstr "Edit request"
+
+#: leaves/templates/leaves/edit_request.html:11
+msgid "Aktualny zakres dat:"
+msgstr "Current date range:"
+
+#: leaves/templates/leaves/edit_request.html:15
+msgid "edytować"
+msgstr "edit"
 
 #: leaves/templates/leaves/log_history.html:3
 #: leaves/templates/leaves/log_history.html:36
