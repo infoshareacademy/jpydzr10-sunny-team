@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 14:56+0200\n"
+"POT-Creation-Date: 2026-07-19 02:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,12 +74,14 @@ msgid "Eksportuj do CSV"
 msgstr "Eksportuj do CSV"
 
 #: leaves/templates/leaves/all_requests_list.html:93
+#: leaves/templates/leaves/team_leave_balance.html:18
 #, python-format
 msgid "Zespół: %(name)s"
 msgstr "Zespół: %(name)s"
 
 #: leaves/templates/leaves/all_requests_list.html:96
 #: leaves/templates/leaves/all_requests_list.html:142
+#: leaves/templates/leaves/team_leave_balance.html:24
 msgid "Pracownik"
 msgstr "Pracownik"
 
@@ -454,6 +456,42 @@ msgstr "Zespół:"
 #: leaves/templates/leaves/team_calendar.html:285
 msgid "Brak pracowników"
 msgstr "Brak pracowników"
+
+#: leaves/templates/leaves/team_leave_balance.html:3
+msgid "Saldo urlopu zespołu"
+msgstr "Saldo urlopu zespołu"
+
+#: leaves/templates/leaves/team_leave_balance.html:9
+msgid "Bilans urlopów — zespół %(name)s"
+msgstr "Bilans urlopów — zespół %(name)s"
+
+#: leaves/templates/leaves/team_leave_balance.html:11
+msgid "Bilans urlopów"
+msgstr "Bilans urlopów"
+
+#: leaves/templates/leaves/team_leave_balance.html:25
+msgid "Całkowity"
+msgstr "Całkowity"
+
+#: leaves/templates/leaves/team_leave_balance.html:26
+msgid "Wykorzystany"
+msgstr "Wykorzystane"
+
+#: leaves/templates/leaves/team_leave_balance.html:27
+msgid "Pozostały"
+msgstr "Pozostały"
+
+#: leaves/templates/leaves/team_leave_balance.html:28
+msgid "Postęp"
+msgstr "Postęp"
+
+#: leaves/templates/leaves/team_leave_balance.html:48
+msgid "Brak pracowników w zespole lub brak przypisanego zespołu."
+msgstr "Brak pracowników w zespole lub brak przypisanego zespołu."
+
+#: leaves/templates/leaves/team_leave_balance.html:52
+msgid "Brak danych do wyświetlenia."
+msgstr "Brak danych do wyświetlenia."
 
 #: login/templates/login.html:7
 msgid "Logowanie – Sunny"
