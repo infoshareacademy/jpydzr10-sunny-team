@@ -1,17 +1,15 @@
 {% extends 'request_base.html' %}
+{% load i18n %}
 
-{% block title %}Edycja wniosku{% endblock %}
-{% block form_title %}Edytuj wniosek{% endblock %}
-{% block top %}Edytuj wniosek{% endblock %}
-
-
+{% block title %}{% trans "Edycja wniosku" %}{% endblock %}
+{% block form_title %}{% trans "Edytuj wniosek" %}{% endblock %}
+{% block top %}{% trans "Edytuj wniosek" %}{% endblock %}
 {% block form_action %}{% url 'leave_request_edit' form.instance.id %}{% endblock %}
-
-{% block button %}Edytuj wniosek{% endblock %}
+{% block button %}{% trans "Edytuj wniosek" %}{% endblock %}
 
 {% block description %}
-<p>Aktualny zakres dat:<br>
+<p>{% trans "Aktualny zakres dat:" %}<br>
     <b>{{ existing_start }} - {{ existing_end }}</b></p>
 {% endblock %}
 
-{% block approve %}edytować{% endblock %}
+{% block approve %}{% trans "edytować" %}{% endblock %}
