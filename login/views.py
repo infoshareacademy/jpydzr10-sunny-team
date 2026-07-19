@@ -8,6 +8,7 @@ from logs.models import EmailVerificationCode
 from accounts.models import User
 from logs.models import LoginAttempt
 from logs.utils import get_client_ip
+from django.core.mail import send_mail
 
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_WINDOW_MINUTES = 5
@@ -87,7 +88,13 @@ def login_view(request):
                 code = str(random.randint(100000, 999999))
                 EmailVerificationCode.objects.create(user=user, code=code)
                 request.session['2fa_user_id'] = user.id
-                print(f"KOD 2FA: {code}")  # tymczasowo zamiast maila
+                print(f"KOD 2FA: {code}") # DO ZMIANY NA MAILA JAK JUZ BEDZIE GOTOWY DO WYYSLEK :)
+                # send_mail(
+                # subject='Kod weryfikacyjny 2FA',
+                # message=f'Twój kod weryfikacyjny: {code}',
+                # from_email='noreply@sunnyteam.pl',
+                # recipient_list=[user.email],
+                # )
                 return redirect('verify_2fa')
         else:
             LoginAttempt.objects.create(
