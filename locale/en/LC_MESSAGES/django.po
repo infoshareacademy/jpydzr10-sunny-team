@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-19 02:00+0200\n"
+"POT-Creation-Date: 2026-07-19 02:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,10 +52,12 @@ msgid "Odrzucone"
 msgstr "Rejected"
 
 #: leaves/templates/leaves/all_requests_list.html:65
+#: leaves/templates/leaves/log_history.html:57
 msgid "Od:"
 msgstr "From:"
 
 #: leaves/templates/leaves/all_requests_list.html:68
+#: leaves/templates/leaves/log_history.html:58
 msgid "Do:"
 msgstr "To:"
 
@@ -327,6 +329,44 @@ msgstr "Last actions"
 msgid "Brak ostatnich akcji."
 msgstr "No last action"
 
+#: leaves/templates/leaves/log_history.html:3
+#: leaves/templates/leaves/log_history.html:36
+msgid "Historia Logów"
+msgstr "Log history"
+
+#: leaves/templates/leaves/log_history.html:41
+msgid "Akcja:"
+msgstr "Actions:"
+
+#: leaves/templates/leaves/log_history.html:43
+#: leaves/templates/leaves/log_history.html:51
+msgid "Wszystkie"
+msgstr "All"
+
+#: leaves/templates/leaves/log_history.html:49
+msgid "Typ obiektu:"
+msgstr "Object type:"
+
+#: leaves/templates/leaves/log_history.html:69
+msgid "Data i godzina"
+msgstr "Date and hour"
+
+#: leaves/templates/leaves/log_history.html:70
+msgid "Użytkownik"
+msgstr "User"
+
+#: leaves/templates/leaves/log_history.html:71
+msgid "Akcja"
+msgstr "Action"
+
+#: leaves/templates/leaves/log_history.html:72
+msgid "Typ obiektu"
+msgstr "Object type"
+
+#: leaves/templates/leaves/log_history.html:85
+msgid "Brak wpisów w historii."
+msgstr "No entries in history"
+
 #: leaves/templates/leaves/my_vacations.html:3
 #: leaves/templates/leaves/my_vacations.html:47 templates/base.html:24
 msgid "Moje Urlopy"
@@ -460,6 +500,7 @@ msgid "Saldo urlopu zespołu"
 msgstr "Team vacation balance"
 
 #: leaves/templates/leaves/team_leave_balance.html:9
+#, python-format
 msgid "Bilans urlopów — zespół %(name)s"
 msgstr "Vacation balance - team %(name)s"
 
