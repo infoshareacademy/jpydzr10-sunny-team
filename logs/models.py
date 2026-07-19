@@ -44,3 +44,36 @@ class ChangeLog(models.Model):
 
     def __str__(self):
         return f"{self.who} - {self.action} - {self.object_type} - {self.created_at} - {self.ip_address} -  "
+
+class LoginAttempt(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='login_attempts',
+    )
+    username = models.CharField(max_length=150)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    success = models.BooleanField(default=False)
+    invalidated = models.BooleanField(
+        default=False,
+        help_text="True gdy ten nieudany login zostal 'wyzerowany' przez pozniejsze udane logowanie."
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['username', 'timestamp']),
+            models.Index(fields=['ip_address', 'timestamp']),
+        ]
+
+    def __str__(self):
+        status = 'OK' if self.success else 'FAIL'
+        return f"{self.username} - {status} - {self.ip_address} - {self.timestamp}"
+class EmailVerificationCode(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)

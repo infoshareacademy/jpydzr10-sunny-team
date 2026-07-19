@@ -10,3 +10,4 @@ mysqlclient
 
 numpy
 django
+python-dotenv
