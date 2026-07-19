@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-
-{% block title %}Historia Logów{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Historia Logów" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -33,29 +33,29 @@
 </style>
 
 <div class="container mt-4">
-    <h1>Historia Logów</h1>
+    <h1>{% trans "Historia Logów" %}</h1>
 
     <!-- Filtry -->
     <div class="filters">
         <form method="get">
-            <strong>Akcja:</strong>
+            <strong>{% trans "Akcja:" %}</strong>
             <select name="action" style="padding:8px; margin:0 10px;">
-                <option value="">Wszystkie</option>
+                <option value="">{% trans "Wszystkie" %}</option>
                 {% for value, label in logs.model.ACTION_CHOICES %}
                 <option value="{{ value }}" {% if action_filter == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
 
-            <strong>Typ obiektu:</strong>
+            <strong>{% trans "Typ obiektu:" %}</strong>
             <select name="object_type" style="padding:8px; margin:0 10px;">
-                <option value="">Wszystkie</option>
+                <option value="">{% trans "Wszystkie" %}</option>
                 {% for value, label in logs.model.OBJECT_TYPE_CHOICES %}
                 <option value="{{ value }}" {% if object_type_filter == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
 
-            <strong>Od:</strong> <input type="date" name="date_from" value="{{ date_from }}" style="padding:8px;">
-            <strong>Do:</strong> <input type="date" name="date_to" value="{{ date_to }}" style="padding:8px;">
+            <strong>{% trans "Od:" %}</strong> <input type="date" name="date_from" value="{{ date_from }}" style="padding:8px;">
+            <strong>{% trans "Do:" %}</strong> <input type="date" name="date_to" value="{{ date_to }}" style="padding:8px;">
 
             <button type="submit" style="padding:8px 16px;">Filtruj</button>
             <a href="{% url 'log_history' %}" style="padding:8px 16px; background:#6c757d; color:white; text-decoration:none; border-radius:4px;">Reset</a>
@@ -66,10 +66,10 @@
         <table>
             <thead>
                 <tr>
-                    <th>Data i godzina</th>
-                    <th>Użytkownik</th>
-                    <th>Akcja</th>
-                    <th>Typ obiektu</th>
+                    <th>{% trans "Data i godzina" %}</th>
+                    <th>{% trans "Użytkownik" %}</th>
+                    <th>{% trans "Akcja" %}</th>
+                    <th>{% trans "Typ obiektu" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,7 +82,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" style="text-align:center; padding:40px;">Brak wpisów w historii.</td>
+                    <td colspan="4" style="text-align:center; padding:40px;">{% trans "Brak wpisów w historii." %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
