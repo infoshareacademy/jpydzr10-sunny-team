@@ -5,6 +5,7 @@ holidays==0.99
 jaraco.functools==4.4.0
 more-itertools==10.8.0
 mysqlclient==2.2.8
+nginx==1.24.0
 numpy==2.5.0
 packaging==26.2
 python-dateutil==2.9.0.post0
