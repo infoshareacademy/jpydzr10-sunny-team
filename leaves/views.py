@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import date, datetime, timedelta
@@ -18,6 +17,7 @@ from utils.email_utils import send_approval_notification, send_reject_notificati
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
+from django.contrib.auth import get_user_model
 @login_required
 def dashboard(request):
     active_role = request.session.get('active_role', request.user.role)
@@ -246,6 +246,8 @@ def approve_request(request, request_id):
             profile.subtract_leave_days(leave_request.amount_days)
         except WorkerProfile.DoesNotExist:
             pass
+
+        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
 
         # --- WYŚLIJ MAIL DO PRACOWNIKA ---
         try:
@@ -667,10 +669,14 @@ def export_requests_csv(request):
         except ValueError:
             pass
 
+
+    # odpowiedź HTTP jako plik CSV
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="wnioski_urlopowe.csv"'
 
     writer = csv.writer(response)
+
+    # nagłówki kolumn
     writer.writerow([
         'ID', 'Imię', 'Nazwisko', 'Zespół', 'Data od', 'Data do',
         'Liczba dni', 'Status', 'Potwierdził', 'Data złożenia'
