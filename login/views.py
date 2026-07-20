@@ -5,7 +5,8 @@ from logs.utils import get_client_ip, get_lockout_until, reset_failed_attempts, 
 from django.utils import timezone
 from datetime import timedelta
 import random
-from logs.models import AuthLog, EmailVerificationCode
+from mail.models import EmailVerificationCode
+from logs.models import AuthLog
 from django.core.mail import send_mail
 
 MAX_FAILED_ATTEMPTS = 5

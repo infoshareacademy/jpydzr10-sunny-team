@@ -12,7 +12,7 @@ from accounts.forms import AddUserForm
 from datetime import date
 
 from django.conf import settings
-from utils.email_utils import send_deactivation_email
+from mail.utils import send_deactivation_email
 
 @login_required
 def deactivate_user(request, pk):

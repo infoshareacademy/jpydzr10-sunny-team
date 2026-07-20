@@ -13,7 +13,7 @@ from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-from utils.email_utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
+from mail.utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
