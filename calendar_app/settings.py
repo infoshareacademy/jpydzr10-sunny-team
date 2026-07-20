@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'admin_panel',
     'login',
     'reports',
+    'core'
     'mail'
 
 ]

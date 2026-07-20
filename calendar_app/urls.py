@@ -10,6 +10,6 @@ urlpatterns = [
     path('logs/',include('logs.urls')),
     path('login/',include('login.urls')),
     path('reports/', include('reports.urls')),
-    #path('', include('core.urls')),
+    path('', include('core.urls')),
     path('login/', include('login.urls')),
 ]

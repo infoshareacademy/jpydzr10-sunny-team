@@ -35,7 +35,7 @@ class Permission:
         "Admin": {
             "can_approve_request":      True,
             "can_reject_request":       True,
-            "can_cancel_request":       True,
+            "can_cancel_request":       False,
             "can_change_request":       True,
             "can_see_all_requests":     True,
             "can_submit_request":       False,
@@ -133,7 +133,7 @@ def role_required(action):
                 AuthLog.objects.create(
                     user=request.user,
                     username=None,
-                    action='403',
+                    action='access_denied_403',
                     details=f'Brak permisji: {action}. Aktywna rola: {active_role}',
                     ip_address=get_client_ip(request),
                     severity = 'warning'
@@ -155,9 +155,17 @@ class RoleRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
-        
+
         active_role = request.session.get('active_role', request.user.role)
         if not Permission.verifyPermission(active_role, self.required_action):
+            AuthLog.objects.create(
+                user=request.user,
+                username=None,
+                action='access_denied_403',
+                details=f'Brak permisji: {self.required_action}. Aktywna rola: {active_role}',
+                ip_address=get_client_ip(request),
+                severity='warning'
+            )
             return redirect('dashboard')
         return super().dispatch(request, *args, **kwargs)
 

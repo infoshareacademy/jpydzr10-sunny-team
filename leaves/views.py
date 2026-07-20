@@ -1,21 +1,21 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from datetime import date, datetime, timedelta
+from datetime import datetime, date, timedelta
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, UpdateView, View, DetailView
 from django.contrib import messages
 from accounts.permission import Permission, role_required, RoleRequiredMixin
 from leaves.models import LeaveRequest, WorkerProfile
 import csv
 from django.http import HttpResponse
 import calendar
+from logs.models import AuthLog, ActivityLog
+from logs.utils import get_client_ip
 from .forms import LeaveRequestForm
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
-from django.views.generic import View
-from mail.utils import send_approval_notification, send_reject_notification, send_new_request_notification, send_welcome_email
+from mail.utils import send_approval_notification, send_reject_notification, send_new_request_notification
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
 @login_required
@@ -67,6 +67,8 @@ def dashboard(request):
     }
 
     return render(request, 'leaves/dashboard.html', context)
+from .utils import Calendar_utils
+
 
 @login_required
 @role_required("can_see_all_requests")
@@ -187,7 +189,6 @@ def my_vacations(request):
 def approve_request(request, request_id):
     leave_request = get_object_or_404(LeaveRequest, pk=request_id)
     active_role = request.session.get('active_role', request.user.role)
-    today = date.today()
 
     if not Permission.verifyPermission(active_role, 'can_approve_request'):
         messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
@@ -201,44 +202,26 @@ def approve_request(request, request_id):
         messages.error(request, _('Pracownik nie ma przypisanego zespołu.'))
         return redirect('all_requests_list')
 
-    # 2. Walidacja uprawnień per rola
+    #2. Walidacja dla Managera
     if active_role == 'Manager':
         # Manager może zatwierdzać tylko swój zespół
         try:
+            is_worker = leave_request.employee.role == 'Worker'
             my_profile = WorkerProfile.objects.get(user=request.user)
-            if my_profile.team != employee_team:
-                messages.error(request, _('Możesz zatwierdzać tylko wnioski swojego zespołu.'))
+            same_team = my_profile.team == employee_team
+            if not (same_team and is_worker):
+                messages.error(request, _('Możesz akceptować tylko wnioski pracowników z Twojego zespołu.'))
                 return redirect('all_requests_list')
         except WorkerProfile.DoesNotExist:
             messages.error(request, _('Nie masz przypisanego zespołu.'))
             return redirect('all_requests_list')
 
+    # 3. Walidacja dla HR
     elif active_role == 'HR':
-        # Pobieramy wszystkich managerów z tego zespołu
-        team_managers_profiles = WorkerProfile.objects.select_related('user').filter(
-            team=employee_team,
-            user__role='Manager'
-        )
-        team_managers_users = [p.user for p in team_managers_profiles]
+        if leave_request.employee == request.user.id:
+            messages.error(request, 'Nie możesz akceptować własnego wniosku.')
+            return redirect('all_requests_list')
 
-        if team_managers_users:
-            managers_on_leave_count = LeaveRequest.objects.filter(
-                employee__in=team_managers_users,
-                status=LeaveRequest.Status.APPROVED,
-                start_date__lte=today,
-                end_date__gte=today,
-            ).distinct().count()
-
-            # HR może zatwierdzić TYLKO gdy wszyscy managerowie zespołu są na urlopie
-            if managers_on_leave_count < len(team_managers_users):
-                messages.error(
-                    request,
-                    _('W zespole %(team)s przynajmniej jeden manager jest dostępny. HR może zatwierdzać tylko, gdy wszyscy managerowie zespołu są na urlopie.')
-                    % {'team': employee_team}
-                )
-                return redirect('all_requests_list')
-
-    # 3. PROCES ZATWIERDZANIA (Wspólny dla każdej roli, wyciągnięty na zewnątrz!)
     try:
         leave_request.approve(who=request.user)
         try:
@@ -246,7 +229,6 @@ def approve_request(request, request_id):
             profile.subtract_leave_days(leave_request.amount_days)
         except WorkerProfile.DoesNotExist:
             pass
-
         messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
 
         # --- WYŚLIJ MAIL DO PRACOWNIKA ---
@@ -272,7 +254,6 @@ def approve_request(request, request_id):
 def reject_request(request, request_id):
     leave_request = get_object_or_404(LeaveRequest, pk=request_id)
     active_role = request.session.get('active_role', request.user.role)
-    today = date.today()
 
     # 1. Pobierz zespół pracownika składającego wniosek
     try:
@@ -287,37 +268,22 @@ def reject_request(request, request_id):
         # Manager może odrzucać tylko swój zespół
         try:
             my_profile = WorkerProfile.objects.get(user=request.user)
-            if my_profile.team != employee_team:
-                messages.error(request, 'Możesz odrzucać tylko wnioski swojego zespołu.')
-                return redirect('all_requests_list')
         except WorkerProfile.DoesNotExist:
             messages.error(request, 'Nie masz przypisanego zespołu.')
             return redirect('all_requests_list')
 
-    # 3. Walidacja dla HR (obsługująca wielu managerów)
+        same_team = my_profile.team == employee_team
+        is_worker = leave_request.employee.role == 'Worker'
+
+        if not (same_team and is_worker):
+            messages.error(request, 'Możesz odrzucać tylko wnioski pracowników z Twojego zespołu.')
+            return redirect('all_requests_list')
+
+    # 3. Walidacja dla HR
     elif active_role == 'HR':
-        # HR może odrzucić tylko jeśli wszyscy managerowie zespołu są na urlopie
-        team_managers_profiles = WorkerProfile.objects.select_related('user').filter(
-            team=employee_team,
-            user__role='Manager'
-        )
-        team_managers_users = [p.user for p in team_managers_profiles]
-
-        if team_managers_users:
-            managers_on_leave_count = LeaveRequest.objects.filter(
-                employee__in=team_managers_users,
-                status=LeaveRequest.Status.APPROVED,
-                start_date__lte=today,
-                end_date__gte=today,
-            ).distinct().count()
-
-            if managers_on_leave_count < len(team_managers_users):
-                messages.error(
-                    request,
-                    f'W zespole {employee_team} przynajmniej jeden manager jest dostępny. '
-                    f'HR może odrzucać tylko, gdy wszyscy managerowie zespołu są na urlopie.'
-                )
-                return redirect('all_requests_list')
+        if leave_request.employee == request.user.id:
+            messages.error(request, 'Nie możesz odrzucać własnego wniosku.')
+            return redirect('all_requests_list')
 
     # 4. Proces odrzucania wniosku
     try:
@@ -461,19 +427,27 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
 
         active_role = request.session.get('active_role', request.user.role)
         if not Permission.verifyPermission(active_role, self.required_action):
-            raise PermissionDenied
+            AuthLog.objects.create(
+                user=request.user,
+                username=None,
+                action='access_denied_403',
+                details=f'Brak permisji: {self.required_action}. Aktywna rola: {active_role}',
+                ip_address=get_client_ip(request),
+                severity='warning'
+            )
+            return redirect('home')
 
         obj = self.get_object()
 
         # Blokada edycji wniosków, które zostały już zaakceptowane lub odrzucone
         if obj.status != LeaveRequest.Status.PENDING:
             messages.error(request, _("Można edytować tylko wnioski oczekujące."))
-            return redirect('my_vacations')
+            return redirect('home')
 
         # Pracownik nie może edytować wniosków innych osób
-        if obj.employee != request.user:
+        if active_role == 'Worker' and obj.employee != request.user:
             messages.error(request, _("Możesz edytować tylko własne wnioski."))
-            return redirect('my_vacations')
+            return redirect('home')
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -556,15 +530,15 @@ class CancelLeaveView(RoleRequiredMixin, View):
 
         if active_role == 'Worker':
             return redirect('my_vacations')
-        return redirect('all_requests_list')
+        return redirect('home')
 
 @login_required
 @role_required("can_see_team_balance")
 def team_leave_balance(request):
     # Tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
-    if active_role not in ['Manager', 'HR']:
-        return redirect('dashboard')
+    if active_role not in ['Manager', 'HR', 'Admin']:
+        return redirect('home')
 
     if active_role == 'HR':
         # HR widzi wszystkie zespoły
@@ -631,7 +605,7 @@ def export_requests_csv(request):
     # tylko Manager i HR mają dostęp
     active_role = request.session.get('active_role', request.user.role)
     if active_role not in ['Manager', 'HR', 'Admin']:
-        return redirect('dashboard')
+        return redirect('home')
 
     # filtry z adresu URL
     status_filter = request.GET.get('status', '').lower()
@@ -834,3 +808,155 @@ def team_calendar(request):
         'today': today,
     }
     return render(request, 'leaves/team_calendar.html', context)
+
+
+
+
+MONTH_NAMES_PL = [
+    "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+    "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
+]
+
+
+def month_range(start_date, end_date):
+    """Generuje kolejne pary (rok, miesiąc) pokrywające zakres dat."""
+    year, month = start_date.year, start_date.month
+    end_year, end_month = end_date.year, end_date.month
+
+    while (year, month) <= (end_year, end_month):
+        yield year, month
+        month, year = (1, year + 1) if month == 12 else (month + 1, year)
+
+
+def build_leave_calendars(leave):
+    """Buduje listę kalendarzy miesięcznych z zaznaczonymi dniami urlopu."""
+    cal = calendar.Calendar(firstweekday=0)
+    calendars_data = []
+
+    for year, month in month_range(leave.start_date, leave.end_date):
+        cal_utils = Calendar_utils(year)
+
+        leave_days_set = {
+            d.day
+            for d in _iter_month_overlap(leave.start_date, leave.end_date, year, month)
+            if cal_utils.is_working_day(d)
+        }
+
+        weeks_data = []
+        for week in cal.monthdayscalendar(year, month):
+            week_days = []
+            for day in week:
+                if day == 0:
+                    week_days.append({'day': '', 'is_leave': False, 'is_non_working': False})
+                    continue
+
+                check_date = date(year, month, day)
+                week_days.append({
+                    'day': day,
+                    'is_leave': day in leave_days_set,
+                    'is_non_working': cal_utils.is_weekend(check_date) or cal_utils.is_holiday(check_date),
+                })
+            weeks_data.append(week_days)
+
+        calendars_data.append({
+            'title': f"{MONTH_NAMES_PL[month - 1]} {year}",
+            'weeks': weeks_data,
+        })
+
+    return calendars_data
+
+
+def _iter_month_overlap(start_date, end_date, year, month):
+    """Zwraca daty z zakresu [start_date, end_date] należące do danego (year, month)."""
+    first_of_month = date(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    last_of_month = date(year, month, last_day)
+
+    range_start = max(start_date, first_of_month)
+    range_end = min(end_date, last_of_month)
+
+    current = range_start
+    while current <= range_end:
+        yield current
+        current += timedelta(days=1)
+
+
+class LeaveDetailView(LoginRequiredMixin, DetailView):
+    model = LeaveRequest
+    template_name = 'leaves/leave_detail.html'
+
+    def get(self, request, *args, **kwargs):
+        leave_request = get_object_or_404(LeaveRequest, pk=kwargs.get('pk'))
+        target_user = leave_request.employee
+        active_role = request.session.get('active_role', request.user.role)
+
+        if not self._has_access(request.user, target_user, active_role):
+            self._log_access_denied(request, leave_request, target_user, active_role)
+            messages.info(request, 'Nie masz uprawnień do przeglądania tego wniosku')
+            return redirect('home')
+
+        context = self._build_context(request.user, leave_request, target_user, active_role)
+        return self.render_to_response(context)
+
+    def _log_access_denied(self, request, leave_request, target_user, active_role):
+        AuthLog.objects.create(
+            user=request.user,
+            username=None,
+            action='access_denied_403',
+            details=(
+                f"Próba podglądu wniosku #{leave_request.id} użytkownika "
+                f"{target_user.username}. Aktywna rola: {active_role}"
+            ),
+            ip_address=get_client_ip(request),
+            severity='warning',
+        )
+
+    def _has_access(self, viewer, target_user, active_role):
+        if target_user == viewer:
+            return True
+        if active_role == 'Admin':
+            return True
+        if active_role == 'HR':
+            return target_user.role not in ['HR', 'Admin']
+        if active_role == 'Manager':
+            return self._is_same_team_manager(viewer, target_user)
+        return False
+
+    def _is_same_team_manager(self, viewer, target_user):
+        if target_user.role != "Worker":
+            return False
+        try:
+            return viewer.worker_profile.team == target_user.worker_profile.team
+        except WorkerProfile.DoesNotExist:
+            return False
+
+    def _build_context(self, viewer, leave, target_user, active_role):
+        confirmed_by_name = None
+        if leave.who_confirmed:
+            confirmed_by = leave.who_confirmed
+            confirmed_by_name = (
+                f"{confirmed_by.first_name} {confirmed_by.last_name}".strip()
+                or confirmed_by.username
+            )
+
+        activity_logs = ActivityLog.objects.filter(
+            object_type='leave_request',
+            object_id=leave.id,
+        ).order_by('-created_at')[:10].values('created_at', 'details')
+
+        return {
+            'leave_id': leave.id,
+            'owner_full_name': f"{target_user.first_name} {target_user.last_name}".strip() or target_user.username,
+            'status_code': leave.status.lower(),
+            'status_display': leave.get_status_display(),
+            'start_date': leave.start_date,
+            'end_date': leave.end_date,
+            'amount_days': leave.amount_days,
+            'confirmed_by_name': confirmed_by_name,
+            'activity_logs': activity_logs,
+            'calendars': build_leave_calendars(leave),
+            'is_owner': viewer == target_user,
+            'active_role': active_role,
+            'target_user': target_user,
+            'leave': leave,
+        }

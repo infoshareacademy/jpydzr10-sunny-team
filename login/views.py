@@ -1,16 +1,12 @@
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
+from logs.models import AuthLog
 from logs.utils import get_client_ip, get_lockout_until, reset_failed_attempts, log_failed_attempt
-from django.utils import timezone
-from datetime import timedelta
 import random
 from mail.models import EmailVerificationCode
-from logs.models import AuthLog
-from django.core.mail import send_mail
+#from django.core.mail import send_mail
 
-MAX_FAILED_ATTEMPTS = 5
-LOCKOUT_WINDOW_MINUTES = 5
 
 User = get_user_model()
 
@@ -73,7 +69,7 @@ def login_view(request):
                     severity='info',
                     details='Poprawne uwierzytelnienie hasłem. Rozpoczęto procedurę 2FA.'
                 )
-                # Udane logowanie - unieważniamy poprzednie nieudane proby 
+                # Udane logowanie - unieważniamy poprzednie nieudane proby
                 reset_failed_attempts(username, ip_address)
                 code = str(random.randint(100000, 999999))
                 EmailVerificationCode.objects.create(user=user, code=code)

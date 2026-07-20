@@ -211,11 +211,10 @@
 
 <div class="logs-wrapper mt-4">
     <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">Historia Aktywności</h1>
-    <p style="margin-bottom: 30px;"><a href="{% url 'auth_log' %}" class="auth-link">Zobacz logi logowań i dostępu &rarr;</a></p>
+    <p style="margin-bottom: 30px;"><a href="{% url 'auth_log' %}" class="auth-link">Zobacz logi logowań i dostępu</a></p>
 
     <section class="filters">
         <form method="get">
-
             <div class="filter-group">
                 <label for="id_user">Użytkownik:</label>
                 <select name="user" id="id_user">
@@ -279,14 +278,32 @@
                     {% for log in logs %}
                     <tr>
                         <td style="color: #4a5568; font-weight: 500; white-space: nowrap;">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
-                        <td style="font-weight: 700; color: #1a202c;">{{ log.who|default:"&mdash;" }}</td>
+                        <td style="font-weight: 700;">
+                            {% if log.who %}
+                                <a href="{% url 'profile' user_id=log.who.id %}" style="color: #1a202c; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                    {{ log.who }}
+                                </a>
+                            {% else %}
+                                <span style="color: #1a202c;">&mdash;</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <span class="badge badge-{{ log.action|default:'default' }}">
                                 {{ log.get_action_display|default:log.action }}
                             </span>
                         </td>
                         <td style="color: #2d3748; font-weight: 500;">
-                            {{ log.get_object_type_display|default:log.object_type }}{% if log.object_id %} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>{% endif %}
+                            {% if log.object_type == 'user' and log.object_id %}
+                                <a href="{% url 'profile' user_id=log.object_id %}" style="color: #2d3748; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                </a>
+                            {% elif log.object_type == 'leave_request' and log.object_id %}
+                                <a href="{% url 'leave_detail' pk=log.object_id %}" style="color: #2d3748; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                </a>
+                            {% else %}
+                                {{ log.get_object_type_display|default:log.object_type }}{% if log.object_id %} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>{% endif %}
+                            {% endif %}
                         </td>
                         <td style="color: #2d3748; line-height: 1.5; min-width: 250px; word-wrap: break-word;">{{ log.details|default:"&mdash;" }}</td>
                     </tr>

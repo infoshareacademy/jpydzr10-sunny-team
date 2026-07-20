@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import ProfileView
 
 urlpatterns = [
     path('users/deactivate/<int:pk>', views.deactivate_user, name='deactivate_user'),
@@ -7,4 +8,5 @@ urlpatterns = [
     path('switch-role/', views.switch_role, name='switch_role'),
     path("add-user/", views.add_user, name="add_user"),
     path("reset-password/", views.reset_password, name="reset_password"),
+    path('profile/<int:user_id>/', ProfileView.as_view(), name='profile'),
 ]
