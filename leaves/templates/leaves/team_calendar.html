@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
- 
-{% block title %}Kalendarz urlopów zespołu{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Kalendarz urlopów zespołu" %}{% endblock %}
  
 {% block content %}
 <style>
@@ -111,6 +111,14 @@
         text-overflow: ellipsis;
         max-width: 100%;
     }
+
+    /* ── Chipsy oczekujące (wyszarzone) ── */
+    .leave-chip.pending {
+        background: #adb5bd;
+        border: 1px dashed #6c757d;
+        color: white;
+        opacity: 0.75;
+    }
  
     /* 10 kolorów dla różnych pracowników */
     .color-0  { background: #3b82f6; }
@@ -172,10 +180,10 @@
     <div class="cal-header">
         {# Link do POPRZEDNIEGO miesiąca #}
         <a class="nav-btn"
-           href="?year={{ prev_year }}&month={{ prev_month }}">&#8592; Poprzedni</a>
+           href="?year={{ prev_year }}&month={{ prev_month }}">&#8592; {% trans "Poprzedni" %}</a>
  
         <h1>
-            Kalendarz urlopów — {{ month_name }} {{ year }}
+            {% blocktrans with month=month_name y=year %}Kalendarz urlopów — {{ month }} {{ y }}{% endblocktrans %}
             {% if team_name %}
                 <small style="font-size:1rem; color:#6c757d;">({{ team_name }})</small>
             {% endif %}
@@ -183,7 +191,7 @@
  
         {# Link do NASTĘPNEGO miesiąca #}
         <a class="nav-btn"
-           href="?year={{ next_year }}&month={{ next_month }}">Następny &#8594;</a>
+           href="?year={{ next_year }}&month={{ next_month }}">{% trans "Następny" %} &#8594;</a>
     </div>
  
     <div class="page-layout">
@@ -199,19 +207,23 @@
                         <span>{{ member.name }}</span>
                     </div>
                 {% endfor %}
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#adb5bd; border: 1px dashed #6c757d;"></div>
+                    <span>{% trans "Oczekujący" %}</span>
+                </div>
             </div>
  
             {# Tabela z dniami #}
             <table class="cal-table">
                 <thead>
                     <tr>
-                        <th>Pon</th>
-                        <th>Wt</th>
-                        <th>Śr</th>
-                        <th>Czw</th>
-                        <th>Pt</th>
-                        <th style="background:#6c757d;">Sob</th>
-                        <th style="background:#6c757d;">Nd</th>
+                        <th>{% trans "Pon" %}</th>
+                        <th>{% trans "Wt" %}</th>
+                        <th>{% trans "Śr" %}</th>
+                        <th>{% trans "Czw" %}</th>
+                        <th>{% trans "Pt" %}</th>
+                        <th style="background:#6c757d;">{% trans "Sob" %}</th>
+                        <th style="background:#6c757d;">{% trans "Nd" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -239,6 +251,16 @@
                                             {% endif %}
                                         {% endfor %}
                                     {% endfor %}
+
+                                    {# Chipsy wniosków oczekujących (wyszarzone) #}
+                                    {% for name in cell.pending %}
+                                        {% blocktrans with n=name %}
+                                        <span class="leave-chip pending"
+                                              title="{{ name }} (oczekujący)">
+                                            {{ n }}
+                                        </span>
+                                        {% endblocktrans %}
+                                    {% endfor %}
  
                                 </td>
                             {% endif %}
@@ -252,7 +274,7 @@
  
         {# ── Prawa część: lista pracowników ── #}
         <div class="sidebar">
-            <h3>Zespół</h3>
+            <h3>{% trans "Zespół" %}</h3>
             <ul>
                 {% for member in team_members %}
                 <li>
@@ -260,7 +282,7 @@
                     {{ member.name }}
                 </li>
                 {% empty %}
-                <li>Brak pracowników</li>
+                <li>{% trans "Brak pracowników" %}</li>
                 {% endfor %}
             </ul>
         </div>

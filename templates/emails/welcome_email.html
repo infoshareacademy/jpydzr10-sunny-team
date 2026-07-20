@@ -1,0 +1,16 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+    <h2 style="color:#f9a825;">👋 Witaj, {{ user_name }}!</h2>
+    <p>Twoje konto w systemie <strong>SunnyTeam</strong> zostało pomyślnie utworzone.</p>
+    <p>Poniżej znajdziesz swoje dane logowania:</p>
+    <ul style="padding-left:20px;">
+        <li><strong>Login:</strong> {{ username }}</li>
+        <li><strong>Hasło tymczasowe:</strong> {{ password }}</li>
+    </ul>
+    <p style="color:#dc3545; font-size:14px;"><strong>Uwaga:</strong> Po pierwszym logowaniu zalecamy zmianę hasła w panelu użytkownika.</p>
+    <p style="margin:20px 0;">
+        <a href="{{ site_url }}/login/" style="display:inline-block; background:#f9a825; color:#fff; padding:10px 20px; text-decoration:none; border-radius:4px;">Zaloguj się do systemu</a>
+    </p>
+    <p>Pozdrawiamy,<br>Zespół SunnyTeam</p>
+{% endblock %}

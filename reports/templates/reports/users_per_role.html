@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Raport: użytkownicy wg roli{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 30px auto; padding: 20px;">
+    <h1>Liczba użytkowników wg roli</h1>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr style="background: #0d6efd; color: white;">
+                <th style="padding: 12px; text-align: left;">Rola</th>
+                <th style="padding: 12px; text-align: center;">Liczba użytkowników</th>
+                <th style="padding: 12px; text-align: center;">Aktywni</th>
+                <th style="padding: 12px; text-align: center;">% aktywnych</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in report_rows %}
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <td style="padding: 12px;">{{ row.role }}</td>
+                <td style="padding: 12px; text-align: center;">{{ row.total }}</td>
+                <td style="padding: 12px; text-align: center;">{{ row.active }}</td>
+                <td style="padding: 12px; text-align: center; color: #28a745; font-weight: bold;">
+                    {{ row.percent_active }}%
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="padding: 12px; text-align: center;">Brak danych.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p style="margin-top: 20px;">
+        <a href="{% url 'reports_index' %}">&laquo; Wróć do raportów</a>
+    </p>
+</div>
+{% endblock %}

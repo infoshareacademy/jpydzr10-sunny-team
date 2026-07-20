@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from login import views as log_views
+from django.conf.urls.i18n import i18n_patterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,5 +26,7 @@ urlpatterns = [
     path('admin_panel/',include('admin_panel.urls')),
     path('logs/',include('logs.urls')),
     path('login/',include('login.urls')),
+    path('reports/', include('reports.urls')),
     path('', log_views.home, name='home'),
+    path('i18n/', include('django.conf.urls.i18n'), name='i18n'),
 ]

@@ -1,7 +1,8 @@
 from functools import wraps
-from django.shortcuts import redirect
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from logs.utils import get_client_ip
+from django.shortcuts import redirect
 class Permission:
     """
     System uprawnień aplikacji urlopowej.
@@ -18,6 +19,10 @@ class Permission:
         can_list_users         - wyświetlanie listy użytkowników
         can_reset_password     - resetowanie hasła użytkownika
         can_see_user_vacations - podgląd urlopów dowolnego użytkownika
+        can_view_logs          - wyswietlanie ostatnich akcji
+        can_see_team_balance   - podgląd zespołu
+        can_export_requests    - export
+        can_see_team_calendar  - kalendarz zespołu
 
     Uwaga dotycząca can_cancel_request:
         Worker może anulować tylko własne wnioski.
@@ -27,68 +32,76 @@ class Permission:
 
     permissions = {
         "Admin": {
-            "can_approve_request":    True,
-            "can_reject_request":     True,
-            "can_cancel_request":     True,
-            "can_change_request":     True,
-            "can_see_all_requests":   True,
-            "can_submit_request":     False,
-            "can_see_own_requests":   False,
-            "can_add_user":           True,
-            "can_list_users":         True,
-            "can_reset_password":     True,
-            "can_see_user_vacations": True,
-            "can_deactivate_staff":   True,
-            "can_deactivate_worker":  True,
-            "can_view_user_list":     True,
-        },
-        "Manager": {
-            "can_approve_request":    True,
-            "can_reject_request":     True,
-            "can_cancel_request":     True,
-            "can_change_request":     False,
-            "can_see_all_requests":   True,
-            "can_submit_request":     True,
-            "can_see_own_requests":   True,
-            "can_add_user":           False,
-            "can_list_users":         False,
-            "can_reset_password":     False,
-            "can_see_user_vacations": True,
-            "can_deactivate_staff":   False,
-            "can_deactivate_worker":  True,
-            "can_view_user_list":     False,
+            "can_approve_request":      True,
+            "can_reject_request":       True,
+            "can_cancel_request":       True,
+            "can_change_request":       True,
+            "can_see_all_requests":     True,
+            "can_submit_request":       False,
+            "can_see_own_requests":     False,
+            "can_add_user":             True,
+            "can_view_user_list":       True,
+            "can_reset_password":       True,
+            "can_deactivate_staff":     True,
+            "can_deactivate_worker":    True,
+            "can_view_logs":            True,
+            "can_see_team_balance":     True,
+            "can_export_requests":      True,
+            "can_see_team_calendar":    True,
         },
         "HR": {
-            "can_approve_request":    False,
-            "can_reject_request":     False,
-            "can_cancel_request":     True,
-            "can_change_request":     False,
-            "can_see_all_requests":   True,
-            "can_submit_request":     True,
-            "can_see_own_requests":   True,
-            "can_add_user":           True,
-            "can_list_users":         True,
-            "can_reset_password":     False,
-            "can_see_user_vacations": True,
-            "can_deactivate_staff":   False,
-            "can_deactivate_worker":  True,
-            "can_view_user_list":     True,
+            "can_approve_request":      True,
+            "can_reject_request":       True,
+            "can_cancel_request":       False,
+            "can_change_request":       False,
+            "can_see_all_requests":     True,
+            "can_submit_request":       False,
+            "can_see_own_requests":     False,
+            "can_add_user":             True,
+            "can_reset_password":       True,
+            "can_deactivate_staff":     False,
+            "can_deactivate_worker":    True,
+            "can_view_user_list":       True,
+            "can_view_logs":            True,
+            "can_see_team_balance":     True,
+            "can_export_requests":      True,
+            "can_see_team_calendar":    True,
+        },
+        "Manager": {
+            "can_approve_request":      True,
+            "can_reject_request":       True,
+            "can_cancel_request":       False,
+            "can_change_request":       False,
+            "can_see_all_requests":     True,
+            "can_submit_request":       False,
+            "can_see_own_requests":     False,
+            "can_add_user":             False,
+            "can_reset_password":       False,
+            "can_deactivate_staff":     False,
+            "can_deactivate_worker":    False,
+            "can_view_user_list":       True,
+            "can_view_logs":            True,
+            "can_see_team_balance":     True,
+            "can_export_requests":      True,
+            "can_see_team_calendar":    True,
         },
         "Worker": {
-            "can_approve_request":    False,
-            "can_reject_request":     False,
-            "can_cancel_request":     True,
-            "can_change_request":     True,
-            "can_see_all_requests":   False,
-            "can_submit_request":     True,
-            "can_see_own_requests":   True,
-            "can_add_user":           False,
-            "can_list_users":         False,
-            "can_reset_password":     False,
-            "can_see_user_vacations": False,
-            "can_deactivate_staff":   False,
-            "can_deactivate_worker":  False,
-            "can_view_user_list":     False,
+            "can_approve_request":      False,
+            "can_reject_request":       False,
+            "can_cancel_request":       True,
+            "can_change_request":       True,
+            "can_see_all_requests":     False,
+            "can_submit_request":       True,
+            "can_see_own_requests":     True,
+            "can_add_user":             False,
+            "can_reset_password":       False,
+            "can_deactivate_staff":     False,
+            "can_deactivate_worker":    False,
+            "can_view_user_list":       False,
+            "can_view_logs":            False,
+            "can_see_team_balance":     False,
+            "can_export_requests":      False,
+            "can_see_team_calendar":    False,
         },
     }
 
@@ -112,6 +125,14 @@ def role_required(action):
         def wrapper(request, *args, **kwargs):
             active_role = request.session.get('active_role', request.user.role)
             if not Permission.verifyPermission(active_role, action):
+                from logs.models import ChangeLog
+                ChangeLog.objects.create(
+                    who=request.user,
+                    action='403',
+                    object_type='user',
+                    details=action,
+                    ip_address=get_client_ip(request)
+                )
                 return redirect('dashboard')
             return view_func(request, *args, **kwargs)
         return wrapper
@@ -127,9 +148,12 @@ class RoleRequiredMixin(LoginRequiredMixin):
     required_action = None
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        
         active_role = request.session.get('active_role', request.user.role)
         if not Permission.verifyPermission(active_role, self.required_action):
-            return redirect('dashboard')
+            raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
 # use case:

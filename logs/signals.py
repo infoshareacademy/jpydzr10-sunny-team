@@ -2,7 +2,8 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from leaves.models import LeaveRequest
 from logs.models import ChangeLog
-
+from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
+from logs.utils import get_client_ip
 # Słownik
 STATUS_TO_ACTION = {
     LeaveRequest.Status.APPROVED: 'zatwierdz',
@@ -37,6 +38,7 @@ def log_leave_request_change(sender, instance, created, **kwargs):
             action='dodaj',
             object_type='leave_request',
         )
+
         return
 
     # Pobieramy stary status zapamiętany w pre_save (jeśli nie istnieje, domyślnie None) i pobieramy nowy w new_status
@@ -70,3 +72,28 @@ def log_leave_request_change(sender, instance, created, **kwargs):
             action=action,
             object_type='leave_request',
         )
+
+@receiver(user_logged_in)
+def log_user_login(sender, request, user, **kwargs):
+    ChangeLog.objects.create(
+        who=user,
+        action='login',
+        object_type='user',
+        ip_address=get_client_ip(request)
+    )
+@receiver(user_logged_out)
+def log_user_logout(sender, request, user, **kwargs):
+    ChangeLog.objects.create(
+        who=user,
+        action='logout',
+        object_type='user',
+        ip_address=get_client_ip(request)
+    )
+@receiver(user_login_failed)
+def log_user_login_failed(sender, credentials, request, **kwargs):
+    ChangeLog.objects.create(
+        who=None,
+        action='login_failed',
+        object_type='user',
+        ip_address=get_client_ip(request)
+    )
