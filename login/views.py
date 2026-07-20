@@ -68,7 +68,7 @@ def login_view(request):
                 )
                 reset_failed_attempts(ip_address)
                 login(request, user)
-                return redirect('dashboard')
+                return redirect('home')
         else:
             # Formularz nie przeszedł walidacji (np. puste hasło lub nieistniejący user)
             new_lockout = log_failed_attempt(existing_user, username, ip_address)
