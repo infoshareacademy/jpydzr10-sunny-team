@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from logs.models import AuthLog
 from logs.utils import get_client_ip
+from django.shortcuts import redirect
 class Permission:
     """
     System uprawnień aplikacji urlopowej.
