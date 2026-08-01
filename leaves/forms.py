@@ -9,10 +9,16 @@ class LeaveRequestForm(forms.ModelForm):
 
     class Meta:
         model = LeaveRequest
-        fields = ['start_date', 'end_date', 'confirmed']
+        fields = ['start_date', 'end_date', 'request_comment','confirmed']
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'request_comment': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Opcjonalny komentarz lub uzasadnienie wniosku...',
+                'maxlength': '250',
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -35,6 +41,7 @@ class LeaveRequestForm(forms.ModelForm):
             raise ValidationError("Nie znaleziono profilu pracownika.")
 
         if self.instance and self.instance.pk:
+            request_comment = cd.get('request_comment')
             if start_date == self.instance.start_date and end_date == self.instance.end_date:
                 raise ValidationError(
                     "Nie wprowadzono żadnych zmian."

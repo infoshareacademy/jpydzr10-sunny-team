@@ -1,0 +1,28 @@
+{% load i18n %}
+
+{% with active_list=sec.data.active|default:custom_data.active
+        inactive_list=sec.data.inactive|default:custom_data.inactive
+        show_hire=sec.show_hire_date|default:custom_show_hire_date
+        show_actions=sec.show_actions|default:custom_show_actions
+%}
+
+    <!-- Aktywni użytkownicy -->
+    {% if active_list %}
+        <div class="active-users-block">
+            {% include 'accounts/user_tables/user_table.html' with users_list=active_list show_team_column=show_team_column show_hire_date=show_hire show_actions_column=show_actions %}
+        </div>
+    {% endif %}
+
+    <!-- Nieaktywni użytkownicy w ramach sekcji -->
+    {% if inactive_list %}
+        <div class="status-tab-header status-bg-inactive">
+            <span class="status-text-inactive">
+                {% trans "Nieaktywni" %} ({{ inactive_list|length }})
+            </span>
+        </div>
+        <div class="inactive-users-block">
+            {% include 'accounts/user_tables/user_table.html' with users_list=inactive_list show_team_column=show_team_column show_hire_date=show_hire show_actions_column=False %}
+        </div>
+    {% endif %}
+
+{% endwith %}

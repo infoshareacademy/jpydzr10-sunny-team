@@ -1,0 +1,174 @@
+{% load i18n %}
+
+<style>
+    /* Bazowa sztywna siatka tabeli z minimalną szerokością zapobiegającą ściskaniu */
+    .unified-app-table {
+        table-layout: fixed !important;
+        width: 100% !important;
+        min-width: 1000px !important;
+        border-collapse: collapse;
+    }
+
+    .unified-app-table th,
+    .unified-app-table td {
+        vertical-align: middle;
+        padding: 10px 8px !important;
+        box-sizing: border-box;
+    }
+
+    /* Przycinanie tekstu z kropkami dla kolumn tekstowych */
+    .col-name, .col-username, .col-team, .col-hire-date, .col-email {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Domyślne szerokości i minima kolumn */
+    .col-name { width: 18%; min-width: 160px; }
+    .col-username { width: 13%; min-width: 120px; }
+    .col-team { width: 20%; min-width: 170px; }
+    .col-hire-date { width: 12%; min-width: 120px; }
+    .col-email { width: 18%; min-width: 160px; }
+
+    /* Kolumna Akcji - widoczność przycisków bez obcinania */
+    .col-actions {
+        width: 20%;
+        min-width: 200px !important;
+        text-align: center !important;
+        overflow: visible !important;
+    }
+
+    /* Wyrównanie i elastyczność przycisków akcji */
+    .btn-action-group {
+        display: flex !important;
+        gap: 6px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+    }
+
+    .btn-action-group .btn {
+        padding: 5px 10px !important;
+        font-size: 0.8rem !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+</style>
+
+<div class="table-responsive-wrapper" style="overflow-x: auto;">
+    <table class="unified-app-table">
+        <thead>
+            <tr>
+                <th class="col-name">{% trans "Imię i Nazwisko" %}</th>
+                <th class="col-username">{% trans "Nazwa użytkownika" %}</th>
+                <th class="col-team">{% if show_team_column %}{% trans "Zarządzane Zespoły / Zespół" %}{% endif %}</th>
+                <th class="col-hire-date">{% if show_hire_date %}{% trans "Data zatrudnienia" %}{% endif %}</th>
+                <th class="col-email">{% trans "E-mail" %}</th>
+                <th class="col-actions text-center">{% if show_actions_column %}{% trans "Akcje" %}{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usr in users_list %}
+            <tr {% if usr.has_profile and usr.role != 'HR' %}class="clickable-row" onclick="navigateToProfile(event, '{% url 'profile' user_id=usr.id %}')"{% endif %}>
+
+                <!-- 1. Imię i Nazwisko -->
+                <td class="col-name font-bold" title="{{ usr.get_full_name|default:usr.username }}">
+                    {% if usr.has_profile %}
+                        <a href="{% url 'profile' user_id=usr.id %}" class="table-link" onclick="event.stopPropagation();">
+                            {{ usr.get_full_name|default:usr.username }}
+                        </a>
+                    {% else %}
+                        <span>{{ usr.get_full_name|default:usr.username }}</span>
+                    {% endif %}
+                </td>
+
+                <!-- 2. Nazwa użytkownika -->
+                <td class="col-username text-muted" title="@{{ usr.username }}">
+                    @{{ usr.username }}
+                </td>
+
+                <!-- 3. Zespół / Zarządzane zespoły -->
+                <td class="col-team">
+                    {% if show_team_column %}
+                        {% if usr.has_profile and usr.worker_profile.team %}
+                            <a href="{% url 'team-detail' pk=usr.worker_profile.team.pk %}" class="table-link" onclick="event.stopPropagation();">
+                                {{ usr.worker_profile.team.name }}
+                            </a>{% if usr.managed_teams %}, {% endif %}
+                        {% endif %}
+
+                        {% if usr.managed_teams %}
+                            {% for t in usr.managed_teams|slice:":2" %}
+                                <a href="{% url 'team-detail' pk=t.pk %}" class="table-link" onclick="event.stopPropagation();">{{ t.name }}</a>{% if not forloop.last or usr.managed_teams|length > 2 %}, {% endif %}
+                            {% endfor %}
+
+                            {% if usr.managed_teams|length > 2 %}
+                                <span class="more-teams-trigger" onclick="toggleTeamsDropdown(event, this)">
+                                    +{{ usr.managed_teams|length|add:"-2" }}
+                                    <div class="floating-teams-dropdown">
+                                        <div class="dropdown-title">{% trans "Pozostałe zespoły" %}</div>
+                                        {% for t in usr.managed_teams|slice:"2:" %}
+                                            <a href="{% url 'team-detail' pk=t.pk %}" onclick="event.stopPropagation();" class="table-link">{{ t.name }}</a>
+                                        {% endfor %}
+                                    </div>
+                                </span>
+                            {% endif %}
+                        {% elif not usr.has_profile or not usr.worker_profile.team %}
+                            <span class="text-muted">&mdash;</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+
+                <!-- 4. Data zatrudnienia -->
+                <td class="col-hire-date text-muted">
+                    {% if show_hire_date %}
+                        {% if usr.has_profile %}
+                            {{ usr.worker_profile.hire_date|date:"Y-m-d"|default:"&mdash;" }}
+                        {% else %}
+                            <span class="text-muted">&mdash;</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+
+                <!-- 5. E-mail -->
+                <td class="col-email text-muted" title="{{ usr.email }}">
+                    {{ usr.email|default:"&mdash;" }}
+                </td>
+
+                <!-- 6. Akcje -->
+                <td class="col-actions" onclick="event.stopPropagation();">
+                    {% if show_actions_column %}
+                        {% if current_user_role == 'COO' and usr == request.user %}
+                            <span class="text-muted">&mdash;</span>
+                        {% else %}
+                        <div class="btn-action-group">
+                            {% if usr.has_profile %}
+                                <a href="{% url 'edit_worker_profile' user_id=usr.id %}" class="btn btn-sm btn-primary">{% trans "Edytuj profil" %}</a>
+                            {% else %}
+                                <a href="{% url 'assign_worker_profile' user_id=usr.id %}" class="btn btn-sm btn-warning text-white">{% trans "Przydziel profil" %}</a>
+                            {% endif %}
+
+                            {% if usr.is_active %}
+                                {% if request.user.is_superuser or current_user_role == 'COO' or current_user_role == 'Admin' %}
+                                    <a href="{% url 'deactivate_user' pk=usr.id %}" class="btn btn-sm btn-danger">{% trans "Dezaktywuj" %}</a>
+                                {% elif current_user_role == 'HR' and usr.role == 'Worker' or current_user_role == 'HR' and usr.role == 'Manager' %}
+                                    <a href="{% url 'deactivate_user' pk=usr.id %}" class="btn btn-sm btn-danger">{% trans "Dezaktywuj" %}</a>
+                                {% endif %}
+                            {% endif %}
+
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center text-muted" style="padding: 20px;">
+                    {% trans "Brak użytkowników na tej stronie." %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

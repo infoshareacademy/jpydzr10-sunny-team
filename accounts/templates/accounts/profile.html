@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block title %}Profil Użytkownika - SunnyTeamProject{% endblock %}
 
 {% block content %}
@@ -37,19 +38,83 @@
                 </div>
 
                 <ul class="meta-list">
-                    <li class="meta-item"><span class="meta-label">Stanowisko</span><span class="meta-value">{{ position }}</span></li>
                     <li class="meta-item">
-                        <span class="meta-label">Status konta</span>
-                        <span class="meta-value">
-                            {% if profile_owner.is_active %}
-                                <span class="badge badge-success">Aktywny</span>
-                            {% else %}
-                                <span class="badge badge-danger">Nieaktywny</span>
-                            {% endif %}
-                        </span>
+                        <span class="meta-label">Stanowisko</span>
+                        <span class="meta-value">{{ position }}</span>
                     </li>
-                    <li class="meta-item"><span class="meta-label">Data zatrudnienia</span><span class="meta-value">{{ profile.hire_date|date:"d.m.Y"|default:"—" }}</span></li>
-                    <li class="meta-item"><span class="meta-label">Zespół</span><span class="meta-value">{{ profile.team|default:"Brak" }}</span></li>
+
+                    {% if active_role in 'HR,COO,Admin' %}
+                        <li class="meta-item">
+                            <span class="meta-label">Status konta</span>
+                            <span class="meta-value">
+                                {% if profile_owner.is_active %}
+                                    <span class="badge badge-success">Aktywny</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Nieaktywny</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <li class="meta-item">
+                        <span class="meta-label">Data zatrudnienia</span>
+                        <span class="meta-value">{{ profile.hire_date|date:"d.m.Y"|default:"—" }}</span>
+                    </li>
+
+                    {% if position == 'Worker' or position == 'Manager' %}
+                        <li class="meta-item">
+                            <span class="meta-label">
+                                {% if managed_teams %}Zarządzane zespoły{% else %}Zespół{% endif %}
+                            </span>
+                            <span class="meta-value">
+                                {% if managed_teams %}
+                                    {% for t in managed_teams %}
+                                        {% if forloop.counter <= 2 %}
+                                            {% if active_role == 'Worker' %}
+                                                <span class="text-dark">{{ t.name }}</span>
+                                            {% else %}
+                                                <a href="{% url 'team-detail' pk=t.pk %}" class="text-dark text-decoration-none hover-underline">
+                                                    {{ t.name }}
+                                                </a>
+                                            {% endif %}
+                                            {% if not forloop.last and forloop.counter < 2 %}, {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if managed_teams|length > 2 %}
+                                        <span class="more-teams-trigger" onclick="event.stopPropagation(); toggleTeamsDropdown(event, this)">
+                                            +{{ managed_teams|length|add:"-2" }}
+                                            <div class="floating-teams-dropdown">
+                                                <div class="dropdown-title">Pozostałe zespoły</div>
+                                                {% for t in managed_teams %}
+                                                    {% if forloop.counter > 2 %}
+                                                        {% if active_role == 'Worker' %}
+                                                            <span class="text-dark">{{ t.name }}</span>
+                                                        {% else %}
+                                                            <a href="{% url 'team-detail' pk=t.pk %}">{{ t.name }}</a>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    {% if profile.team %}
+                                        {% if active_role == 'Worker' %}
+                                            {{ worker_team_name|default:profile.team.name }}
+                                        {% else %}
+                                            <a href="{% url 'team-detail' pk=profile.team.pk %}" class="text-dark text-decoration-none hover-underline">
+                                                {{ worker_team_name|default:profile.team.name }}
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        Brak
+                                    {% endif %}
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% endif %}
+
                     <li class="meta-item">
                         <span class="meta-label">Staż zewnętrzny</span>
                         <span class="meta-value">
@@ -62,18 +127,50 @@
                     </li>
                 </ul>
 
-                <!-- SEKCOJA PANELU ADMINISTRATORA -->
-                {% if active_role == 'Admin' and not is_own_profile %}
-                    <div class="admin-actions">
-                        <form action="{% url 'deactivate_user' profile_owner.id %}" method="post" class="w-100">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-admin-danger" onclick="return confirm('Czy na pewno chcesz zmienić status aktywności tego użytkownika?');">
-                                {% if profile_owner.is_active %}Dezaktywuj użytkownika{% else %}Aktywuj użytkownika{% endif %}
-                            </button>
-                        </form>
-                        <a href="{% url 'admin_change_password' profile_owner.id %}" class="btn-admin-secondary">Zmień hasło użytkownika</a>
-                    </div>
-                {% endif %}
+            <!-- SEKCJA AKCJI ZARZĄDZANIA PROFILEM -->
+            {% if is_own_profile and profile_owner.is_active %}
+                <div class="d-grid gap-2 mt-3 pt-3 border-top">
+                    <a href="{% url 'change_own_password' %}" class="btn btn-warning fw-bold position-relative text-center py-2">
+                        <i class="bi bi-unlock-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                        <span>{% trans "Zmień hasło" %}</span>
+                    </a>
+                {% if not is_own_profile and profile_owner.is_active %}
+                    <!-- 1. PRZYCISK: Edycja profilu pracownika -->
+                    {% if request.user.is_superuser or active_role == 'COO' or active_role == 'Admin' %}
+                        <a href="{% url 'edit_worker_profile' user_id=profile_owner.id %}" class="btn btn-primary fw-bold position-relative text-center py-2">
+                            <i class="bi bi-sliders position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                            <span>{% trans "Edytuj profil" %}</span>
+                        </a>
+                    {% elif active_role == 'HR' and profile_owner.role == 'Worker' or active_role == 'HR' and profile_owner.role == 'Manager' %}
+                        <a href="{% url 'edit_worker_profile' user_id=profile_owner.id %}" class="btn btn-primary fw-bold position-relative text-center py-2">
+                            <i class="bi bi-sliders position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                            <span>{% trans "Edytuj profil" %}</span>
+                        </a>
+                    {% endif %}
+
+                    <!-- 2. PRZYCISK: Ustawienia konta (tylko Admin / Superuser) -->
+                    {% if request.user.is_superuser or active_role == 'Admin' %}
+                        <a href="{% url 'edit_user' user_id=profile_owner.id %}" class="btn btn-success fw-bold position-relative text-center py-2">
+                            <i class="bi bi-pencil-square position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                            <span>{% trans "Ustawienia konta" %}</span>
+                        </a>
+                    {% endif %}
+
+                    <!-- 3. PRZYCISK: Dezaktywacja użytkownika -->
+                    {% if request.user.is_superuser or active_role == 'COO' or active_role == 'Admin' %}
+                        <a href="{% url 'deactivate_user' pk=profile_owner.id %}" class="btn btn-danger fw-bold position-relative text-center py-2">
+                            <i class="bi bi-exclamation-triangle-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                            <span>{% trans "Dezaktywuj" %}</span>
+                        </a>
+                    {% elif active_role == 'HR' and profile_owner.role == 'Worker' or active_role == 'HR' and profile_owner.role == 'Manager' %}
+                        <a href="{% url 'deactivate_user' pk=profile_owner.id %}" class="btn btn-danger fw-bold position-relative text-center py-2">
+                            <i class="bi bi-exclamation-triangle-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                            <span>{% trans "Dezaktywuj" %}</span>
+                        </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            {% endif %}
             </div>
         </div>
 
@@ -127,25 +224,32 @@
                 <!-- KOLUMNA TABELI: PLANOWANE URLOPY -->
                 <div class="profile-section flex-fill-custom-1">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-1">
+                    {% if is_own_profile and active_role == 'Worker' %}
+                        <a href="{% url 'my_vacations' %}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
+                            Planowane urlopy
+                        </a>
+                    {% elif not is_own_profile %}
+                        <a href="{% url 'all_requests_list' %}?user={{ profile_owner.id }}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
+                            Planowane urlopy
+                        </a>
+                    {% else %}
                         <h2 class="m-0 fs-5">Planowane urlopy</h2>
-                        {% if active_role in 'HR,Admin' %}
-                            <a href="{% url 'activity_log' %}?user={{ profile_owner.id }}&object_type=leave_request" class="text-muted text-decoration-none small hover-underline py-1">
-                                Pokaż wnioski urlopowe
-                            </a>
-                        {% endif %}
-                    </div>
+                    {% endif %}
+                </div>
                     <div class="table-responsive">
                         <table>
                             <tbody>
                                 {% for req in recent_requests %}
                                     <tr>
                                         <td class="py-2 px-2" style="width: 65%;">
-                                            <div class="fw-bold text-secondary small">
-                                                {{ req.start_date|date:"d.m.Y" }} — {{ req.end_date|date:"d.m.Y" }}
-                                            </div>
-                                            <div class="text-muted fs-7 mt-1">
-                                                Czas trwania: <strong>{{ req.amount_days }} dni</strong>
-                                            </div>
+                                            <a href="{% url 'leave_detail' pk=req.pk %}" class="text-dark text-decoration-none hover-underline">
+                                                <div class="fw-bold text-secondary small">
+                                                    {{ req.start_date|date:"d.m.Y" }} - {{ req.end_date|date:"d.m.Y" }}
+                                                </div>
+                                                <div class="text-muted fs-7 mt-1">
+                                                    Czas trwania: <strong>{{ req.amount_days }} dni</strong>
+                                                </div>
+                                            </a>
                                         </td>
                                         <td class="py-2 px-2 text-end align-middle">
                                             <span class="badge badge-{{ req.status|lower }}">
@@ -168,13 +272,14 @@
                 <!-- KOLUMNA TABELI: NAJNOWSZA AKTYWNOŚĆ -->
                 <div class="profile-section flex-fill-custom-2">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-3">
-                        <h2 class="m-0 fs-5">Najnowsza aktywność</h2>
-                        {% if active_role in 'HR,Admin' %}
-                            <a href="{% url 'activity_log' %}?user={{ profile_owner.id }}" class="text-muted text-decoration-none small hover-underline">
-                                Pokaż całą aktywność
-                            </a>
-                        {% endif %}
-                    </div>
+    {% if active_role in 'Admin' %}
+        <a href="{% url 'activity_log' %}?user={{ profile_owner.id }}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
+            Najnowsza aktywność
+        </a>
+    {% else %}
+        <h2 class="m-0 fs-5">Najnowsza aktywność</h2>
+    {% endif %}
+</div>
                     <div class="table-responsive">
                         <table>
                             <tbody>
@@ -184,9 +289,19 @@
                                             {{ log.created_at|date:"Y-m-d H:i:s" }}
                                         </td>
                                         <td class="text-dark fw-semibold small">
-                                            {{ log.get_object_type_display|default:log.object_type }}
-                                            {% if log.object_id %}
-                                                <span class="text-muted font-monospace">#{{ log.object_id }}</span>
+                                            {% if log.object_type == 'user' and log.object_id %}
+                                                <a href="{% url 'profile' user_id=log.object_id %}" class="text-dark text-decoration-none hover-underline">
+                                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                                </a>
+                                            {% elif log.object_type == 'leave_request' and log.object_id %}
+                                                <a href="{% url 'leave_detail' pk=log.object_id %}" class="text-dark text-decoration-none hover-underline">
+                                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                                </a>
+                                            {% else %}
+                                                {{ log.get_object_type_display|default:log.object_type }}
+                                                {% if log.object_id %}
+                                                    <span class="text-muted font-monospace">#{{ log.object_id }}</span>
+                                                {% endif %}
                                             {% endif %}
                                         </td>
                                         <td class="pe-3 text-end">
@@ -214,209 +329,79 @@
 
 <style>
     /* BAZA STRUKTURALNA STRONY */
-    .profile-page-wrapper {
-        max-width: 100%;
-        margin: 0 auto 50px auto;
-        padding: 0 5%;
-    }
-    .profile-layout {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 30px;
-        margin-top: 25px;
-    }
-    .sidebar-content {
-        flex: 1;
-        min-width: 340px;
-    }
-    .main-content {
-        flex: 2.5;
-        min-width: 340px;
-    }
+    .profile-page-wrapper { max-width: 100%; margin: 0 auto 50px auto; padding: 0 5%; }
+    .profile-layout { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 25px; }
+    .sidebar-content { flex: 1; min-width: 340px; }
+    .main-content { flex: 2.5; min-width: 340px; }
     .profile-section, .info-card {
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: 1px solid #cbd5e0;
-        overflow: hidden;
+        background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0; overflow: hidden;
     }
-    .profile-section {
-        margin-bottom: 30px;
-        padding: 25px;
-    }
-    .profile-section h2 {
-        font-weight: 800;
-        color: #1a202c;
-        margin-top: 0;
-    }
+    .profile-section { margin-bottom: 30px; padding: 25px; }
+    .profile-section h2 { font-weight: 800; color: #1a202c; margin-top: 0; }
 
     /* SIATKA AGREGUJĄCA STRONY GŁÓWNEJ */
-    .dashboard-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        width: 100%;
-    }
-    .dashboard-row .profile-section {
-        margin-bottom: 0;
-    }
-    .flex-fill-custom-1 {
-        flex: 4;
-        min-width: 320px;
-        padding: 25px 15px !important;
-    }
-    .flex-fill-custom-2 {
-        flex: 6;
-        min-width: 450px;
-        padding: 25px 0 0 0 !important;
-    }
+    .dashboard-row { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; }
+    .dashboard-row .profile-section { margin-bottom: 0; }
+    .flex-fill-custom-1 { flex: 4; min-width: 320px; padding: 25px 15px !important; }
+    .flex-fill-custom-2 { flex: 6; min-width: 450px; padding: 25px 0 0 0 !important; }
 
     /* KARTY METRYK */
-    .cards-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
+    .cards-grid { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
     .info-card {
-        flex: 1;
-        min-width: 220px;
-        min-height: 180px;
-        padding: 25px 20px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        flex: 1; min-width: 220px; min-height: 180px; padding: 25px 20px; text-align: center;
+        display: flex; flex-direction: column; justify-content: center;
     }
     .info-card h3 {
-        margin: 0 0 12px 0;
-        color: #4a5568;
-        font-size: 0.95rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        margin: 0 0 12px 0; color: #4a5568; font-size: 0.95rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
     }
-    .info-card .number {
-        font-size: 3.2rem;
-        font-weight: 800;
-        margin: 5px 0;
-        line-height: 1;
-    }
-    .info-card p {
-        color: #718096;
-        font-size: 0.95rem;
-        margin: 5px 0 0 0;
-    }
+    .info-card .number { font-size: 3.2rem; font-weight: 800; margin: 5px 0; line-height: 1; }
+    .info-card p { color: #718096; font-size: 0.95rem; margin: 5px 0 0 0; }
 
     /* PASKI POSTĘPU */
-    .progress-bar-bg {
-        background: #e2e8f0;
-        border-radius: 9999px;
-        height: 12px;
-        margin-top: 15px;
-        overflow: hidden;
-    }
-    .progress-bar-fill {
-        height: 12px;
-        border-radius: 9999px;
-        transition: width 0.4s ease;
-    }
+    .progress-bar-bg { background: #e2e8f0; border-radius: 9999px; height: 12px; margin-top: 15px; overflow: hidden; }
+    .progress-bar-fill { height: 12px; border-radius: 9999px; transition: width 0.4s ease; }
     .bg-green { background: #10ae55; }
     .bg-yellow { background: #ecc94b; }
     .bg-red { background: #e53e3e; }
 
     /* AWATAR ANIMOWANY (SŁOŃCE) */
     .profile-avatar-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        margin-bottom: 25px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid #e2e8f0;
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+        margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;
     }
     .sunny-avatar-box {
-        position: relative;
-        width: 140px;
-        height: 140px;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        position: relative; width: 140px; height: 140px; margin-bottom: 15px;
+        display: flex; align-items: center; justify-content: center;
     }
     .sunny-avatar-icon {
-        font-size: 8.5rem;
-        color: #ffc107;
-        line-height: 1;
-        display: inline-block;
+        font-size: 8.5rem; color: #ffc107; line-height: 1; display: inline-block;
         animation: permanent-spin 25s linear infinite;
     }
     .sunny-avatar-center-circle {
-        position: absolute;
-        width: 73px;
-        height: 73px;
-        background-color: #ffc107;
-        border: 3px solid #ffc107;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2;
+        position: absolute; width: 73px; height: 73px; background-color: #ffc107;
+        border: 3px solid #ffc107; border-radius: 50%; display: flex;
+        align-items: center; justify-content: center; z-index: 2;
     }
-    .sunny-avatar-text {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: #ffffff;
-        line-height: 1;
-    }
-    @keyframes permanent-spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
+    .sunny-avatar-text { font-size: 1.75rem; font-weight: 800; color: #ffffff; line-height: 1; }
+    @keyframes permanent-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* STYLIZACJA TABEL */
-    .table-responsive {
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        border-radius: 8px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
+    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; }
     th {
-        background-color: #ebf1f5 !important;
-        color: #2d3748;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 0.5px;
-        padding: 14px 16px;
-        border-bottom: 3px solid #cbd5e0;
+        background-color: #ebf1f5 !important; color: #2d3748; font-weight: 700; text-transform: uppercase;
+        font-size: 0.8rem; letter-spacing: 0.5px; padding: 14px 16px; border-bottom: 3px solid #cbd5e0;
         white-space: nowrap;
     }
-    td {
-        padding: 14px 16px;
-        text-align: left;
-        border-bottom: 1px solid #e2e8f0;
-        color: #1a202c;
-        font-size: 0.95rem;
-    }
-    tr:last-child td {
-        border-bottom: none;
-    }
+    td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; color: #1a202c; font-size: 0.95rem; }
+    tr:last-child td { border-bottom: none; }
 
     /* SYSTEM ODZNAK STATUSÓW (BADGES) */
     .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 12px;
-        border-radius: 9999px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        line-height: 1.2;
-        white-space: nowrap;
+        display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 9999px;
+        font-size: 0.8rem; font-weight: 700; line-height: 1.2; white-space: nowrap;
     }
     .badge-success, .badge-approved, .badge-approve, .badge-dodaj, .badge-create { background-color: #def7ec; color: #03543f; }
     .badge-danger, .badge-rejected, .badge-reject, .badge-odrzuć, .badge-odrzuc, .badge-delete { background-color: #fde8e8; color: #9b1c1c; }
@@ -426,138 +411,152 @@
     .badge-default { background-color: #edf2f7; color: #4a5568; }
 
     /* LISTA DANYCH METRYCZNYCH PROFILE-SIDEBAR */
-    .meta-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    .meta-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    .meta-item:last-child {
-        border-bottom: none;
-    }
-    .meta-label {
-        color: #718096;
-        font-weight: 500;
-    }
-    .meta-value {
-        color: #1a202c;
-        font-weight: 700;
-        text-align: right;
-    }
+    .meta-list { list-style: none; padding: 0; margin: 0; }
+    .meta-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+    .meta-item:last-child { border-bottom: none; }
+    .meta-label { color: #718096; font-weight: 500; }
+    .meta-value { color: #1a202c; font-weight: 700; text-align: right; }
 
     /* AKCJE ADMINISTRATORA */
-    .admin-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 2px dashed #e2e8f0;
-    }
+    .admin-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; }
     .btn-admin-danger {
-        display: block;
-        width: 100%;
-        padding: 12px;
-        background: #e53e3e;
-        color: #ffffff;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
+        display: block; width: 100%; padding: 12px; background: #e53e3e; color: #ffffff; border: none;
+        border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;
     }
     .btn-admin-danger:hover { background: #c53030; }
     .btn-admin-secondary {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        background: #ffffff;
-        color: #4a5568;
-        border: 2px solid #cbd5e0;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s;
-        text-align: center;
+        display: block; width: 100%; padding: 10px; background: #ffffff; color: #4a5568;
+        border: 2px solid #cbd5e0; border-radius: 8px; text-decoration: none; font-weight: 600;
+        transition: all 0.2s; text-align: center;
     }
     .btn-admin-secondary:hover { background: #edf2f7; color: #1a202c; }
 
     /* KONTENER WYKRESU */
-    .chart-container {
-        position: relative;
-        height: 300px;
-        width: 100%;
-        margin-top: 10px;
-    }
+    .chart-container { position: relative; height: 300px; width: 100%; margin-top: 10px; }
 
     /* INTERAKCJE I STRUKTURA UTILITY */
     .hover-underline:hover { text-decoration: underline !important; }
     .text-muted-gray { color: #a0aec0; }
     .fs-7 { font-size: 0.8rem; }
     .fw-extrabold { font-weight: 800; }
+
+    /* ROZWIJANA LISTA ZESPOŁÓW */
+    .more-teams-trigger {
+        display: inline-block; margin-left: 3px; font-weight: 900; color: #64748b;
+        cursor: pointer; padding: 0 4px; user-select: none; position: relative;
+    }
+    .more-teams-trigger:hover { color: #0284c7; }
+    .floating-teams-dropdown {
+        display: none; position: fixed; z-index: 999999 !important; background: #ffffff;
+        border: 1px solid #cbd5e0; border-radius: 8px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+        padding: 10px 14px; min-width: 170px; text-align: left;
+    }
+    .floating-teams-dropdown.show { display: block !important; }
+    .floating-teams-dropdown .dropdown-title {
+        font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;
+        margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #f1f5f9;
+    }
+    .floating-teams-dropdown a {
+        display: block; padding: 4px 0; color: #0f172a !important; text-decoration: none !important;
+        font-size: 0.85rem; font-weight: 600;
+    }
+    .floating-teams-dropdown a:hover { color: #0284c7 !important; }
 </style>
 
-<!-- RENDEROWANIE WYKRESU STATYSTYK -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-  const chartLabels = {{ chart_labels|safe|default:"[]" }};
-  const chartValues = {{ chart_values|safe|default:"[]" }};
-  const chartMax = {{ chart_max|default:"null" }} || 26;
-
-  new Chart(document.getElementById('leaveChart').getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: chartLabels,
-      datasets: [{
-        label: 'Wykorzystane dni urlopu (narastająco)',
-        data: chartValues,
-        borderColor: '#007bff',
-        backgroundColor: 'rgba(0, 123, 255, 0.06)',
-        fill: true,
-        tension: 0,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: '#007bff',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
-      scales: {
-        y: {
-          min: 0,
-          max: chartMax,
-          ticks: { stepSize: 2, color: '#718096', font: { weight: '500' } },
-          grid: { color: '#e2e8f0' },
-          title: { display: true, text: 'Dni urlopu', color: '#4a5568', font: { weight: '600' } }
-        },
-        x: {
-          ticks: { color: '#718096', font: { weight: '500' } },
-          grid: { display: false },
-          title: { display: true, text: 'Miesiąc', color: '#4a5568', font: { weight: '600' } }
+    // --- Rozwijana lista zespołów ---
+    function toggleTeamsDropdown(event, triggerElem) {
+        if (event.target.closest('a')) {
+            return;
         }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a202c',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          padding: 10,
-          cornerRadius: 6,
-          displayColors: false,
-          callbacks: { label: (ctx) => `${ctx.parsed.y} dni wykorzystane` }
+        event.stopPropagation();
+        event.preventDefault();
+        const dropdown = triggerElem.querySelector('.floating-teams-dropdown');
+        const isAlreadyOpen = dropdown.classList.contains('show');
+        document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => el.classList.remove('show'));
+        if (!isAlreadyOpen) {
+            const rect = triggerElem.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.classList.add('show');
         }
-      }
     }
-  });
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => el.classList.remove('show'));
+    });
+
+    // --- Wykres wykorzystania urlopu ---
+    const chartLabels = {{ chart_labels|safe|default:"[]" }};
+    const chartValues = {{ chart_values|safe|default:"[]" }};
+    const chartMax = {{ chart_max|default:"null" }} || 26;
+
+    const isOwnWorkerProfile = {{ is_own_profile|yesno:"true,false" }} && "{{ active_role }}" === "Worker";
+    const profileOwnerId = {{ profile_owner.id }};
+    const currentChartYear = {{ current_year }};
+
+    function buildMonthRangeUrl(monthIndex) {
+        const monthNum = monthIndex + 1;
+        const lastDay = new Date(currentChartYear, monthNum, 0).getDate();
+        const dateFrom = `${currentChartYear}-${String(monthNum).padStart(2, '0')}-01`;
+        const dateTo = `${currentChartYear}-${String(monthNum).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        if (isOwnWorkerProfile) {
+            return `{% url 'my_vacations' %}?date_from=${dateFrom}&date_to=${dateTo}`;
+        }
+        return `{% url 'all_requests_list' %}?user=${profileOwnerId}&processed=processed&date_from=${dateFrom}&date_to=${dateTo}`;
+    }
+
+    const leaveChartCanvas = document.getElementById('leaveChart');
+    leaveChartCanvas.style.cursor = 'pointer';
+
+    new Chart(leaveChartCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Wykorzystane dni urlopu',
+                data: chartValues,
+                backgroundColor: '#007bff',
+                borderRadius: 4,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            onClick: (event, elements) => {
+                if (elements.length === 0) return;
+                window.location.href = buildMonthRangeUrl(elements[0].index);
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: chartMax,
+                    ticks: { stepSize: 2, color: '#718096', font: { weight: '500' } },
+                    grid: { color: '#e2e8f0' },
+                    title: { display: true, text: 'Dni urlopu', color: '#4a5568', font: { weight: '600' } }
+                },
+                x: {
+                    ticks: { color: '#718096', font: { weight: '500' } },
+                    grid: { display: false },
+                    title: { display: true, text: 'Miesiąc', color: '#4a5568', font: { weight: '600' } }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1a202c',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 10,
+                    cornerRadius: 6,
+                    displayColors: false,
+                    callbacks: { label: (ctx) => `${ctx.parsed.y} dni urlopu` }
+                }
+            }
+        }
+    });
 </script>
 {% endblock %}

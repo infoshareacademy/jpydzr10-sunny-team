@@ -168,9 +168,14 @@
     }
     .badge-login_success { background-color: #c6f6d5; color: #1c5234; }
     .badge-login_failed { background-color: #feebc8; color: #744210; }
+    .badge-incorrect_username { background-color: #feebc8; color: #744210; }
+    .badge-2fa_success { background-color: #c6f6d5; color: #1c5234; }
+    .badge-2fa_failed { background-color: #fde8e8; color: #9b1c1c; }
     .badge-logout { background-color: #e2e8f0; color: #2d3748; }
     .badge-ip_locked { background-color: #fed7d7; color: #742a2a; }
     .badge-access_denied_403 { background-color: #e1effe; color: #1e429f; }
+    .badge-role_change { background-color: #fce7f3; color: #9d174d; }
+    .badge-password_changed { background-color: #e9d8fd; color: #441239; }
 
     .badge-critical { background-color: #fed7d7; color: #742a2a; }
     .badge-warning { background-color: #feebc8; color: #744210; }
@@ -263,7 +268,6 @@
                         <th style="width: 18%;">Data i godzina</th>
                         <th style="width: 12%;">Użytkownik</th>
                         <th style="width: 16%;">Akcja</th>
-                        <th style="width: 13%;">Wpisany login</th>
                         <th style="width: 11%;">Waga</th>
                         <th style="width: 13%;">Adres IP</th>
                         <th>Szczegóły</th>
@@ -290,7 +294,6 @@
                                 {{ log.get_action_display|default:log.action }}
                             </span>
                         </td>
-                        <td style="color: #2d3748; font-weight: 500;">{{ log.username|default:"&mdash;" }}</td>
                         <td>
                             <span class="badge badge-{{ log.severity|default:'default' }}">
                                 {{ log.get_severity_display|default:log.severity }}

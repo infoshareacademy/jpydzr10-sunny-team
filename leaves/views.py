@@ -1,6 +1,10 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from datetime import datetime, date, timedelta
+
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, UpdateView, View, DetailView
 from django.contrib import messages
@@ -9,6 +13,7 @@ from leaves.models import LeaveRequest, WorkerProfile
 import csv
 from django.http import HttpResponse
 import calendar
+from accounts.models import User
 from logs.models import AuthLog, ActivityLog
 from logs.utils import get_client_ip
 from .forms import LeaveRequestForm
@@ -18,121 +23,251 @@ from mail.utils import send_approval_notification, send_reject_notification, sen
 from django.conf import settings
 from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
-@login_required
-def dashboard(request):
-    active_role = request.session.get('active_role', request.user.role)
-
-    try:
-        profile = WorkerProfile.objects.get(user=request.user)
-        total_days = profile._get_total_leave_days()
-        used_days = profile.used_leave_days
-        remaining_days = profile.get_leave_days()
-        # pasek postępu: ile % urlopu wykorzystano (0-100)
-        progress_percent = round((used_days / total_days) * 100) if total_days > 0 else 0
-    except WorkerProfile.DoesNotExist:
-        # jeśli zalogowany user nie ma profilu (np. Admin bez profilu)
-        total_days = None
-        used_days = None
-        remaining_days = None
-        progress_percent = 0
-
-    my_requests = LeaveRequest.objects.filter(employee=request.user)
-    recent_requests_qs = LeaveRequest.objects.select_related('employee').order_by('-created_at')
-
-    if active_role == 'Manager':
-        try:
-            my_profile = WorkerProfile.objects.get(user=request.user)
-            team_members = WorkerProfile.objects.filter(team=my_profile.team).values_list('user', flat=True)
-            recent_requests_qs = recent_requests_qs.filter(employee__in=team_members)
-        except WorkerProfile.DoesNotExist:
-            recent_requests_qs = recent_requests_qs.none()
-    elif active_role == 'Worker':
-        recent_requests_qs = recent_requests_qs.filter(employee=request.user)
-
-    recent_requests = recent_requests_qs[:5]
-
-    active_count = my_requests.exclude(status=LeaveRequest.Status.CANCELED).count()
-    pending_count = my_requests.filter(status=LeaveRequest.Status.PENDING).count()
-
-    context = {
-        'title': 'Dashboard Urlopowy',
-        'total_days': total_days,
-        'used_days': used_days,
-        'remaining_days': remaining_days,
-        'progress_percent': progress_percent,
-        'active_count': active_count,
-        'pending_count': pending_count,
-        'recent_requests': recent_requests,
-        'active_role': active_role,
-    }
-
-    return render(request, 'leaves/dashboard.html', context)
 from .utils import Calendar_utils
+from team.models import Team
+from django.db.models import Q, Case, When, Value, IntegerField
+from collections import defaultdict
+from django.core.paginator import Paginator
 
 
-@login_required
-@role_required("can_see_all_requests")
-def all_requests_list(request):
-    status_filter = request.GET.get('status', '').lower()
-    date_from_str = request.GET.get('date_from', '')
-    date_to_str = request.GET.get('date_to', '')
-    active_role = request.session.get('active_role', request.user.role)
+def _get_manager_team_ids(user):
+    return list(Team.get_teams_managed_by(user).values_list('pk', flat=True))
 
-    qs = LeaveRequest.objects.select_related('employee', 'who_confirmed').all()
 
-    # Manager widzi tylko swój zespół
+def _base_visible_queryset(request, active_role):
+    qs = LeaveRequest.objects.select_related(
+        'employee',
+        'who_confirmed',
+        'employee__worker_profile',
+        'employee__worker_profile__team',
+    )
+
+    if active_role == 'Worker':
+        return qs.filter(employee=request.user)
+
     if active_role == 'Manager':
-        try:
-            my_profile = WorkerProfile.objects.get(user=request.user)
-            team_members = WorkerProfile.objects.filter(team=my_profile.team).values_list('user', flat=True)
-            qs = qs.filter(employee__in=team_members)
-        except WorkerProfile.DoesNotExist:
-            qs = qs.none()
+        managed_team_ids = _get_manager_team_ids(request.user)
+        if not managed_team_ids:
+            return qs.none()
 
-    if status_filter and status_filter in LeaveRequest.Status.values:
-        qs = qs.filter(status=status_filter)
+        team_members = WorkerProfile.objects.filter(
+            team_id__in=managed_team_ids
+        ).values_list('user', flat=True)
 
-    if date_from_str:
+        return qs.filter(employee__in=team_members, employee__role='Worker')
+
+    if active_role == 'HR':
+        return qs.filter(employee__role__in=['Worker', 'Manager'])
+
+    if active_role in ('COO', 'Admin'):
+        return qs
+
+    return qs.none()
+
+
+def _get_role_and_team_lists(active_role, base_qs):
+    if active_role == 'Manager':
+        roles = []
+        teams = Team.objects.filter(
+            id__in=base_qs.values('employee__worker_profile__team')
+        ).distinct()
+    elif active_role == 'HR':
+        roles = ['Worker', 'Manager']
+        teams = Team.objects.filter(is_active=True)
+    else:
+        roles = ['Worker', 'Manager', 'HR', 'COO', 'Admin']
+        teams = Team.objects.filter(is_active=True)
+
+    return roles, teams
+
+
+def _apply_filters_and_ordering(qs, filters, all_roles_list):
+    if user_id := filters['user']:
+        if user_id.isdigit():
+            qs = qs.filter(employee_id=user_id)
+    elif query := filters['search']:
+        qs = qs.filter(
+            Q(employee__first_name__icontains=query) |
+            Q(employee__last_name__icontains=query) |
+            Q(employee__username__icontains=query)
+        )
+
+    if status := filters['status']:
+        if status in LeaveRequest.Status.values:
+            qs = qs.filter(status=status)
+
+    proc = filters['processed']
+    if proc == 'unprocessed':
+        qs = qs.filter(status='pending')
+    elif proc == 'processed':
+        qs = qs.filter(status__in=['approved', 'rejected', 'canceled'])
+    elif proc in ('approved', 'rejected', 'canceled'):
+        qs = qs.filter(status=proc)
+
+    if date_from_str := filters['date_from']:
         try:
             date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
             qs = qs.filter(end_date__gte=date_from)
         except ValueError:
             pass
 
-    if date_to_str:
+    if date_to_str := filters['date_to']:
         try:
             date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
             qs = qs.filter(start_date__lte=date_to)
         except ValueError:
             pass
 
-    if active_role == 'HR':
-        all_team_names = (
-            WorkerProfile.objects
-            .values_list('team', flat=True)
-            .distinct()
-            .order_by('team')
+    if (role := filters['role']) and role in all_roles_list:
+        qs = qs.filter(employee__role=role)
+
+    if team_id := filters['team']:
+        if team_id.isdigit():
+            qs = qs.filter(employee__worker_profile__team_id=team_id)
+
+    return qs.annotate(
+        role_priority=Case(
+            When(employee__role='COO', then=Value(0)),
+            When(employee__role='HR', then=Value(1)),
+            When(employee__role='Manager', then=Value(2)),
+            When(employee__role='Worker', then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        ),
+        status_priority=Case(
+            When(status='pending', then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
         )
-        teams = []
-        for team_name in all_team_names:
-            teams.append({
-                'team_name': team_name,
-                'requests': qs.filter(employee__worker_profile__team=team_name),
-            })
-        context = {
-            'teams': teams,
-            'is_hr': True,
-            'status_filter': status_filter,
-            'date_from': date_from_str,
-            'date_to': date_to_str,
+    ).order_by(
+        'role_priority',
+        'employee__worker_profile__team__name',
+        'status_priority',
+        '-created_at'
+    )
+
+
+def _attach_managed_teams(requests_list):
+    employee_ids = {req.employee_id for req in requests_list}
+    has_manager_id_attr = hasattr(Team, 'manager_id')
+
+    managed_teams_map = (
+        {
+            team.manager_id: list(team.managed_teams.all())
+            for team in Team.objects.filter(manager_id__in=employee_ids).prefetch_related('managed_teams')
         }
-    else:
-        context = {
-            'all_vacations': qs,
-            'status_filter': status_filter,
-            'date_from': date_from_str,
-            'date_to': date_to_str,
+        if has_manager_id_attr
+        else {}
+    )
+
+    for req in requests_list:
+        req.managed_teams = managed_teams_map.get(
+            req.employee_id,
+            list(Team.get_teams_managed_by(req.employee))
+        )
+
+
+def _build_section_data(items):
+    pending = [r for r in items if r.status == 'pending']
+    processed = [r for r in items if r.status != 'pending']
+    return {
+        'has_items': bool(items),
+        'pending': pending,
+        'processed': processed,
+        'pending_count': len(pending),
+        'processed_count': len(processed),
+    }
+
+
+def _get_team_for_employee(employee):
+    try:
+        return employee.worker_profile.team
+    except (ObjectDoesNotExist, AttributeError):
+        return None
+
+
+def _build_page_sections(page_items):
+    role_groups = defaultdict(list)
+    worker_unassigned = []
+    teams_on_page = defaultdict(lambda: {'team_name': '', 'requests': []})
+
+    for req in page_items:
+        role = req.employee.role
+        if role in ('COO', 'HR', 'Manager'):
+            role_groups[role].append(req)
+        else:
+            role_groups['Worker'].append(req)
+            team = _get_team_for_employee(req.employee)
+            if team:
+                teams_on_page[team.id]['team_name'] = team.name
+                teams_on_page[team.id]['requests'].append(req)
+            else:
+                worker_unassigned.append(req)
+
+    worker_teams_list = [
+        {
+            'team_name': data['team_name'],
+            'requests': _build_section_data(data['requests'])
         }
+        for data in teams_on_page.values()
+    ]
+
+    return {
+        'coo': _build_section_data(role_groups['COO']),
+        'hr': _build_section_data(role_groups['HR']),
+        'managers': _build_section_data(role_groups['Manager']),
+        'workers': {
+            'has_items': bool(role_groups['Worker']),
+            'unassigned': _build_section_data(worker_unassigned),
+            'teams': worker_teams_list,
+        }
+    }
+
+
+@login_required
+@role_required("can_see_all_requests")
+def all_requests_list(request):
+    active_role = request.session.get('active_role', request.user.role)
+    base_qs = _base_visible_queryset(request, active_role)
+
+    all_roles_list, all_teams_list = _get_role_and_team_lists(active_role, base_qs)
+
+    filters = {
+        'status': request.GET.get('status', '').lower(),
+        'processed': request.GET.get('processed', '').lower(),
+        'date_from': request.GET.get('date_from', ''),
+        'date_to': request.GET.get('date_to', ''),
+        'team': request.GET.get('team', ''),
+        'role': request.GET.get('role', ''),
+        'user': request.GET.get('user'),
+        'search': request.GET.get('search', '').strip(),
+    }
+
+    queryset = _apply_filters_and_ordering(base_qs, filters, all_roles_list)
+
+    paginator = Paginator(queryset, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    page_items = list(page_obj.object_list)
+    _attach_managed_teams(page_items)
+
+    sections = _build_page_sections(page_items)
+
+    context = {
+        'page_obj': page_obj,
+        'sections': sections,
+        'active_role': active_role,
+        'proc_filter': filters['processed'],
+        'status_filter': filters['status'],
+        'date_from': filters['date_from'],
+        'date_to': filters['date_to'],
+        'team_filter': filters['team'],
+        'role_filter': filters['role'],
+        'search_query': filters['search'],
+        'all_teams_list': all_teams_list,
+        'all_roles_list': all_roles_list,
+    }
 
     return render(request, 'leaves/all_requests_list.html', context)
 
@@ -189,38 +324,39 @@ def my_vacations(request):
 def approve_request(request, request_id):
     leave_request = get_object_or_404(LeaveRequest, pk=request_id)
     active_role = request.session.get('active_role', request.user.role)
-
     if not Permission.verifyPermission(active_role, 'can_approve_request'):
         messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
         return redirect('all_requests_list')
 
-    # 1. Pobierz zespół pracownika składającego wniosek
     try:
         employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
-        employee_team = employee_profile.team
+        employee_team_id = employee_profile.team_id
     except WorkerProfile.DoesNotExist:
-        messages.error(request, _('Pracownik nie ma przypisanego zespołu.'))
-        return redirect('all_requests_list')
+        employee_team_id = None
 
-    #2. Walidacja dla Managera
     if active_role == 'Manager':
-        # Manager może zatwierdzać tylko swój zespół
-        try:
-            is_worker = leave_request.employee.role == 'Worker'
-            my_profile = WorkerProfile.objects.get(user=request.user)
-            same_team = my_profile.team == employee_team
-            if not (same_team and is_worker):
-                messages.error(request, _('Możesz akceptować tylko wnioski pracowników z Twojego zespołu.'))
-                return redirect('all_requests_list')
-        except WorkerProfile.DoesNotExist:
-            messages.error(request, _('Nie masz przypisanego zespołu.'))
+        managed_team_ids = _get_manager_team_ids(request.user)
+        is_worker = leave_request.employee.role == 'Worker'
+        same_team = employee_team_id in managed_team_ids
+        if not (same_team and is_worker):
+            messages.error(request, _('Możesz akceptować tylko wnioski pracowników z Twojego zespołu.'))
             return redirect('all_requests_list')
 
-    # 3. Walidacja dla HR
     elif active_role == 'HR':
-        if leave_request.employee == request.user.id:
+        if leave_request.employee_id == request.user.id:
             messages.error(request, 'Nie możesz akceptować własnego wniosku.')
             return redirect('all_requests_list')
+        if leave_request.employee.role not in ('Worker', 'Manager'):
+            messages.error(request, 'HR może zatwierdzać jedynie wnioski Workerów i Managerów.')
+            return redirect('all_requests_list')
+
+    elif active_role in ('COO', 'Admin'):
+        if leave_request.employee_id == request.user.id:
+            messages.error(request, 'Nie możesz akceptować własnego wniosku.')
+            return redirect('all_requests_list')
+
+        answer_comment = request.POST.get('answer_comment', '').strip()[:250]
+        leave_request.answer_comment = answer_comment if answer_comment else None
 
     try:
         leave_request.approve(who=request.user)
@@ -230,8 +366,6 @@ def approve_request(request, request_id):
         except WorkerProfile.DoesNotExist:
             pass
         messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
-
-        # --- WYŚLIJ MAIL DO PRACOWNIKA ---
         try:
             send_approval_notification(
                 employee_email=leave_request.employee.email,
@@ -241,10 +375,8 @@ def approve_request(request, request_id):
             )
         except Exception as mail_error:
             print(f"Błąd wysyłki powiadomienia e-mail: {mail_error}")
-
     except Exception as e:
         messages.error(request, _(f'Błąd podczas zatwierdzania: {e}'))
-
     return redirect('all_requests_list')
 
 
@@ -255,41 +387,44 @@ def reject_request(request, request_id):
     leave_request = get_object_or_404(LeaveRequest, pk=request_id)
     active_role = request.session.get('active_role', request.user.role)
 
-    # 1. Pobierz zespół pracownika składającego wniosek
-    try:
-        employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
-        employee_team = employee_profile.team
-    except WorkerProfile.DoesNotExist:
-        messages.error(request, 'Pracownik nie ma przypisanego zespołu.')
+    if not Permission.verifyPermission(active_role, 'can_reject_request'):
+        messages.error(request, 'Nie masz uprawnień do odrzucania wniosków urlopowych.')
         return redirect('all_requests_list')
 
-    # 2. Walidacja dla Managera
+    try:
+        employee_profile = WorkerProfile.objects.get(user=leave_request.employee)
+        employee_team_id = employee_profile.team_id
+    except WorkerProfile.DoesNotExist:
+        employee_team_id = None
+
     if active_role == 'Manager':
-        # Manager może odrzucać tylko swój zespół
-        try:
-            my_profile = WorkerProfile.objects.get(user=request.user)
-        except WorkerProfile.DoesNotExist:
-            messages.error(request, 'Nie masz przypisanego zespołu.')
-            return redirect('all_requests_list')
-
-        same_team = my_profile.team == employee_team
+        managed_team_ids = _get_manager_team_ids(request.user)
         is_worker = leave_request.employee.role == 'Worker'
-
+        same_team = employee_team_id in managed_team_ids
         if not (same_team and is_worker):
-            messages.error(request, 'Możesz odrzucać tylko wnioski pracowników z Twojego zespołu.')
+            messages.error(request, _('Możesz odrzucać tylko wnioski pracowników z Twojego zespołu.'))
             return redirect('all_requests_list')
 
-    # 3. Walidacja dla HR
     elif active_role == 'HR':
-        if leave_request.employee == request.user.id:
+        if leave_request.employee_id == request.user.id:
+            messages.error(request, 'Nie możesz odrzucać własnego wniosku.')
+            return redirect('all_requests_list')
+        if leave_request.employee.role not in ('Worker', 'Manager'):
+            messages.error(request, 'HR może odrzucać jedynie wnioski Workerów i Managerów.')
+            return redirect('all_requests_list')
+
+    elif active_role in ('COO', 'Admin'):
+        if leave_request.employee_id == request.user.id:
             messages.error(request, 'Nie możesz odrzucać własnego wniosku.')
             return redirect('all_requests_list')
 
-    # 4. Proces odrzucania wniosku
+    answer_comment = request.POST.get('answer_comment', '').strip()[:250]
+    leave_request.answer_comment = answer_comment if answer_comment else None
+
     try:
         leave_request.reject(who=request.user)
-        messages.success(request, _(f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.'))
-
+        messages.success(request,
+                         f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.')
         try:
             send_reject_notification(
                 employee_email=leave_request.employee.email,
@@ -300,7 +435,6 @@ def reject_request(request, request_id):
             )
         except Exception as mail_error:
             print(f"Błąd wysyłki powiadomienia e-mail o odrzuceniu: {mail_error}")
-
     except Exception as e:
         messages.error(request, _(f'Błąd podczas odrzucania: {e}'))
 
@@ -342,18 +476,27 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
         obj = form.save(commit=False)
         obj.employee = self.request.user
         obj.amount_days = form.cleaned_data['amount_days']
+
+        user_role = getattr(self.request.user, "role", None)
+        if user_role == "COO":
+            obj.status = LeaveRequest.Status.APPROVED
+            obj.who_confirmed = self.request.user
+            try:
+                profile = WorkerProfile.objects.get(user=self.request.user)
+                profile.subtract_leave_days(obj.amount_days)
+            except (WorkerProfile.DoesNotExist, ValueError) as e:
+                pass
+
         obj.save()
         self.object = obj
 
         # --- WYŚLIJ MAIL DO MANAGERA/HR ---
-        from django.utils import timezone
-
         # Pobierz adresy email wszystkich użytkowników z rolą Manager lub HR
         User = get_user_model()
         manager_emails = list(
             User.objects.filter(role__in=["Manager", "HR"])
             .values_list("email", flat=True)
-            .exclude(email="")  # pomiń puste adresy
+            .exclude(email="")
         )
 
         if manager_emails:
@@ -366,7 +509,6 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
                     site_url=settings.SITE_URL,
                 )
             except Exception as e:
-                # Loguj błąd, ale nie przerywaj działania
                 import logging
 
                 logger = logging.getLogger(__name__)
@@ -384,14 +526,12 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         form = context['form']
 
-        # Pobieranie puli dostępnych dni urlopowych profilu pracownika
         try:
             profile = WorkerProfile.objects.get(user=self.request.user)
             context['available_days'] = profile.get_leave_days()
         except WorkerProfile.DoesNotExist:
             context['available_days'] = None
 
-        # Formatowanie dat do wyświetlenia w podsumowaniu (modalu)
         if form.is_bound and form.is_valid():
             context['amount_days'] = form.cleaned_data.get('amount_days')
             context['start_date'] = form.cleaned_data.get('start_date').strftime('%d.%m.%Y')
@@ -429,7 +569,6 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
         if not Permission.verifyPermission(active_role, self.required_action):
             AuthLog.objects.create(
                 user=request.user,
-                username=None,
                 action='access_denied_403',
                 details=f'Brak permisji: {self.required_action}. Aktywna rola: {active_role}',
                 ip_address=get_client_ip(request),
@@ -469,7 +608,6 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
             context = self.get_context_data(form=form, show_modal=True)
             return self.render_to_response(context)
 
-        # Zapis zaktualizowanych danych wniosku
         obj = form.save(commit=False)
         obj.amount_days = form.cleaned_data['amount_days']
         obj.save()
@@ -483,8 +621,6 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
         from leaves.models import WorkerProfile
         context = super().get_context_data(**kwargs)
         form = context['form']
-
-        # Pobranie obecnych (starych) dat wniosku z bazy danych w celu wyświetlenia ich w szablonie
         pk = self.kwargs['pk']
         leave_request = LeaveRequest.objects.get(pk=pk)
         context['existing_start'] = leave_request.start_date.strftime('%d.%m.%Y')
@@ -524,6 +660,9 @@ class CancelLeaveView(RoleRequiredMixin, View):
         if leave_request.status != LeaveRequest.Status.PENDING:
             messages.error(request, _("Można anulować tylko wnioski oczekujące."))
             return redirect('my_vacations')
+
+        answer_comment = request.POST.get('answer_comment', '').strip()[:250]
+        leave_request.answer_comment = answer_comment if answer_comment else None
 
         leave_request.cancel_request(who=request.user)
         messages.success(request, _("Wniosek został anulowany."))
@@ -678,140 +817,6 @@ def export_requests_csv(request):
 
     return response
 
-@login_required
-@role_required("can_see_team_calendar")
-def team_calendar(request):
-    # miesięczny kalendarz urlopów dla całego zespołu
-    # jeśli w url jest rok/mc to pobieram
-    # jeśli brak to bieżący
-    today = date.today()
-    year = int(request.GET.get('year', today.year))
-    month = int(request.GET.get('month', today.month))
-
-    # dane którego zespołu
-    try:
-        my_profile = WorkerProfile.objects.get(user=request.user)
-        team_name = my_profile.team
-    except WorkerProfile.DoesNotExist:
-        team_name = None
-
-    # lista pracowników
-    if team_name:
-        team_profiles = WorkerProfile.objects.filter(team=team_name).select_related('user')
-    else:
-        team_profiles = WorkerProfile.objects.none()
-
-    team_members = [
-        {
-            'id': p.user.id,
-            'name': f"{p.user.last_name} {p.user.first_name}",
-        }
-        for p in team_profiles
-    ]
-
-    first_day = date(year, month, 1)
-    last_day = date(year, month, calendar.monthrange(year, month)[1])
-    team_user_ids = [m['id'] for m in team_members]
-
-    approved_leaves = LeaveRequest.objects.filter(
-        employee__id__in=team_user_ids,  # tylko ten zespół
-        status=LeaveRequest.Status.APPROVED,
-        start_date__lte=last_day,  # zaczyna się przed końcem miesiąca
-        end_date__gte=first_day,  # kończy się po początku miesiąca
-    ).select_related('employee')
-
-    pending_leaves = LeaveRequest.objects.filter(
-        employee__id__in=team_user_ids,
-        status=LeaveRequest.Status.PENDING,
-        start_date__lte=last_day,
-        end_date__gte=first_day,
-    ).select_related('employee')
-
-    # słownik urlopowiczów z danego mc-a
-    leave_map = {}
-    for leave in approved_leaves:
-        name = f"{leave.employee.last_name} {leave.employee.first_name}"
-        current = max(leave.start_date, first_day)
-        end = min(leave.end_date, last_day)
-        while current <= end:
-            day_num = current.day
-            if day_num not in leave_map:
-                leave_map[day_num] = []
-            if name not in leave_map[day_num]:
-                leave_map[day_num].append(name)
-            current += timedelta(days=1)
-
-    pending_map = {}
-    for leave in pending_leaves:
-        current = max(leave.start_date, first_day)
-        end = min(leave.end_date, last_day)
-        while current <= end:
-            day_num = current.day
-            if day_num not in pending_map:
-                pending_map[day_num] = []
-            name = f"{leave.employee.last_name} {leave.employee.first_name}"
-            if name not in pending_map[day_num]:
-                pending_map[day_num].append(name)
-            current += timedelta(days=1)
-
-    # miesięczny widok kalendarze
-    # monthcalendar(rok, miesiąc) zwraca listę tygodni,
-    # każdy tydzień to lista 7 liczb (0 = ten dzień należy do innego miesiąca)
-    # Przykład: [[0, 0, 1, 2, 3, 4, 5], [6, 7, 8, ...], ...]
-    cal = calendar.monthcalendar(year, month)
-
-    # zamieniam siatkę liczbową na siatkę słowników z datą i urlopami
-    weeks = []
-    for week in cal:
-        week_row = []
-        for day_num in week:
-            if day_num == 0:
-                # dzień spoza miesiąca — pusta komórka
-                week_row.append({'day': 0, 'leaves': [], 'pending': [], 'is_today': False})
-            else:
-                week_row.append({
-                    'day': day_num,
-                    'leaves': leave_map.get(day_num, []),  # [] jeśli brak urlopów
-                    'pending': pending_map.get(day_num, []),
-                    'is_today': date(year, month, day_num) == today,
-                })
-        weeks.append(week_row)
-
-    # poprzedni i następny miesiąc (do przycisków nawigacji)
-    if month == 1:
-        prev_year, prev_month = year - 1, 12
-    else:
-        prev_year, prev_month = year, month - 1
-
-    if month == 12:
-        next_year, next_month = year + 1, 1
-    else:
-        next_year, next_month = year, month + 1
-
-
-    PL_MONTHS = {
-        1: "Styczeń", 2: "Luty", 3: "Marzec", 4: "Kwiecień", 5: "Maj", 6: "Czerwiec",
-        7: "Lipiec", 8: "Sierpień", 9: "Wrzesień", 10: "Październik", 11: "Listopad", 12: "Grudzień"
-    }
-
-    context = {
-        'year': year,
-        'month': month,
-        'month_name': PL_MONTHS[month],
-        'weeks': weeks,
-        'team_name': team_name,
-        'team_members': team_members,
-        'prev_year': prev_year,
-        'prev_month': prev_month,
-        'next_year': next_year,
-        'next_month': next_month,
-        'today': today,
-    }
-    return render(request, 'leaves/team_calendar.html', context)
-
-
-
-
 MONTH_NAMES_PL = [
     "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
     "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
@@ -880,7 +885,6 @@ def _iter_month_overlap(start_date, end_date, year, month):
         yield current
         current += timedelta(days=1)
 
-
 class LeaveDetailView(LoginRequiredMixin, DetailView):
     model = LeaveRequest
     template_name = 'leaves/leave_detail.html'
@@ -901,7 +905,6 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
     def _log_access_denied(self, request, leave_request, target_user, active_role):
         AuthLog.objects.create(
             user=request.user,
-            username=None,
             action='access_denied_403',
             details=(
                 f"Próba podglądu wniosku #{leave_request.id} użytkownika "
@@ -914,10 +917,10 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
     def _has_access(self, viewer, target_user, active_role):
         if target_user == viewer:
             return True
-        if active_role == 'Admin':
+        if active_role in ['Admin', 'COO']:
             return True
         if active_role == 'HR':
-            return target_user.role not in ['HR', 'Admin']
+            return target_user.role not in ['HR', 'COO', 'Admin']
         if active_role == 'Manager':
             return self._is_same_team_manager(viewer, target_user)
         return False
@@ -926,9 +929,36 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
         if target_user.role != "Worker":
             return False
         try:
-            return viewer.worker_profile.team == target_user.worker_profile.team
+            target_team_id = target_user.worker_profile.team_id
         except WorkerProfile.DoesNotExist:
             return False
+        if target_team_id is None:
+            return False
+        managed_team_ids = Team.get_teams_managed_by(viewer).values_list('pk', flat=True)
+        return target_team_id in managed_team_ids
+
+    def _get_adjacent_leave_ids(self, viewer, current_leave, active_role):
+        """Wyznacza ID poprzedniego i następnego wniosku dostępnego dla użytkownika.
+
+        Lista jest sortowana rosnąco po ID, aby strzałka w prawo prowadziła do wyższego ID,
+        a strzałka w lewo do niższego ID.
+        """
+        # Sortujemy rosnąco po ID, aby zachować naturalną kolejność chronologiczną (1, 2, 3...)
+        base_qs = _base_visible_queryset(self.request, active_role).order_by('id')
+
+        leave_ids = list(base_qs.values_list('id', flat=True))
+
+        try:
+            current_index = leave_ids.index(current_leave.id)
+            # Poprzedni w liście = mniejszy numer ID (strzałka w lewo)
+            prev_id = leave_ids[current_index - 1] if current_index > 0 else None
+            # Następny w liście = większy numer ID (strzałka w prawo)
+            next_id = leave_ids[current_index + 1] if current_index < len(leave_ids) - 1 else None
+        except ValueError:
+            prev_id = None
+            next_id = None
+
+        return prev_id, next_id
 
     def _build_context(self, viewer, leave, target_user, active_role):
         confirmed_by_name = None
@@ -942,21 +972,41 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
         activity_logs = ActivityLog.objects.filter(
             object_type='leave_request',
             object_id=leave.id,
-        ).order_by('-created_at')[:10].values('created_at', 'details')
+        ).order_by('-created_at')[:10]
+
+        logs_data = [
+            {
+                'created_at': log.created_at,
+                'action': log.action,
+                'action_display': log.get_action_display(),
+                'details': log.details,
+            }
+            for log in activity_logs
+        ]
+
+        user_teams = []
+        if hasattr(target_user, 'worker_profile') and target_user.worker_profile.team:
+            user_teams = [target_user.worker_profile.team]
+        elif target_user.role == 'Manager':
+            user_teams = list(Team.get_teams_managed_by(target_user))
+        prev_id, next_id = self._get_adjacent_leave_ids(viewer, leave, active_role)
 
         return {
             'leave_id': leave.id,
             'owner_full_name': f"{target_user.first_name} {target_user.last_name}".strip() or target_user.username,
+            'user_teams': user_teams,
             'status_code': leave.status.lower(),
             'status_display': leave.get_status_display(),
             'start_date': leave.start_date,
             'end_date': leave.end_date,
             'amount_days': leave.amount_days,
             'confirmed_by_name': confirmed_by_name,
-            'activity_logs': activity_logs,
+            'activity_logs': logs_data,
             'calendars': build_leave_calendars(leave),
             'is_owner': viewer == target_user,
             'active_role': active_role,
             'target_user': target_user,
             'leave': leave,
+            'prev_id': prev_id,
+            'next_id': next_id,
         }

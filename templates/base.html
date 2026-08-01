@@ -13,11 +13,18 @@
         html {
             scroll-behavior: smooth;
         }
+
         .mynavbar {
-            background-color: #87cefa;
-            border-bottom: 3px solid #87cefa;
+            background: linear-gradient(135deg, #87cefa 0%, #18b1ff  100%);
             padding-top: 1rem !important;
             padding-bottom: 1rem !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
         }
         .brand-logo {
             display: inline-flex;
@@ -25,7 +32,7 @@
             gap: 0.5rem;
             text-decoration: none;
             font-size: 1.6rem;
-            font-weight: 1000;
+            font-weight: 800;
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .brand-logo:hover {
@@ -65,9 +72,11 @@
             border-radius: 12px;
             font-size: 1.1rem;
             z-index: 1050;
+            padding: 0.5rem !important;
         }
         .mynavbar .dropdown-item {
-            padding: 0.5rem 1.25rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px !important;
             transition: all 0.2s;
         }
         .mynavbar .dropdown-item:hover {
@@ -91,7 +100,7 @@
             transition: all 0.2s ease-in-out !important;
         }
         .profile-wrapper .profile-trigger i {
-            color: #87cefa !important;
+            color: #18b1ff !important;
             transition: none !important;
         }
         .profile-wrapper .profile-trigger:hover,
@@ -103,7 +112,7 @@
         }
         .profile-wrapper .profile-trigger:hover i,
         .profile-wrapper .profile-trigger[aria-expanded="true"] i {
-            color: #87cefa !important;
+            color: #18b1ff  !important;
         }
         .profile-wrapper .profile-trigger::after {
             display: none !important;
@@ -212,6 +221,47 @@
             transition: opacity 0.2s ease;
         }
         .toast-mini.show { opacity: 1; }
+
+        /* --- STYLE GLOBALNEGO POPUPU DECYZYJNEGO --- */
+        .popup-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(0px);
+            z-index: 1050;
+            justify-content: center;
+            align-items: flex-start;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+        }
+        .modal-content-box {
+            width: 500px;
+            margin: auto;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        .popup-modal .top {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -219,124 +269,125 @@
 {% block nav %}
     <nav class="navbar navbar-expand mynavbar">
         <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div class="d-flex align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center flex-wrap gap-4">
                 <a class="brand-logo" href="{% url 'home' %}">
                     <i class="bi bi-sun-fill"></i>
-                    <span class="d-none d-md-inline">Sunny</span>
+                    <span class="d-none d-sm-inline">Sunny</span>
                 </a>
-                {% if user.is_authenticated %}
-                <ul class="navbar-nav d-flex flex-row align-items-center gap-3 gap-md-4 ms-md-4 m-0 p-0 flex-wrap">
+                {% if active_role in 'Worker,Manager,HR,COO,Admin' %}
+                <ul class="navbar-nav d-flex flex-row align-items-center gap-3  m-0 p-0 flex-wrap">
+                    {% if active_role in 'Worker,Manager,HR,COO' %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-postcard-fill"></i>
-                            <span class="d-none d-xxl-inline">Wnioski Urlopowe</span>
+                            <span class="d-none d-lg-inline">Wnioski Urlopowe</span>
                         </a>
                         <ul class="dropdown-menu shadow-sm">
                             {% if active_role == 'Worker' %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'new_request' %}"><i class="bi bi-file-earmark-plus-fill text-muted"></i> Nowy wniosek</a></li>
-                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'my_vacations' %}"><i class="bi bi-sunglasses text-muted"></i> Moje urlopy</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'new_request' %}"><i class="bi bi-file-earmark-plus-fill text-muted"></i> Nowy </a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'my_vacations' %}"><i class="bi bi-folder-fill text-muted"></i> Lista </a></li>
                             {% else %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'all_requests_list' %}"><i class="bi bi-file-text-fill text-muted"></i> Lista wniosków</a></li>
-                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'team_calendar' %}"><i class="bi bi-calendar2-week-fill text-muted"></i> Kalendarz zespołowy</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'all_requests_list' %}"><i class="bi bi-file-text-fill text-muted"></i> Lista</a></li>
                             {% endif %}
                         </ul>
+                        {% endif %}
                     </li>
-                    {% if active_role in 'Manager,HR,Admin' %}
+                    {% if active_role in 'Manager,HR,COO, Admin' %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bar-chart-line-fill"></i>
-                            <span class="d-none d-xxl-inline">Raporty & Statystyki</span>
+                            <span class="d-none d-lg-inline">Zarządzanie</span>
                         </a>
                         <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'leave_usage_report' %}"><i class="bi bi-person-fill text-muted"></i> Pracownicy</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'team_report' %}"><i class="bi bi-people-fill text-muted"></i> Zespoły</a></li>
-                            {% if active_role in 'HR,Admin' %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'users_per_role_report' %}"><i class="bi bi-person-lines-fill text-muted"></i> Role</a></li>
-                            {% endif %}
+                    {% if active_role in 'HR,COO,Admin,Manager' %}
+                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'reports_index' %}"><i class="bi bi-clipboard-data-fill text-muted"></i> Raporty</a></li>
+                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'user_list' %}"><i class="bi bi-person-fill text-muted"></i> Pracownicy</a></li>
+                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'team-list' %}"><i class="bi bi-people-fill text-muted"></i> Zespoły</a></li>
+
+                        {% if active_role in 'HR,COO,Admin' %}
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'users_per_role_report' %}"><i class="bi bi-person-lines-fill text-muted"></i> Role</a></li>
+                        {% endif %}
+                    {% endif %}
                         </ul>
                     </li>
                     {% endif %}
-                    {% if active_role == 'HR' or active_role == 'Admin' %}
+                    {% if active_role == 'Admin' %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-terminal-fill"></i>
-                            <span class="d-none d-xxl-inline">Logi Systemowe</span>
+                            <span class="d-none d-lg-inline">Panel Admina</span>
                         </a>
                         <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'activity_log' %}"><i class="bi bi-keyboard-fill text-muted"></i> Aktywności</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'auth_log' %}"><i class="bi bi-key-fill text-muted"></i> Autoryzacja</a></li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                    {% if active_role == 'HR' or active_role == 'Admin' %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-gear-wide-connected"></i>
-                            <span class="d-none d-xxl-inline">Panel Sterowania</span>
-                        </a>
-                        <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'user_list' %}"><i class="bi bi-building-fill text-muted"></i> Użytkownicy</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2" href="{% url 'add_user' %}"><i class="bi bi-person-plus-fill text-muted"></i> Dodaj użytkownika</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'activity_log' %}"><i class="bi bi-keyboard-fill text-muted"></i> Logi Aktywności</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'auth_log' %}"><i class="bi bi-key-fill text-muted"></i> Logi Autoryzacji</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'add_user' %}"><i class="bi bi-person-plus-fill text-muted"></i> Dodaj użytkownika</a></li>
                         </ul>
                     </li>
                     {% endif %}
                 </ul>
                 {% endif %}
             </div>
-            {% if user.is_authenticated %}
-            <div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
-                <span class="navbar-text text-light fs-5 fw-bold text-nowrap">
-                    <span class="d-none d-md-inline">Rola: </span><strong style="color: #ffdf22;">{{ active_role }}</strong>
-                </span>
-                <div class="dropdown profile-wrapper">
-                    <a class="nav-link dropdown-toggle profile-trigger" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-fill fs-4"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" style="min-width: 260px;">
-                        <div class="px-3 py-3 bg-white rounded-top border-bottom">
-                            <div class="fw-bold text-dark fs-5 text-nowrap">{{ user.first_name }} {{ user.last_name }}</div>
-                        </div>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 py-2 text-nowrap" href="{% url 'profile' user.id %}"><i class="bi bi-info-square-fill text-secondary"></i> Szczegóły profilu</a></li>
-                        {% if available_roles|length == 1 %}
-                            <li>
-                                <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-single" class="m-0">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="role" value="{{ available_roles.0 }}">
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-nowrap" href="#" onclick="document.getElementById('switch-role-form-single').submit(); return false;">
-                                        <i class="bi bi-compass-fill text-secondary"></i> Zmień rolę: {{ available_roles.0 }}
-                                    </a>
-                                </form>
-                            </li>
-                        {% elif available_roles|length > 1 %}
-                            <li>
-                                <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-select" class="m-0">
-                                    {% csrf_token %}
-                                    <div class="dropdown-item d-flex align-items-center gap-2 py-2 text-nowrap" style="background: none; cursor: default;">
-                                        <i class="bi bi-compass-fill text-secondary"></i>
-                                        <span class="text-dark me-1">Zmień rolę:</span>
-                                        <select name="role" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
-                                            <option value="" disabled selected>Wybierz...</option>
-                                            {% for role in available_roles %}
-                                                <option value="{{ role }}">{{ role }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </form>
-                            </li>
-                        {% endif %}
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form action="{% url 'logout' %}" method="post" class="m-0">
-                                {% csrf_token %}
-                                <button type="submit" class="profile-form-btn d-flex align-items-center gap-2 text-danger text-nowrap fw-semibold">
-                                    <i class="bi bi-door-open-fill"></i> Wyloguj się
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
+{% if user.is_authenticated %}
+<div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
+    <span class="navbar-text text-light fs-5 fw-bold text-nowrap">
+        <span class="d-none d-sm-inline">Rola: </span><strong style="color: #ffdf22;">{{ active_role }}</strong>
+    </span>
+    <div class="dropdown profile-wrapper">
+        <a class="nav-link dropdown-toggle profile-trigger" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-fill fs-4"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end mt-2 shadow p-2" style="min-width: 260px;">
+            {% if active_role != 'Admin' %}
+                <div class="px-2 py-2 mb-1 bg-white border-bottom">
+                    <div class="fw-bold text-dark fs-5 text-nowrap px-1">{{ user.first_name }} {{ user.last_name }}</div>
                 </div>
-            </div>
+
+                {% if available_roles|length == 1 %}
+                    <li>
+                        <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-single" class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="role" value="{{ available_roles.0 }}">
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" href="#" onclick="document.getElementById('switch-role-form-single').submit(); return false;">
+                                <i class="bi bi-compass-fill text-secondary"></i> Zmień rolę: {{ available_roles.0 }}
+                            </a>
+                        </form>
+                    </li>
+                {% elif available_roles|length > 1 %}
+                    <li>
+                        <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-select" class="m-0">
+                            {% csrf_token %}
+                            <div class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" style="background: none; cursor: default;">
+                                <i class="bi bi-compass-fill text-secondary"></i>
+                                <span class="text-dark me-1">Zmień rolę:</span>
+                                <select name="role" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                    <option value="" disabled selected>Wybierz...</option>
+                                    {% for role in available_roles %}
+                                        <option value="{{ role }}">{{ role }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </li>
+                {% endif %}
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" href="{% url 'profile' user.id %}">
+                        <i class="bi bi-info-square-fill text-secondary"></i> Szczegóły profilu
+                    </a>
+                </li>
             {% endif %}
+
+            <li>
+                <form action="{% url 'logout' %}" method="post" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="profile-form-btn d-flex align-items-center gap-2 text-danger text-nowrap fw-semibold py-2 px-2 rounded w-100">
+                        <i class="bi bi-door-open-fill"></i> Wyloguj się
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endif %}
         </div>
     </nav>
 {% endblock %}

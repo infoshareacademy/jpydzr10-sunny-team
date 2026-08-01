@@ -33,25 +33,30 @@ class Permission:
 
     permissions = {
         "Admin": {
-            "can_approve_request":      True,
-            "can_reject_request":       True,
+            "can_deactivate_worker":    True,
+            "can_deactivate_staff":     True,
+            "can_approve_request":      False,
+            "can_reject_request":       False,
             "can_cancel_request":       False,
-            "can_change_request":       True,
+            "can_change_request":       False,
             "can_see_all_requests":     True,
             "can_submit_request":       False,
             "can_see_own_requests":     False,
             "can_add_user":             True,
             "can_view_user_list":       True,
             "can_reset_password":       True,
-            "can_deactivate_staff":     True,
-            "can_deactivate_worker":    True,
+            "can_manage_staff":         True,
+            "can_manage_worker":        True,
+            "can_manage_team":          True,
             "can_view_logs":            True,
             "can_see_team_balance":     True,
             "can_export_requests":      True,
             "can_see_team_calendar":    True,
             "can_see_user_vacations":   True,
         },
-        "HR": {
+        "COO": {
+            "can_deactivate_worker":    True,
+            "can_deactivate_staff":     True,
             "can_approve_request":      True,
             "can_reject_request":       True,
             "can_cancel_request":       False,
@@ -59,18 +64,21 @@ class Permission:
             "can_see_all_requests":     True,
             "can_submit_request":       False,
             "can_see_own_requests":     False,
-            "can_add_user":             True,
-            "can_reset_password":       True,
-            "can_deactivate_staff":     False,
-            "can_deactivate_worker":    True,
+            "can_add_user":             False,
             "can_view_user_list":       True,
-            "can_view_logs":            True,
+            "can_reset_password":       False,
+            "can_manage_staff":         False,
+            "can_manage_worker":        True,
+            "can_manage_team":          True,
+            "can_view_logs":            False,
             "can_see_team_balance":     True,
             "can_export_requests":      True,
             "can_see_team_calendar":    True,
             "can_see_user_vacations":   True,
         },
-        "Manager": {
+        "HR": {
+            "can_deactivate_worker":    True,
+            "can_deactivate_staff":     False,
             "can_approve_request":      True,
             "can_reject_request":       True,
             "can_cancel_request":       False,
@@ -80,9 +88,32 @@ class Permission:
             "can_see_own_requests":     False,
             "can_add_user":             False,
             "can_reset_password":       False,
-            "can_deactivate_staff":     False,
+            "can_manage_staff":         False,
+            "can_manage_worker":        True,
+            "can_manage_team":          True,
+            "can_view_user_list":       True,
+            "can_view_logs":            False,
+            "can_see_team_balance":     True,
+            "can_export_requests":      True,
+            "can_see_team_calendar":    True,
+            "can_see_user_vacations":   True,
+        },
+        "Manager": {
             "can_deactivate_worker":    False,
-            "can_view_user_list":       False,
+            "can_deactivate_staff":     False,
+            "can_approve_request":      True,
+            "can_reject_request":       True,
+            "can_cancel_request":       False,
+            "can_change_request":       False,
+            "can_see_all_requests":     True,
+            "can_submit_request":       False,
+            "can_see_own_requests":     False,
+            "can_add_user":             False,
+            "can_reset_password":       False,
+            "can_manage_staff":         False,
+            "can_manage_worker":        False,
+            "can_manage_team":          False,
+            "can_view_user_list":       True,
             "can_view_logs":            False,
             "can_see_team_balance":     True,
             "can_export_requests":      True,
@@ -90,6 +121,8 @@ class Permission:
             "can_see_user_vacations":   True,
         },
         "Worker": {
+            "can_deactivate_worker":    False,
+            "can_deactivate_staff":     False,
             "can_approve_request":      False,
             "can_reject_request":       False,
             "can_cancel_request":       True,
@@ -99,8 +132,9 @@ class Permission:
             "can_see_own_requests":     True,
             "can_add_user":             False,
             "can_reset_password":       False,
-            "can_deactivate_staff":     False,
-            "can_deactivate_worker":    False,
+            "can_manage_staff":         False,
+            "can_manage_worker":        False,
+            "can_manage_team":          False,
             "can_view_user_list":       False,
             "can_view_logs":            False,
             "can_see_team_balance":     False,
@@ -132,13 +166,12 @@ def role_required(action):
             if not Permission.verifyPermission(active_role, action):
                 AuthLog.objects.create(
                     user=request.user,
-                    username=None,
                     action='access_denied_403',
                     details=f'Brak permisji: {action}. Aktywna rola: {active_role}',
                     ip_address=get_client_ip(request),
                     severity = 'warning'
                 )
-                return redirect('dashboard')
+                return redirect('home')
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -160,13 +193,12 @@ class RoleRequiredMixin(LoginRequiredMixin):
         if not Permission.verifyPermission(active_role, self.required_action):
             AuthLog.objects.create(
                 user=request.user,
-                username=None,
                 action='access_denied_403',
                 details=f'Brak permisji: {self.required_action}. Aktywna rola: {active_role}',
                 ip_address=get_client_ip(request),
                 severity='warning'
             )
-            return redirect('dashboard')
+            return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
 # use case:

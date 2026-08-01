@@ -106,6 +106,10 @@
         <form id="leave-form" method="post" novalidate>
             {% csrf_token %}
             {{ form.as_p }}
+            <div id="comment-counter" class="form-text text-end text-muted" style="font-size: 0.8rem; margin-top: -15px; margin-bottom: 15px;">
+                {% trans "Pozostało" %} <span id="current-count">250</span> / <span id="max-count">250</span> {% trans "znaków" %}
+            </div>
+
             <button class="btn btn-primary" type="submit">{% block button %}{% trans "Button" %}{% endblock %}</button>
         </form>
     </div>
@@ -129,13 +133,33 @@
     </div>
 </div>
 
-
     <script>
         const modal = document.getElementById('popup-modal');
         const form = document.getElementById('leave-form');
         const confirmedInput = document.getElementById('id_confirmed');
         const startDateInput = document.getElementById('id_start_date');
         const endDateInput = document.getElementById('id_end_date');
+        const commentInput = document.getElementById('id_request_comment') || document.getElementById('id_comment');
+        const currentCountElem = document.getElementById('current-count');
+        const maxCountElem = document.getElementById('max-count');
+        const counterContainer = document.getElementById('comment-counter');
+
+        if (commentInput) {
+            const maxLength = commentInput.getAttribute('maxlength') || 250;
+            commentInput.setAttribute('maxlength', maxLength);
+            if (maxCountElem) maxCountElem.textContent = maxLength;
+
+            function updateCommentCounter() {
+                const currentLength = commentInput.value.length;
+                const remaining = maxLength - currentLength;
+                if (currentCountElem) currentCountElem.textContent = remaining;
+            }
+
+            commentInput.addEventListener('input', updateCommentCounter);
+            updateCommentCounter();
+        } else if (counterContainer) {
+            counterContainer.style.display = 'none';
+        }
 
         {% if show_modal %}
             setTimeout(() => {

@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}Zarządzaj składem: {{ team.name }}{% endblock %}
+
+{% block content %}
+<style>
+    .form-wrapper { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+    .form-card { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #cbd5e0; }
+    .form-header { margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px; }
+    .form-title { font-size: 1.8rem; font-weight: 800; color: #1a202c; margin: 0; }
+    .form-subtitle { color: #718096; font-size: 0.95rem; margin-top: 5px; }
+
+    .form-group { margin-bottom: 22px; }
+    .form-group label { display: block; font-weight: 700; color: #2d3748; margin-bottom: 8px; font-size: 0.95rem; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 1rem; color: #1a202c; background-color: #fff; box-sizing: border-box; }
+    .form-control:focus { border-color: #007bff; outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+
+    /* Pigułki / Tagi dla członków */
+    .selected-tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+        min-height: 48px;
+        padding: 8px;
+        background: #f7fafc;
+        border: 1px dashed #cbd5e0;
+        border-radius: 8px;
+    }
+    .user-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e2e8f0;
+        color: #2d3748;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .user-tag .remove-btn {
+        margin-left: 10px;
+        cursor: pointer;
+        color: #e53e3e;
+        font-weight: bold;
+        font-size: 1.1rem;
+        border: none;
+        background: none;
+        padding: 0;
+        line-height: 1;
+    }
+    .user-tag .remove-btn:hover { color: #9b2c2c; }
+
+    .error-list { color: #e53e3e; font-size: 0.875rem; margin-top: 6px; list-style: none; padding-left: 0; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #edf2f7; }
+    .btn-submit { padding: 10px 24px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-submit:hover { background: #218838; }
+    .btn-cancel { padding: 10px 20px; background: #e2e8f0; color: #4a5568; border-radius: 8px; font-weight: 600; text-decoration: none; }
+</style>
+
+<div class="form-wrapper">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">Zarządzanie Składem Zespołu</h1>
+            <p class="form-subtitle">Zespół: <strong style="color: #007bff;">{{ team.name }}</strong></p>
+        </div>
+
+
+        <form method="post" id="membersForm" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div style="background: #fff5f5; border: 1px solid #feb2b2; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+                    {% for error in form.non_field_errors %}
+                        <p style="color: #c53030; margin: 0; font-size: 0.9rem; font-weight: 600;">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label>{{ form.members.label }}</label>
+
+                <!-- Ukryty oryginalny select Django -->
+                <div style="display: none;">
+                    {{ form.members }}
+                </div>
+
+                <!-- Zwykła, pojedyncza lista rozwijana -->
+                <select id="members_dropdown" class="form-control">
+                    <option value="">-- Dodaj członka do zespołu... --</option>
+                </select>
+
+                <!-- Dynamiczna lista tagów / pigułek poniżej -->
+                <label style="margin-top: 15px; font-size: 0.85rem; color: #718096;">Aktualnie przypisani członkowie zespołu:</label>
+                <div id="members_tags" class="selected-tags-container"></div>
+
+                {% if form.members.errors %}<ul class="error-list">{% for error in form.members.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'team-detail' pk=team.pk %}" class="btn-cancel">Anuluj</a>
+                <button type="submit" class="btn-submit">Zapisz skład zespołu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function setupTagSelector(originalSelectId, dropdownId, tagsContainerId) {
+        const originalSelect = document.getElementById(originalSelectId);
+        const dropdown = document.getElementById(dropdownId);
+        const tagsContainer = document.getElementById(tagsContainerId);
+
+        if (!originalSelect || !dropdown || !tagsContainer) return;
+
+        function renderDropdown() {
+            dropdown.innerHTML = '<option value="">-- Wybierz osobę do dodania... --</option>';
+            Array.from(originalSelect.options).forEach(opt => {
+                if (!opt.selected) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = opt.value;
+                    newOpt.textContent = opt.textContent;
+                    dropdown.appendChild(newOpt);
+                }
+            });
+        }
+
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            let hasSelection = false;
+
+            Array.from(originalSelect.options).forEach(opt => {
+                if (opt.selected) {
+                    hasSelection = true;
+                    const tag = document.createElement('div');
+                    tag.className = 'user-tag';
+                    tag.innerHTML = `
+                        <span>${opt.textContent}</span>
+                        <button type="button" class="remove-btn" data-value="${opt.value}">✕</button>
+                    `;
+                    tagsContainer.appendChild(tag);
+                }
+            });
+
+            if (!hasSelection) {
+                tagsContainer.innerHTML = '<span style="color: #a0aec0; font-size: 0.875rem; padding: 4px;">Brak dodanych osób w tym zespole.</span>';
+            }
+        }
+
+        dropdown.addEventListener('change', function() {
+            const val = this.value;
+            if (!val) return;
+
+            Array.from(originalSelect.options).forEach(opt => {
+                if (opt.value === val) opt.selected = true;
+            });
+
+            renderDropdown();
+            renderTags();
+        });
+
+        tagsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-btn')) {
+                const val = e.target.getAttribute('data-value');
+                Array.from(originalSelect.options).forEach(opt => {
+                    if (opt.value === val) opt.selected = false;
+                });
+
+                renderDropdown();
+                renderTags();
+            }
+        });
+
+        renderDropdown();
+        renderTags();
+    }
+
+    setupTagSelector('id_members', 'members_dropdown', 'members_tags');
+});
+</script>
+{% endblock %}

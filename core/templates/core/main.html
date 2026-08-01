@@ -13,136 +13,129 @@
     <div class="dashboard-strips">
 
         <!-- KARTA 1: PROFIL UŻYTKOWNIKA -->
-        <div class="strip-card">
-            <div class="strip-bg-icon"><i class="bi bi-person-badge-fill"></i></div>
-            <div class="strip-base-content">
-                <div class="strip-summary">
-                    <span class="strip-pretitle">Profil użytkownika</span>
-                    <h3 class="strip-title">{{ user.first_name }} {{ user.last_name }}</h3>
-                    <p class="strip-subtitle">Aktualna rola: {{ active_role }}</p>
-                </div>
-            </div>
-            <div class="strip-hover-overlay">
-                <div class="overlay-buttons" style="flex-wrap: wrap; justify-content: center;">
-                    {% if available_roles|length == 1 %}
-                        <form action="{% url 'switch_role' %}" method="post" style="display: inline-flex;">
-                            {% csrf_token %}
-                            <input type="hidden" name="active_role" value="{{ available_roles.0 }}">
-                            <button type="submit" class="btn btn-dashboard-action" title="Zmień rolę: {{ available_roles.0 }}" style="display: flex; align-items: center; border: 0 !important;">
-                                <i class="bi bi-compass-fill"></i>
-                                <span class="btn-text">Zmień rolę: {{ available_roles.0 }}</span>
-                            </button>
-                        </form>
-                    {% elif available_roles|length > 1 %}
-                        <form id="roleForm" action="{% url 'switch_role' %}" method="post" style="position: relative; display: inline-flex;">
-                            {% csrf_token %}
-                            <div class="btn btn-dashboard-action" title="Zmień rolę" style="position: relative; overflow: hidden; display: flex; align-items: center; border: 0 !important;">
-                                <i class="bi bi-compass-fill"></i>
-                                <span class="btn-text">Zmień rolę</span>
-                                <select name="active_role" onchange="this.form.submit()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                                    <option value="" disabled selected>Zmień rolę</option>
-                                    {% for role in available_roles %}
-                                        <option value="{{ role }}">{{ role }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </form>
-                    {% endif %}
-                    <a href="{% url 'profile' user.id %}" class="btn btn-dashboard-action" title="Szczegóły profilu"><i class="bi bi-info-square-fill"></i><span class="btn-text">Szczegóły</span></a>
-
-                    <form action="{% url 'logout' %}" method="post" style="display: inline-flex;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-dashboard-action text-danger" title="Wyloguj się" style="display: flex; align-items: center; border: 0 !important;">
-                            <i class="bi bi-door-open-fill"></i><span class="btn-text">Wyloguj</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
+<!-- KARTA 1: PROFIL UŻYTKOWNIKA -->
+{% if active_role != 'Admin' %}
+<div class="strip-card">
+    <div class="strip-bg-icon"><i class="bi bi-person-badge-fill"></i></div>
+    <div class="strip-base-content">
+        <div class="strip-summary">
+            <span class="strip-pretitle">Profil użytkownika</span>
+            <h3 class="strip-title">{{ user.first_name }} {{ user.last_name }}</h3>
+            <p class="strip-subtitle">Aktualna rola: {{ active_role }}</p>
         </div>
+    </div>
+    <div class="strip-hover-overlay">
+        <div class="overlay-buttons" style="flex-wrap: wrap; justify-content: center;">
 
-        <!-- KARTA 2: WNIOSKI URLOPOWE -->
+            {% if available_roles|length == 1 %}
+                <form action="{% url 'switch_role' %}" method="post" style="display: inline-flex;">
+                    {% csrf_token %}
+                    <input type="hidden" name="role" value="{{ available_roles.0 }}">
+                    <button type="submit" class="btn btn-dashboard-action" title="Zmień rolę: {{ available_roles.0 }}" style="display: flex; align-items: center; border: 0 !important;">
+                        <i class="bi bi-compass-fill"></i>
+                        <span class="btn-text">Zmień rolę: {{ available_roles.0 }}</span>
+                    </button>
+                </form>
+            {% elif available_roles|length > 1 %}
+                <form id="roleForm" action="{% url 'switch_role' %}" method="post" style="position: relative; display: inline-flex;">
+                    {% csrf_token %}
+                    <div class="btn btn-dashboard-action" title="Zmień rolę" style="position: relative; overflow: hidden; display: flex; align-items: center; border: 0 !important;">
+                        <i class="bi bi-compass-fill"></i>
+                        <span class="btn-text">Zmień rolę</span>
+                        <select name="role" onchange="this.form.submit()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10;">
+                            <option value="" disabled selected>Zmień rolę</option>
+                            {% for role in available_roles %}
+                                <option value="{{ role }}">{{ role }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            {% endif %}
+
+            <!-- PRZYCISK SZCZEGÓŁY - WYCIĄGNIĘTY POZA BLOK IF/ELIF -->
+            <a href="{% url 'profile' user.id %}" class="btn btn-dashboard-action" title="Szczegóły profilu">
+                <i class="bi bi-info-square-fill"></i><span class="btn-text">Szczegóły</span>
+            </a>
+
+            <!-- PRZYCISK WYLOGUJ -->
+            <form action="{% url 'logout' %}" method="post" style="display: inline-flex;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-dashboard-action text-danger" title="Wyloguj się" style="display: flex; align-items: center; border: 0 !important;">
+                    <i class="bi bi-door-open-fill"></i><span class="btn-text">Wyloguj</span>
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- KARTA 2: WNIOSKI URLOPOWE -->
+        {% if active_role in 'Worker,Manager,HR,COO' %}
         <div class="strip-card">
             <div class="strip-bg-icon"><i class="bi bi-postcard-fill"></i></div>
             <div class="strip-base-content">
                 <div class="strip-summary">
-                    <span class="strip-pretitle">Zarządzanie</span>
+                    <span class="strip-pretitle">Planowanie</span>
                     <h3 class="strip-title">Wnioski Urlopowe</h3>
                     <p class="strip-subtitle">
-                        {% if active_role == 'Worker' %}Obsługa Twoich wniosków.{% else %}Lista wniosków i kalendarz zespołu.{% endif %}
+                        {% if active_role == 'Worker' %}Obsługa Twoich wniosków urlopowych.{% else %}Przeglądanie listy wniosków w systemie.{% endif %}
                     </p>
                 </div>
             </div>
             <div class="strip-hover-overlay">
                 <div class="overlay-buttons">
                     {% if active_role == 'Worker' %}
-                        <a href="{% url 'new_request' %}" class="btn btn-warning btn-dashboard-action" title="Złóż nowy wniosek urlopowy"><i class="bi bi-file-earmark-plus-fill"></i><span class="btn-text">Nowy wniosek</span></a>
-                        <a href="{% url 'my_vacations' %}" class="btn btn-warning btn-dashboard-action" title="Przejrzyj moje urlopy"><i class="bi bi-sunglasses"></i><span class="btn-text">Moje urlopy</span></a>
+                        <a href="{% url 'new_request' %}" class="btn btn-warning btn-dashboard-action" title="Złóż nowy wniosek urlopowy"><i class="bi bi-file-earmark-plus-fill"></i><span class="btn-text">Nowy</span></a>
+                        <a href="{% url 'my_vacations' %}" class="btn btn-warning btn-dashboard-action" title="Przejrzyj aktualne wnioski"><i class="bi bi-folder-fill"></i><span class="btn-text">Lista</span></a>
                     {% else %}
-                        <a href="{% url 'all_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="Lista wszystkich wniosków pracowników"><i class="bi bi-file-text-fill"></i><span class="btn-text">Lista wniosków</span></a>
-                        <a href="{% url 'team_calendar' %}" class="btn btn-warning btn-dashboard-action" title="Kalendarz urlopów zespołowych"><i class="bi bi-calendar2-week-fill"></i><span class="btn-text">Kalendarz zespołowy</span></a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- KARTA 3: RAPORTY & STATYSTYKI -->
-        {% if active_role in 'Manager,HR,Admin' %}
-        <div class="strip-card">
-            <div class="strip-bg-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
-            <div class="strip-base-content">
-                <div class="strip-summary">
-                    <span class="strip-pretitle">Analityka</span>
-                    <h3 class="strip-title">Raporty & Statystyki</h3>
-                    <p class="strip-subtitle">Wgląd w dane pracowników i zespołów.</p>
-                </div>
-            </div>
-            <div class="strip-hover-overlay">
-                <div class="overlay-buttons">
-                    <a href="{% url 'leave_usage_report' %}" class="btn btn-warning btn-dashboard-action" title="Raport wykorzystania urlopów pracowników"><i class="bi bi-person-fill"></i><span class="btn-text">Pracownicy</span></a>
-                    <a href="{% url 'team_report' %}" class="btn btn-warning btn-dashboard-action" title="Statystyki zespołowe"><i class="bi bi-people-fill"></i><span class="btn-text">Zespoły</span></a>
-                    {% if active_role in 'HR,Admin' %}
-                        <a href="{% url 'users_per_role_report' %}" class="btn btn-warning btn-dashboard-action" title="Podział użytkowników na role"><i class="bi bi-person-lines-fill"></i><span class="btn-text">Role</span></a>
+                        <a href="{% url 'all_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="Lista wniosków urlopowych"><i class="bi bi-file-text-fill"></i><span class="btn-text">Lista</span></a>
                     {% endif %}
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- KARTA 4: LOGI SYSTEMOWE -->
-        {% if active_role == 'HR' or active_role == 'Admin' %}
+<!-- KARTA 3: ZARZĄDZANIE -->
+        {% if active_role in 'Manager,HR,COO,Admin' %}
+        <div class="strip-card">
+            <div class="strip-bg-icon"><i class="bi bi-kanban-fill"></i></div>
+            <div class="strip-base-content">
+                <div class="strip-summary">
+                    <span class="strip-pretitle">Organizacja</span>
+                    <h3 class="strip-title">Zarządzanie</h3>
+                    <p class="strip-subtitle">Struktura organizacyjna, zasoby ludzkie i podział ról.</p>
+                </div>
+            </div>
+            <div class="strip-hover-overlay">
+                <div class="overlay-buttons">
+                    <a href="{% url 'reports_index' %}" class="btn btn-warning btn-dashboard-action" title="Lista Raportów"><i class="bi bi-clipboard-data-fill"></i><span class="btn-text">Raporty</span></a>
+                    <a href="{% url 'user_list' %}" class="btn btn-warning btn-dashboard-action" title="Zarządzaj pracownikami"><i class="bi bi-person-fill"></i><span class="btn-text">Pracownicy</span></a>
+                    <a href="{% url 'team-list' %}" class="btn btn-warning btn-dashboard-action" title="Zarządzaj zespołami"><i class="bi bi-people-fill"></i></i><span class="btn-text">Zespoły</span></a>
+                    {% if active_role in 'HR,COO,Admin' %}
+                        <a href="{% url 'users_per_role_report' %}" class="btn btn-warning btn-dashboard-action" title="Przegląd ról w systemie"><i class="bi bi-person-lines-fill"></i> <span class="btn-text">Role</span></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- KARTA 4: PANEL ADMINA -->
+        {% if active_role == 'Admin' %}
         <div class="strip-card">
             <div class="strip-bg-icon"><i class="bi bi-terminal-fill"></i></div>
             <div class="strip-base-content">
                 <div class="strip-summary">
-                    <span class="strip-pretitle">System</span>
-                    <h3 class="strip-title">Logi Systemowe</h3>
-                    <p class="strip-subtitle">Monitoring aktywności i autoryzacji.</p>
-                </div>
-            </div>
-            <div class="strip-hover-overlay">
-                <div class="overlay-buttons">
-                    <a href="{% url 'activity_log' %}" class="btn btn-warning btn-dashboard-action" title="Przeglądaj logi aktywności użytkowników"><i class="bi bi-keyboard-fill"></i><span class="btn-text">Aktywności</span></a>
-                    <a href="{% url 'auth_log' %}" class="btn btn-warning btn-dashboard-action" title="Logi autoryzacji i logowań"><i class="bi bi-key-fill"></i><span class="btn-text">Autoryzacja</span></a>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- KARTA 5: PANEL STEROWANIA -->
-        {% if active_role == 'HR' or active_role == 'Admin' %}
-        <div class="strip-card">
-            <div class="strip-bg-icon"><i class="bi bi-gear-wide-connected"></i></div>
-            <div class="strip-base-content">
-                <div class="strip-summary">
                     <span class="strip-pretitle">Administracja</span>
-                    <h3 class="strip-title">Panel Sterowania</h3>
-                    <p class="strip-subtitle">Zarządzanie użytkownikami systemu.</p>
+                    <h3 class="strip-title">Panel Admina</h3>
+                    <p class="strip-subtitle">Monitorowanie bezpieczeństwa i logów systemowych.</p>
                 </div>
             </div>
             <div class="strip-hover-overlay">
                 <div class="overlay-buttons">
-                    <a href="{% url 'user_list' %}" class="btn btn-warning btn-dashboard-action" title="Lista wszystkich użytkowników w systemie"><i class="bi bi-building-fill"></i><span class="btn-text">Użytkownicy</span></a>
-                    <a href="{% url 'add_user' %}" class="btn btn-warning btn-dashboard-action" title="Utwórz konto nowego użytkownika"><i class="bi bi-person-plus-fill"></i><span class="btn-text">Dodaj użytkownika</span></a>
+                    <a href="{% url 'activity_log' %}" class="btn btn-warning btn-dashboard-action" title="Logi aktywności systemowej"><i class="bi bi-keyboard-fill"></i></i><span class="btn-text">Logi Aktywności</span></a>
+                    <a href="{% url 'auth_log' %}" class="btn btn-warning btn-dashboard-action" title="Logi autoryzacji i logowań"><i class="bi bi-key-fill"></i><span class="btn-text">Logi Autoryzacji</span></a>
+                    <a href="{% url 'add_user' %}" class="btn btn-warning btn-dashboard-action" title="Dodaj nowego użytkownika"><i class="bi bi-person-plus-fill"></i><span class="btn-text">Dodaj Użytkownika</span></a>
                 </div>
             </div>
         </div>
@@ -152,7 +145,7 @@
 </div>
 
 <style>
-    .dashboard-container { max-width: 1300px; margin: 3rem auto; padding: 0 2rem; }
+    .dashboard-container { max-width: 1300px; margin:auto; padding: 0 2rem; }
     .dashboard-header { margin-bottom: 2.5rem; }
     .dashboard-strips { display: flex; flex-direction: column; gap: 2.5rem; }
 

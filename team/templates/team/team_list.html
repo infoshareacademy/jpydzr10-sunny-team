@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Lista Zespołów{% endblock %}
+
+{% block content %}
+<style>
+    /* Główny kontener z elastycznym marginesem bocznym */
+    .teams-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    /* Sekcja główna - ukrywa wszystko co wystaje poza zaokrąglone brzegi */
+    .teams-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    .teams-section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Kontener responsywny dla tabeli wewnątrz sekcji */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover td {
+        background-color: #f7fafc;
+    }
+
+    /* PRZYCISKI - Wyrównana wysokość dla obu typów */
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0.375rem 0.75rem; /* Standardowy padding z Bootstrapa */
+        font-size: 1rem;
+        line-height: 1.5;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-sizing: border-box;
+        vertical-align: middle;
+    }
+
+    .btn-create {
+        background-color: #007bff;
+        color: white;
+        border: 1px solid #007bff;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .btn-create:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+        color: white;
+    }
+
+    .btn-action-deactivate {
+        padding: 6px 14px;
+        background: #fde8e8;
+        color: #9b1c1c;
+        border: 1px solid #f87171;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-action-deactivate:hover {
+        background: #f87171;
+        color: white;
+    }
+
+    .user-link {
+        color: #1a202c;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .user-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Pigułki statusów (Badges) */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    .badge-active { background-color: #def7ec; color: #03543f; }
+    .badge-inactive { background-color: #f3f4f6; color: #4b5563; }
+</style>
+
+<div class="teams-wrapper mt-4">
+    <!-- Nagłówek z wyrównaniem przycisków do prawej strony -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Lista Zespołów</h1>
+
+        <!-- Grupa przycisków o idealnie równej wysokości -->
+        <div class="d-flex gap-2 align-items-stretch">
+            {% if active_role in 'Manager, COO,HR,Admin'%}
+                <a href="{% url 'team_report' %}" class="btn btn-success btn-custom">
+                    <i class="bi bi-clipboard-data-fill"></i>
+                    <span>Raport Zespołów</span>
+                </a>
+            {% endif %}
+
+            {% if active_role in 'COO,HR,Admin' %}
+                <a href="{% url 'team-create' %}" class="btn-custom btn-create">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Dodaj zespół</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- DIV 1: AKTYWNE ZESPOŁY -->
+    <section class="teams-section">
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Nazwa zespołu</th>
+                        <th style="width: 40%;">Kierownik (Manager)</th>
+                        <th style="width: 20%;">Liczba pracowników</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in active_teams %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'team-detail' team.pk %}" class="user-link">
+                                {{ team.name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if team.head_manager %}
+                                {% if active_role in 'COO,HR,Admin' %}
+                                    <a href="{% url 'profile' user_id=team.head_manager.id %}" class="user-link">
+                                        {{ team.head_manager.get_full_name|default:team.head_manager.username }}
+                                    </a>
+                                {% else %}
+                                    <span style="font-weight: 600; color: #2d3748;">
+                                        {{ team.head_manager.get_full_name|default:team.head_manager.username }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span style="color: #718096;">&mdash; Brak &mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ team.members_count }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align:center; padding: 40px; color: #718096;">Brak aktywnych zespołów.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

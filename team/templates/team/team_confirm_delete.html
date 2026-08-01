@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 500px;">
+    <div class="card border-danger shadow-sm">
+        <div class="card-header bg-danger text-white">
+            <h3 class="card-title h5 mb-0">Potwierdzenie usunięcia</h3>
+        </div>
+        <div class="card-body text-center">
+            <p class="fs-5">Czy na pewno chcesz usunąć zespół <strong>"{{ object.name }}"</strong>?</p>
+            <p class="text-muted small">Ta operacja jest nieodwracalna.</p>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{% url 'team-list' %}" class="btn btn-secondary">Anuluj</a>
+                    <button type="submit" class="btn btn-danger">Tak, usuń</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

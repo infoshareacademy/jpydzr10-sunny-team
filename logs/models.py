@@ -7,18 +7,19 @@ class ActivityLog(models.Model):
     ACTION_CHOICES = [
         ('create', 'Dodaj'),
         ('update', 'Edytuj'),
+        ('delete', 'Usuń'),
         ('approve', 'Zatwierdź'),
         ('reject', 'Odrzuć'),
         ('cancel', 'Anuluj'),
-        ('delete', 'Usuń'),
-        ('password_reset', 'Reset hasła'),
-        ('new_account', 'Nowe Konto'),
-        ('role_change', 'Zmiana roli'),
     ]
+
     OBJECT_TYPE_CHOICES = [
-        ('user', 'Użytkownik'),
+        ('user', 'Konto Użytkownika'),
+        ('worker_profile', 'Profil Pracownika'),
+        ('team', 'Zespół'),
         ('leave_request', 'Wniosek urlopowy'),
     ]
+
     SEVERITY_CHOICES = [
         ('info', 'Info'),
         ('warning', 'Ostrzeżenie'),
@@ -30,11 +31,6 @@ class ActivityLog(models.Model):
         null=True,
         related_name='activity_logs',
     )
-    SEVERITY_CHOICES = [
-        ('info', 'Info'),
-        ('warning', 'Warning'),
-        ('critical', 'Critical')
-    ]
 
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     object_type = models.CharField(max_length=20, choices=OBJECT_TYPE_CHOICES)
@@ -58,9 +54,14 @@ class AuthLog(models.Model):
     ACTION_CHOICES = [
         ('login_success', 'Logowanie udane'),
         ('login_failed', 'Logowanie nieudane'),
+        ('incorrect_username', 'Brak użytkownika'),
+        ('2fa_success', 'Weryfikacja 2FA udana'),
+        ('2fa_failed', 'Niepoprawny kod 2FA'),
         ('logout', 'Wylogowanie'),
         ('access_denied_403', 'Odmowa dostępu'),
         ('ip_locked', 'IP zablokowane'),
+        ('role_change','Zmiana roli'),
+        ('password_changed', 'Zmiana hasła')
     ]
 
     SEVERITY_CHOICES = [
@@ -76,7 +77,7 @@ class AuthLog(models.Model):
         blank=True,
         related_name='auth_logs',
     )
-    username = models.CharField(max_length=150, null=True)
+
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
@@ -87,10 +88,11 @@ class AuthLog(models.Model):
     class Meta:
         ordering = ['-timestamp']
         indexes = [
-            models.Index(fields=['username', 'timestamp']),
+            models.Index(fields=['user','timestamp']),
             models.Index(fields=['ip_address', 'action', 'timestamp']),
         ]
 
     def __str__(self):
-        return f"{self.username} - {self.action} - {self.ip_address} - {self.timestamp}"
+        user_info = self.user.get_username() if self.user else "Anonim"
+        return f"{user_info} - {self.action} - {self.ip_address} - {self.timestamp}"
 

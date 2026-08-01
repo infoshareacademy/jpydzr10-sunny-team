@@ -51,7 +51,7 @@ class LoginViewTests(TestCase):
         })
 
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertRedirects(response, reverse('home'))
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
     # TEST 4: Konto nieaktywne --> odmowa logowania
@@ -235,7 +235,7 @@ class LoginLockoutTests(TestCase):
             'username': 'jan_kowalski',
             'password': 'TajneHaslo123!',
         })
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertRedirects(response, reverse('home'))
 
     def test_lockout_triggers_after_n_failed_attempts(self):
         for _ in range(MAX_FAILED_ATTEMPTS):
@@ -306,7 +306,7 @@ class LoginLockoutTests(TestCase):
             {'username': 'jan_kowalski', 'password': 'TajneHaslo123!'},
             REMOTE_ADDR='10.0.0.9',
         )
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertRedirects(response, reverse('home'))
 
     def test_old_failed_attempts_outside_window_do_not_count(self):
         for _ in range(MAX_FAILED_ATTEMPTS):
@@ -319,7 +319,7 @@ class LoginLockoutTests(TestCase):
             'username': 'jan_kowalski',
             'password': 'TajneHaslo123!',
         })
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertRedirects(response, reverse('home'))
 
     def test_inactive_user_counts_as_failed_attempt(self):
         self.user.is_active = False
@@ -353,7 +353,7 @@ class LoginLockoutTests(TestCase):
             'username': 'jan_kowalski',
             'password': 'TajneHaslo123!',
         })
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertRedirects(response, reverse('home'))
 
         all_failed = AuthLog.objects.filter(action='login_failed', ip_address='127.0.0.1')
         self.assertEqual(all_failed.count(), MAX_FAILED_ATTEMPTS - 1)

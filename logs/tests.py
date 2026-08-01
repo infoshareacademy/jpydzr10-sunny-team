@@ -283,11 +283,11 @@ class AuthLogViewTests(LogViewsTestCase):
     def setUp(self):
         self.url = reverse('auth_log')
         AuthLog.objects.create(
-            user=self.users['Worker'], username=None, ip_address='127.0.0.1',
+            user=self.users['Worker'], ip_address='127.0.0.1',
             action='login_success', severity='info',
         )
         AuthLog.objects.create(
-            user=None, username='nieznany', ip_address='10.0.0.1',
+            user=None,ip_address='10.0.0.1',
             action='login_failed', severity='warning',
         )
 
@@ -345,7 +345,7 @@ class AuthLogViewTests(LogViewsTestCase):
     def test_pagination_limits_to_20_per_page(self):
         for i in range(25):
             AuthLog.objects.create(
-                user=self.users['Admin'], username=None, ip_address='127.0.0.1',
+                user=self.users['Admin'], ip_address='127.0.0.1',
                 action='login_success', severity='info',
             )
         self.login_as('Admin')

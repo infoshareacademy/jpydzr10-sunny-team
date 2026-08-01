@@ -17,6 +17,7 @@ def get_client_ip(request):
 
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_WINDOW_MINUTES = 5
+FAILED_ACTIONS = ['login_failed', 'incorrect_username']
 
 
 def get_lockout_until(ip_address):
@@ -29,7 +30,7 @@ def get_lockout_until(ip_address):
     recent_failed = list(
         AuthLog.objects.filter(
             ip_address=ip_address,
-            action='login_failed',
+            action__in=FAILED_ACTIONS,
             invalidated=False,
             timestamp__gte=since,
         ).order_by('-timestamp')[:MAX_FAILED_ATTEMPTS]
@@ -48,7 +49,7 @@ def count_failed_attempts(ip_address):
     since = timezone.now() - timedelta(minutes=LOCKOUT_WINDOW_MINUTES)
     return AuthLog.objects.filter(
         ip_address=ip_address,
-        action='login_failed',
+        action__in=FAILED_ACTIONS ,
         invalidated=False,
         timestamp__gte=since,
     ).count()
@@ -61,26 +62,29 @@ def reset_failed_attempts(ip_address):
     """
     AuthLog.objects.filter(
         ip_address=ip_address,
-        action__in=['login_failed', 'ip_locked'],
+        action__in=FAILED_ACTIONS + ['ip_locked', '2fa_failed'],
         invalidated=False,
     ).update(invalidated=True)
 
 
-def log_failed_attempt(user, username, ip_address):
+def log_failed_attempt(user, raw_username, ip_address):
     attempt_no = count_failed_attempts(ip_address) + 1
-    log_username = None
-    if username:
-        try:
-            User.objects.get(username=username)
-        except User.DoesNotExist:
-            log_username = username
+    if user is None:
+        action = 'incorrect_username'
+        details = (
+            f"Logowanie na nieistniejący username: {raw_username}. "
+            f"Próba {attempt_no}/{MAX_FAILED_ATTEMPTS} przed blokadą."
+        )
+    else:
+        action = 'login_failed'
+        details = f"Próba {attempt_no}/{MAX_FAILED_ATTEMPTS} przed blokadą."
+
     AuthLog.objects.create(
         user=user,
-        username=log_username,
         ip_address=ip_address,
-        action='login_failed',
+        action=action,
         severity='warning',
-        details=f'Proba {attempt_no}/{MAX_FAILED_ATTEMPTS} przed blokada.',
+        details=details,
     )
 
     if attempt_no >= MAX_FAILED_ATTEMPTS:
@@ -89,7 +93,6 @@ def log_failed_attempt(user, username, ip_address):
             readable_date = lockout_until.strftime("%d-%m-%Y %H:%M:%S")
             AuthLog.objects.create(
                 user=user,
-                username=log_username,
                 ip_address=ip_address,
                 action='ip_locked',
                 severity='critical',

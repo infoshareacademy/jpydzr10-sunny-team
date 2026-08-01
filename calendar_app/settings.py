@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-%(_+jvc$1luw0bew52xq2_u2arg2%4_!_4qm#-%z)6vm#uodsz'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'   # DEBUG jest sterowany przez .env
+DEBUG = True
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') # ALLOWED HOSTS jest sterowany przez .env
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1').split(',') # ALLOWED HOSTS jest sterowany przez .env
 
 
 # Application definition
@@ -45,8 +45,9 @@ INSTALLED_APPS = [
     'admin_panel',
     'login',
     'reports',
-    'core'
-    'mail'
+    'core',
+    'mail',
+    'team'
 
 ]
 AUTH_USER_MODEL = 'accounts.User'
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'login.middleware.ForcePasswordChangeMiddleware',
 ]
 
 ROOT_URLCONF = 'calendar_app.urls'
@@ -120,6 +122,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'calendar_app.validators.PasswordValidator',
+    },
 ]
 
 
@@ -177,5 +182,5 @@ SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
 ## Session settings
 
 SESSION_COOKIE_AGE = 1800
-SESSION_SAVE_EVERY_REQUEST = False
+SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

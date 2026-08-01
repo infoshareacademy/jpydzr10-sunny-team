@@ -1,53 +1,208 @@
 {% extends 'base.html' %}
 
-{% block title %}Raport: wykorzystanie urlopów{% endblock %}
+{% block title %}Raport: Wykorzystanie urlopów{% endblock %}
 
 {% block content %}
-<div style="max-width: 1000px; margin: 30px auto; padding: 20px;">
-    <h1>Wykorzystanie urlopów per użytkownik</h1>
+<style>
+    .logs-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
 
-    <p>
-        <a href="{% url 'export_leave_usage_csv' %}" class="btn btn-secondary">
-            Eksportuj do CSV
-        </a>
-    </p>
+    .logs-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
 
-    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-        <thead>
-            <tr style="background: #0d6efd; color: white;">
-                <th style="padding: 12px; text-align: left;">Pracownik</th>
-                <th style="padding: 12px; text-align: left;">Zespół</th>
-                <th style="padding: 12px; text-align: center;">Przydzielone</th>
-                <th style="padding: 12px; text-align: center;">Wykorzystane</th>
-                <th style="padding: 12px; text-align: center;">Pozostałe</th>
-                <th style="padding: 12px; text-align: center;">% wykorzystania</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in report_rows %}
-            <tr style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 12px;">{{ row.first_name }} {{ row.last_name }}</td>
-                <td style="padding: 12px;">{{ row.team }}</td>
-                <td style="padding: 12px; text-align: center;">{{ row.total }}</td>
-                <td style="padding: 12px; text-align: center;">{{ row.used }}</td>
-                <td style="padding: 12px; text-align: center; color: #28a745; font-weight: bold;">{{ row.remaining }}</td>
-                <td style="padding: 12px; text-align: center;">
-                    <div style="background: #e9ecef; border-radius: 8px; height: 10px;">
-                        <div style="background: #0d6efd; width: {{ row.percent_used }}%; height: 10px; border-radius: 8px;"></div>
-                    </div>
-                    {{ row.percent_used }}%
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" style="padding: 12px; text-align: center;">Brak danych.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    .filter-box {
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border: 1px solid #e2e8f0;
+    }
 
-    <p style="margin-top: 20px;">
-        <a href="{% url 'reports_index' %}">&laquo; Wróć do raportów</a>
-    </p>
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 700px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 16px 18px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 16px 18px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 0.95rem;
+        vertical-align: top;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover td {
+        background-color: #f7fafc;
+    }
+
+    .table-link {
+        color: #1a202c;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .table-link:hover {
+        color: #1a202c;
+        text-decoration: underline;
+    }
+
+    .auth-link {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="logs-wrapper mt-4">
+    <div style="margin-bottom: 25px;">
+        <h2 style="margin-bottom: 10px; font-size: 1.1rem;">
+            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; Wszystkie raporty</a>
+        </h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Wykorzystanie urlopów</h1>
+
+            <div class="d-flex align-items-center gap-2">
+                <!-- Przyciski eksportu przekazują aktualnie wybrane filtry URL -->
+                <a href="{% url 'export_leave_usage_csv' %}?role={{ selected_role }}&team={{ selected_team }}" class="btn btn-primary font-weight-bold">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Eksportuj do CSV
+                </a>
+                <a href="{% url 'export_leave_usage_pdf' %}?role={{ selected_role }}&team={{ selected_team }}" class="btn btn-danger font-weight-bold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Pobierz PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Filtracji -->
+    <div class="filter-box">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+           {% if active_role != 'Manager' %}
+                <label for="role" class="form-label font-weight-bold text-dark">Filtruj po roli:</label>
+                <select name="role" id="role" class="form-select">
+                    <option value="ALL">Wszystkie role</option>
+                    {% for r in all_roles %}
+                        <option value="{{ r }}" {% if selected_role == r %}selected{% endif %}>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            </div>
+            <div class="col-md-4">
+                <label for="team" class="form-label font-weight-bold text-dark">Filtruj po zespole:</label>
+                <select name="team" class="form-select">
+                    <option value="ALL" {% if selected_team == 'ALL' %}selected{% endif %}>Wszystkie zespoły</option>
+                    {% if show_no_team_option %}
+                        <option value="NONE" {% if selected_team == 'NONE' %}selected{% endif %}>Brak zespołu</option>
+                    {% endif %}
+                    {% for team in all_teams %}
+                        <option value="{{ team.id }}" {% if selected_team == team.id|stringformat:"s" %}selected{% endif %}>
+                            {{ team.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100 font-weight-bold">Filtruj</button>
+                <a href="{% url 'leave_usage_report' %}" class="btn btn-outline-secondary w-100">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <section class="logs-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pracownik</th>
+                        <th>Rola</th>
+                        <th>Zespół</th>
+                        <th style="text-align: center;">Przydzielone</th>
+                        <th style="text-align: center;">Wykorzystane</th>
+                        <th style="text-align: center;">Pozostałe</th>
+                        <th style="text-align: center; width: 20%;">% wykorzystania</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_rows %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'profile' row.user_id %}" class="table-link">
+                                {{ row.first_name }} {{ row.last_name }}
+                            </a>
+                        </td>
+                        <td style="color: #4a5568;">
+                            {{ row.role }}
+                        </td>
+                        <td>
+                            {% if row.teams %}
+                                {% for team in row.teams %}
+                                    <div>
+                                        <a href="{% url 'team-detail' team.id %}" class="table-link">
+                                            {{ team.name }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">{{ row.total }}</td>
+                        <td style="text-align: center; color: #dc3545; font-weight: bold;">{{ row.used }}</td>
+                        <td style="text-align: center; color: #28a745; font-weight: bold;">{{ row.remaining }}</td>
+                        <td style="text-align: center;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 10px; width: 100%; overflow: hidden; margin-bottom: 5px;">
+                                <div style="background: #0d6efd; width: {{ row.percent_used|stringformat:'f' }}%; height: 10px; border-radius: 8px;"></div>
+                            </div>
+                            <span style="font-size: 0.85rem; font-weight: 600;">{{ row.percent_used }}%</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">Brak danych spełniających kryteria filtracji.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
 {% endblock %}

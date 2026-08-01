@@ -1,0 +1,17 @@
+{% load i18n %}
+
+{% if sec.pending %}
+    <div class="status-tab-header status-bg-pending">
+        <span class="status-tab-title status-text-pending">{% trans "Do przetworzenia" %}</span>
+        <span class="status-count status-count-pending">({{ sec.pending|length }})</span>
+    </div>
+    {% include 'leaves/request_tables/request_table.html' with requests=sec.pending show_team_column=show_team_column is_processed=False %}
+{% endif %}
+
+{% if sec.processed %}
+    <div class="status-tab-header status-bg-processed">
+        <span class="status-tab-title status-text-processed">{% trans "Przetworzone" %}</span>
+        <span class="status-count status-count-processed">({{ sec.processed|length }})</span>
+    </div>
+    {% include 'leaves/request_tables/request_table.html' with requests=sec.processed show_team_column=show_team_column is_processed=True %}
+{% endif %}

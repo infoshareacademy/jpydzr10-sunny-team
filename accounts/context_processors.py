@@ -1,4 +1,5 @@
 ALLOWED_ROLES = {
+    'COO': ['COO', 'Worker'],
     'Manager': ['Manager', 'Worker'],
     'HR': ['HR', 'Worker'],
     'Admin': ['Admin'],

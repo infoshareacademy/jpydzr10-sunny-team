@@ -172,17 +172,14 @@
         line-height: 1.2;
         white-space: nowrap;
     }
-    /* Kolory dla akcji z historii aktywności */
+
     .badge-create { background-color: #def7ec; color: #03543f; }
     .badge-update { background-color: #e1effe; color: #1e429f; }
     .badge-approve { background-color: #fef3c7; color: #92400e; }
     .badge-reject { background-color: #fde8e8; color: #9b1c1c; }
     .badge-cancel { background-color: #f3f4f6; color: #4b5563; }
     .badge-delete { background-color: #fde8e8; color: #9b1c1c; }
-    .badge-password_reset { background-color: #f3e8ff; color: #6b21a8; }
-    .badge-new_account { background-color: #eaf4ef; color: #10ae55; }
-    .badge-role_change { background-color: #fce7f3; color: #9d174d; }
-    .badge-default { background-color: #edf2f7; color: #4a5568; }
+
 
     /* Paginacja */
     .pagination {
@@ -297,8 +294,16 @@
                                 <a href="{% url 'profile' user_id=log.object_id %}" style="color: #2d3748; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
                                     {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
                                 </a>
+                            {% elif log.object_type == 'worker_profile' and log.object_id %}
+                                <a href="{% url 'profile' user_id=log.object_id %}" style="color: #2d3748; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                </a>
                             {% elif log.object_type == 'leave_request' and log.object_id %}
                                 <a href="{% url 'leave_detail' pk=log.object_id %}" style="color: #2d3748; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                </a>
+                            {% elif log.object_type == 'team' and log.object_id %}
+                                <a href="{% url 'team-detail' pk=log.object_id %}" style="color: #2d3748; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
                                     {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
                                 </a>
                             {% else %}

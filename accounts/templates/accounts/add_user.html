@@ -39,14 +39,6 @@
 <div class="section">
     <h1>Dodaj nowego użytkownika</h1>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div style="padding:12px; margin:15px 0; border-radius:6px; background:{% if message.tags == 'success' %}#d4edda{% else %}#f8d7da{% endif %}; color:{% if message.tags == 'success' %}#155724{% else %}#721c24{% endif %};">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
     <form method="post">
         {% csrf_token %}
 
@@ -81,12 +73,6 @@
         </div>
 
         <div class="form-group">
-            <label>Rola:</label>
-            {{ form.role }}
-            {{ form.role.errors }}
-        </div>
-
-        <div class="form-group">
             <label>Hasło:</label>
             {{ form.password1 }}
             {{ form.password1.errors }}
@@ -97,30 +83,6 @@
             {{ form.password2 }}
             {{ form.password2.errors }}
         </div>
-
-        <div class="form-group">
-            <label>Zespół:</label>
-            {{ form.team }}
-            {{ form.team.errors }}
-        </div>
-
-        <div class="form-group">
-            <label>Data zatrudnienia:</label>
-            {{ form.hire_date }}
-            {{ form.hire_date.errors }}
-        </div>
-
-        <div class="form-group">
-            <label>Staż urlopowy (lata):</label>
-            {{ form.other_experience_years  }}
-            {{ form.other_experience_years.errors }}
-        </div>
-
-        <div class="form-group">
-            <label>Dopełnienie stażu (dni):</label>
-            {{ form.other_experience_days }}
-            {{ form.other_experience_years.days }}
-        </div>    
 
         <button type="submit" style="background:#007bff; color:white; padding:12px 24px; border:none; border-radius:6px; width:100%;">
             Dodaj użytkownika
