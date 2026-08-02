@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Historia logów{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Historia logów</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Użytkownik</th>
+                <th>Akcja</th>
+                <th>Typ obiektu</th>
+                <th>IP</th>
+                <th>Severity</th>
+                <th>Data</th>
+                <th>Szczegóły</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.who }}</td>
+                <td>{{ log.action }}</td>
+                <td>{{ log.object_type }}</td>
+                <td>{{ log.ip_address }}</td>
+                <td>{{ log.severity }}</td>
+                <td>{{ log.created_at }}</td>
+                <td><a href="{% url 'log_detail' log.pk %}">Zobacz</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7">Brak logów.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
