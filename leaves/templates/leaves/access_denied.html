@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Brak dostępu{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <h2>Brak uprawnień</h2>
+    <p>Nie masz dostępu do tej strony.</p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">Wróć do dashboardu</a>
+</div>
+{% endblock %}
