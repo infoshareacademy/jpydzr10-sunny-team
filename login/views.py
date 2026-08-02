@@ -155,7 +155,13 @@ def forgot_password(request):
             user = User.objects.get(email=email)
             token = PasswordResetToken.objects.create(user=user)
             reset_link = f"http://127.0.0.1:8000/login/reset-password/{token.token}/"
-            print(f"LINK RESETU: {reset_link}")  # TODO: zastąpić send_mail
+            print(f"LINK RESETU: {reset_link}")  # TODO: zastąpić send_mail 
+            # send_mail(
+            #     subject='Reset hasła - Sunny Team',
+            #     message=f'Kliknij w link aby zresetować hasło: {reset_link}',
+            #     from_email='noreply@sunnyteam.pl',
+            #     recipient_list=[user.email],
+            # )
         except User.DoesNotExist:
             pass  
     return render(request, 'forgot_password.html')
