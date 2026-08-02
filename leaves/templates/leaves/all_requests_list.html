@@ -337,12 +337,34 @@
         transform: translateY(-20px);
         transition: transform 0.3s ease;
     }
+
+    .logs-header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 15px;
+}
+
+.logs-header-title {
+    font-weight: 800;
+    color: #1a202c;
+    font-size: 2.2rem;
+    margin: 0;
+}
 </style>
 
 <div class="logs-wrapper mt-4">
-    <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 24px; font-size: 2.2rem;">
+    <div class="logs-header-container">
+    <h1 class="logs-header-title">
         {% trans "Wszystkie wnioski urlopowe" %}
     </h1>
+
+    <a href="{% url 'leave_requests_report_list' %}" class="btn btn-success d-inline-flex gap-2 ms-auto align-items-center">
+        <i class="bi bi-clipboard-data-fill"></i>
+        <span>{% trans "Raport Wniosków" %}</span>
+    </a>
+</div>
 
     <section class="filters">
         <form method="get">

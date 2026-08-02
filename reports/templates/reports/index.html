@@ -17,7 +17,7 @@
             <div class="report-bg-icon"><i class="bi bi-pie-chart-fill"></i></div>
             <div class="report-base-content">
                 <span class="report-pretitle">Statystyki ról</span>
-                <h3 class="report-title">Użytkownicy wg roli</h3>
+                <h3 class="report-title">Role systemowe</h3>
                 <p class="report-subtitle">Liczba użytkowników przypisanych do ról oraz procent aktywnych kont.</p>
             </div>
         </a>
@@ -38,11 +38,36 @@
             <div class="report-bg-icon"><i class="bi bi-people-fill"></i></div>
             <div class="report-base-content">
                 <span class="report-pretitle">Analiza zespołowa</span>
-                <h3 class="report-title">Urlopy per zespół</h3>
+                <h3 class="report-title">Urlopy zespołów</h3>
                 <p class="report-subtitle">Zbiorczy podgląd wykorzystania urlopów w poszczególnych zespołach.</p>
             </div>
         </a>
-
+        <a href="{% url 'leave_requests_report_list' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-sunglasses"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">Raport</span>
+                <h3 class="report-title">Wnioski urlopowe</h3>
+                <p class="report-subtitle">Zestawienie wniosków o urlop, ich statusów oraz decyzji osób zatwierdzających.</p>
+            </div>
+        </a>
+        {% if active_role == 'Admin' %}
+        <a href="{% url 'activity_log' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-keyboard-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">Logi</span>
+                <h3 class="report-title">Aktywność</h3>
+                <p class="report-subtitle">Historia akcji i modyfikacji obiektów dokonywanych w aplikacji.</p>
+            </div>
+        </a>
+        <a href="{% url 'auth_log' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-key-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">Logi</span>
+                <h3 class="report-title">Autoryzacja</h3>
+                <p class="report-subtitle">Historia zdarzeń związanych z logowaniem, dostępem i bezpieczeństwem kont.</p>
+            </div>
+        </a>
+        {% endif %}
     </div>
 </div>
 

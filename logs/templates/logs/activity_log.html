@@ -207,8 +207,22 @@
 </style>
 
 <div class="logs-wrapper mt-4">
-    <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">Historia Aktywności</h1>
-    <p style="margin-bottom: 30px;"><a href="{% url 'auth_log' %}" class="auth-link">Zobacz logi logowań i dostępu</a></p>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 30px;">
+        <div>
+            <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">Historia Aktywności</h1>
+            <p style="margin: 0;"><a href="{% url 'auth_log' %}" class="auth-link">Zobacz logi logowań i dostępu</a></p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <!-- Przyciski eksportu przekazują wszystkie aktywne filtry URL -->
+            <a href="{% url 'export_activity_log_csv' %}?{{ request.GET.urlencode }}" class="btn btn-primary font-weight-bold">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Eksportuj do CSV
+            </a>
+            <a href="{% url 'export_activity_log_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger font-weight-bold">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Pobierz PDF
+            </a>
+        </div>
+    </div>
 
     <section class="filters">
         <form method="get">

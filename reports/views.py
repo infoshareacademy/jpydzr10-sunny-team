@@ -1,15 +1,20 @@
 import csv
-from datetime import datetime
 import io
 import json
 import os
+from dataclasses import dataclass
+from datetime import datetime, time
+from typing import Iterable, Mapping, Sequence
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.core.paginator import Paginator
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Count, Q, QuerySet
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone as dj_timezone
 
 from reportlab.graphics.charts.piecharts import Pie
 from reportlab.graphics.shapes import Drawing
@@ -21,37 +26,60 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from accounts.permission import Permission, role_required, RoleRequiredMixin
-from leaves.models import WorkerProfile
+from accounts.permission import role_required
+from leaves.models import WorkerProfile, LeaveRequest
+from logs.models import AuthLog, ActivityLog
 from team.models import Team
 
 User = get_user_model()
 
-# --- Fonty PDF ---------------------------------------------------------
+DATE_FMT = "%Y-%m-%d"
+DATETIME_DISPLAY_FMT = "%d.%m.%Y %H:%M"
 
-FONT_PATH = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Roboto-Regular.ttf')
+ROLE_HIERARCHY = {"COO": 1, "HR": 2, "Manager": 3, "Worker": 4}
+
+
+# =========================================================================
+# Fonty (Pobrano Roboto, bo klasyczny font nie miał 'ł')
+# =========================================================================
+
+FONT_PATH = os.path.join(settings.BASE_DIR, "static", "fonts", "Roboto-Regular.ttf")
 if os.path.exists(FONT_PATH):
-    pdfmetrics.registerFont(TTFont('Roboto-Regular', FONT_PATH))
-    pdfmetrics.registerFont(TTFont('Roboto-Bold', FONT_PATH))
-    DEFAULT_FONT = 'Roboto-Regular'
-    BOLD_FONT = 'Roboto-Bold'
+    pdfmetrics.registerFont(TTFont("Roboto-Regular", FONT_PATH))
+    pdfmetrics.registerFont(TTFont("Roboto-Bold", FONT_PATH))
+    DEFAULT_FONT = "Roboto-Regular"
+    BOLD_FONT = "Roboto-Bold"
 else:
-    DEFAULT_FONT = 'Helvetica'
-    BOLD_FONT = 'Helvetica-Bold'
+    DEFAULT_FONT = "Helvetica"
+    BOLD_FONT = "Helvetica-Bold"
 
 
 class NumberedCanvas(canvas.Canvas):
-    """Canvas dopisujący do każdej strony numer w formacie 'Strona X z Y'."""
+    """
+    Canvas ReportLab, które automatycznie zlicza
+    wszystkie strony i dodaje stopkę 'Strona X z Y' do każdej z nich.
+    """
 
     def __init__(self, *args, **kwargs):
+        """
+        Inicjalizuje obiekt płótna oraz listę do przechowywania stanów poszczególnych stron.
+        """
         super().__init__(*args, **kwargs)
         self._saved_page_states = []
 
     def showPage(self):
+        """
+        Zapisuje bieżący stan strony w pamięci i rozpoczyna nową stronę,
+        odkładając jej ostateczne renderowanie do momentu wywołania metody save().
+        """
         self._saved_page_states.append(dict(self.__dict__))
         self._startPage()
 
     def save(self):
+        """
+        Renderuje wszystkie zapisane strony z wyliczonym nagłówkiem/stopką
+        zawierającą łączną liczbę stron, a następnie zapisuje dokument PDF.
+        """
         num_pages = len(self._saved_page_states)
         for state in self._saved_page_states:
             self.__dict__.update(state)
@@ -59,232 +87,395 @@ class NumberedCanvas(canvas.Canvas):
             super().showPage()
         super().save()
 
-    def draw_page_number(self, page_count):
+    def draw_page_number(self, page_count: int) -> None:
+        """
+        Rysuje stopkę z numeracją stron (np. 'Strona 1 z 5') w prawym dolnym rogu strony.
+        """
         self.setFont(DEFAULT_FONT, 8)
         self.setFillColor(colors.HexColor("#64748B"))
-        page_text = f"Strona {self._pageNumber} z {page_count}"
-        self.drawRightString(A4[0] - 30, 20, page_text)
+        self.drawRightString(A4[0] - 30, 20, f"Strona {self._pageNumber} z {page_count}")
 
 
-def _get_active_role(request):
-    return request.session.get('active_role', getattr(request.user, 'role', None))
+# =========================================================================
+# PDF budowa
+# =========================================================================
+
+@dataclass(frozen=True)
+class PdfStyles:
+    """
+    Struktura danych przechowująca zbiór spójnych stylów akapitowych (ParagraphStyle)
+    używanych do formatowania nagłówków, tekstu i tabel w raportach PDF.
+    """
+    title: ParagraphStyle
+    meta: ParagraphStyle
+    cell: ParagraphStyle
+    cell_header: ParagraphStyle
+    chart_title: ParagraphStyle
 
 
-def _check_report_access_manager(request):
-    return _get_active_role(request) == 'Manager'
+def _pdf_styles(*, cell_font_size: float = 9, cell_leading: float = 12) -> PdfStyles:
+    """
+    Tworzy i zwraca obiekt PdfStyles z zdefiniowanymi stylami akapitowymi.
+    Pozwala na dostosowanie rozmiaru czcionki i interlinii w komórkach tabeli.
+    """
+    base = getSampleStyleSheet()
+    return PdfStyles(
+        title=ParagraphStyle(
+            "ReportTitle", parent=base["Normal"], fontName=BOLD_FONT,
+            fontSize=16, leading=20, textColor=colors.HexColor("#1E293B"),
+            spaceAfter=8,
+        ),
+        meta=ParagraphStyle(
+            "ReportMeta", parent=base["Normal"], fontName=DEFAULT_FONT,
+            fontSize=8.5, leading=12, textColor=colors.HexColor("#475569"),
+            spaceAfter=3,
+        ),
+        cell=ParagraphStyle(
+            "TableCell", parent=base["Normal"], fontName=DEFAULT_FONT,
+            fontSize=cell_font_size, leading=cell_leading,
+            textColor=colors.HexColor("#334155"),
+        ),
+        cell_header=ParagraphStyle(
+            "TableHeaderCell", parent=base["Normal"], fontName=BOLD_FONT,
+            fontSize=cell_font_size, leading=cell_leading,
+            textColor=colors.HexColor("#0F172A"),
+        ),
+        chart_title=ParagraphStyle(
+            "ChartTitle", parent=base["Normal"], fontName=BOLD_FONT,
+            fontSize=10, leading=13, textColor=colors.HexColor("#475569"),
+            alignment=1, spaceAfter=10,
+        ),
+    )
 
 
-def _pdf_table_style(row_count):
+def _pdf_table_style(row_count: int) -> TableStyle:
+    """
+    Generuje styl tabeli ReportLab z naprzemiennymi kolorami wierszy (naprzemienne tło)
+    oraz standardowym obramowaniem.
+    """
     return TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E2E8F0')),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('LEFTPADDING', (0, 0), (-1, -1), 8),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-        *[(
-            'BACKGROUND', (0, i), (-1, i),
-            colors.HexColor('#F8FAFC') if i % 2 == 0 else colors.white
-        ) for i in range(1, row_count)],
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E2E8F0")),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        *[
+            ("BACKGROUND", (0, i), (-1, i),
+             colors.HexColor("#F8FAFC") if i % 2 == 0 else colors.white)
+            for i in range(1, row_count)
+        ],
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
     ])
 
 
+def _build_table(headers: Sequence[str], rows: Iterable[Sequence[str]],
+                 col_widths: Sequence[float], styles: PdfStyles,) -> Table:
+    """
+    Buduje i sformatuje obiekt tabeli ReportLab na podstawie przekazanych nagłówków,
+    wierszy danych i szerokości kolumn.
+    """
+    data = [[Paragraph(str(h), styles.cell_header) for h in headers]]
+    for row in rows:
+        data.append([Paragraph(str(cell), styles.cell) for cell in row])
+
+    table = Table(data, colWidths=list(col_widths), repeatRows=1)
+    table.setStyle(_pdf_table_style(len(data)))
+    return table
+
+
+def _add_report_header(elements: list, styles: PdfStyles, *, title: str, request,
+    active_role: str | None, filters_desc: str | None = None, record_count: int | None = None, ) -> None:
+    """
+    Dodaje do listy elementów dokumentu PDF standardowy bloku nagłówka raportu,
+    zawierający tytuł, autora, rolę, datę generowania oraz opcjonalne filtry i licznik rekordów.
+    """
+    author_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
+    author_role = active_role or getattr(request.user, "role", None) or "-"
+    generation_date = dj_timezone.localtime(dj_timezone.now()).strftime(DATETIME_DISPLAY_FMT)
+
+    elements.append(Paragraph(title, styles.title))
+    elements.append(Paragraph(f"<b>Wygenerowano przez:</b> {author_name}", styles.meta))
+    elements.append(Paragraph(f"<b>Rola użytkownika:</b> {author_role}", styles.meta))
+    elements.append(Paragraph(f"<b>Data utworzenia:</b> {generation_date}", styles.meta))
+
+    if filters_desc is not None:
+        elements.append(Paragraph(f"<b>Zastosowane filtry:</b> {filters_desc}", styles.meta))
+    if record_count is not None:
+        elements.append(Paragraph(f"<b>Liczba rekordów:</b> {record_count}", styles.meta))
+
+    elements.append(Spacer(1, 15))
+
+
+def _new_pdf_document() -> tuple[io.BytesIO, SimpleDocTemplate]:
+    """
+    Tworzy nowy bufor pamięci BytesIO oraz szablon dokumentu PDF (SimpleDocTemplate)
+    z domyślnymi marginesami i rozmiarem A4.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=portrait(A4),
+        rightMargin=30, leftMargin=30, topMargin=35, bottomMargin=35,
+    )
+    return buffer, doc
+
+
+def _pdf_response(buffer: io.BytesIO, doc: SimpleDocTemplate, elements: list, filename_prefix: str) -> HttpResponse:
+    """
+    Generuje dokument PDF z przekazanych elementów i zwraca go jako obiekt HttpResponse
+    przygotowany do pobrania pliku.
+    """
+    doc.build(elements, canvasmaker=NumberedCanvas)
+    buffer.seek(0)
+
+    filename_date = datetime.now().strftime(DATE_FMT)
+    response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_{filename_date}.pdf"'
+    return response
+
+
+def _csv_response(filename_prefix: str, header_row: Sequence[str], rows: Iterable[Sequence], delimiter: str = ";") -> HttpResponse:
+    """
+    Tworzy i zwraca odpowiedź HttpResponse zawierającą plik CSV kodowany w UTF-8 BOM
+    (zgodny z programem Excel) z podanym separatorem.
+    """
+    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
+    filename_date = datetime.now().strftime(DATE_FMT)
+    response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_{filename_date}.csv"'
+
+    writer = csv.writer(response, delimiter=delimiter)
+    writer.writerow(header_row)
+    for row in rows:
+        writer.writerow(row)
+    return response
+
+
+# =========================================================================
+# Helper do filtrów
+# =========================================================================
+
+def _get_active_role(request) -> str | None:
+    """
+    Pobiera i zwraca aktualną aktywną rolę użytkownika z sesji lub bezpośrednio z obiektu użytkownika.
+    """
+    return request.session.get("active_role", getattr(request.user, "role", None))
+
+
+def _manager_is_restricted(request) -> bool:
+    """
+    Sprawdza, czy aktywną rolą użytkownika jest 'Manager' i czy ma ograniczony dostęp do danego raportu.
+    """
+    return _get_active_role(request) == "Manager"
+
+
+def _get_applied_filters_text(filters_dict: Mapping[str, str | None]) -> str:
+    """
+    Formatuje słownik aktywnych filtrów do postaci czytelnego ciągu tekstowego opisanego w raporcie.
+    """
+    active_filters = [f"{label}: {val}" for label, val in filters_dict.items() if val]
+    return ", ".join(active_filters) if active_filters else "Brak (wszystkie rekordy)"
+
+
+def _get_user_display_name(user_id_str: str) -> str:
+    """
+    Pobiera nazwę użytkownika (username) na podstawie jego ID podanego jako ciąg znaków.
+    """
+    if not user_id_str:
+        return ""
+    try:
+        return User.objects.get(id=int(user_id_str)).username
+    except (ValueError, User.DoesNotExist):
+        return user_id_str
+
+
+def _apply_date_range(qs: QuerySet, date_from: str, date_to: str, field_name: str) -> QuerySet:
+    """
+    Filtruje zapytanie QuerySet według zakresu dat dla wskazanego pola, uwzględniając pełne granice dni.
+    """
+    if date_from:
+        try:
+            start_date = datetime.strptime(date_from, DATE_FMT).date()
+            start = dj_timezone.make_aware(datetime.combine(start_date, time.min))
+            qs = qs.filter(**{f"{field_name}__gte": start})
+        except ValueError:
+            pass
+
+    if date_to:
+        try:
+            end_date = datetime.strptime(date_to, DATE_FMT).date()
+            end = dj_timezone.make_aware(datetime.combine(end_date, time.max))
+            qs = qs.filter(**{f"{field_name}__lte": end})
+        except ValueError:
+            pass
+
+    return qs
+
+
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def reports_index(request):
-    return render(request, 'reports/index.html')
+    """
+    Renderuje stronę główną indeksu raportów.
+    """
+    return render(request, "reports/index.html")
 
 
 # =========================================================================
 # Raport: użytkownicy per rola
 # =========================================================================
 
-def _get_users_per_role_data():
+def _get_users_per_role_data() -> list[dict]:
+    """
+    Pobiera dane statystyczne dotyczące liczby użytkowników oraz aktywnych użytkowników
+    przypisanych do poszczególnych ról w systemie.
+    """
     target_roles = [
-        (None, 'Brak roli'),
-        ('Worker', 'Worker'),
-        ('Manager', 'Manager'),
-        ('HR', 'HR'),
-        ('COO', 'COO'),
+        (None, "Brak roli"),
+        ("Worker", "Worker"),
+        ("Manager", "Manager"),
+        ("HR", "HR"),
+        ("COO", "COO"),
     ]
 
     allowed_role_keys = [key for key, _ in target_roles if key is not None]
-    base_filter = Q(role__in=allowed_role_keys) | Q(role__isnull=True) | Q(role='')
+    base_filter = Q(role__in=allowed_role_keys) | Q(role__isnull=True) | Q(role="")
 
     role_stats = (
         User.objects
         .filter(base_filter)
-        .values('role')
-        .annotate(
-            total=Count('id'),
-            active=Count('id', filter=Q(is_active=True)),
-        )
+        .values("role")
+        .annotate(total=Count("id"), active=Count("id", filter=Q(is_active=True)))
     )
 
     stats_map = {
-        row['role'] or None: {'total': row['total'], 'active': row['active']}
+        row["role"] or None: {"total": row["total"], "active": row["active"]}
         for row in role_stats
     }
 
     report_rows = []
     for role_key, role_display in target_roles:
         if role_key is None:
-            data = stats_map.get(None, {'total': 0, 'active': 0})
-            empty_str_data = stats_map.get('', {'total': 0, 'active': 0})
-            total = data['total'] + empty_str_data['total']
-            active = data['active'] + empty_str_data['active']
+            data = stats_map.get(None, {"total": 0, "active": 0})
+            empty_str_data = stats_map.get("", {"total": 0, "active": 0})
+            total = data["total"] + empty_str_data["total"]
+            active = data["active"] + empty_str_data["active"]
         else:
-            data = stats_map.get(role_key, {'total': 0, 'active': 0})
-            total = data['total']
-            active = data['active']
+            data = stats_map.get(role_key, {"total": 0, "active": 0})
+            total = data["total"]
+            active = data["active"]
 
         percent_active = round(active / total * 100, 1) if total else 0.0
 
         report_rows.append({
-            'role': role_display,
-            'total': total,
-            'active': active,
-            'percent_active': percent_active,
+            "role": role_display,
+            "total": total,
+            "active": active,
+            "percent_active": percent_active,
         })
 
     return report_rows
 
 
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def users_per_role_report(request):
-    if  _check_report_access_manager(request):
-        return redirect('home')
+    """
+    Widok raportu podsumowującego użytkowników według ról z danymi do wykresów.
+    """
+    if _manager_is_restricted(request):
+        return redirect("home")
 
     report_rows = _get_users_per_role_data()
     context = {
-        'report_rows': report_rows,
-        'chart_labels': json.dumps([row['role'] for row in report_rows]),
-        'chart_data_total': json.dumps([row['total'] for row in report_rows]),
-        'chart_data_active': json.dumps([row['active'] for row in report_rows]),
+        "report_rows": report_rows,
+        "chart_labels": json.dumps([row["role"] for row in report_rows]),
+        "chart_data_total": json.dumps([row["total"] for row in report_rows]),
+        "chart_data_active": json.dumps([row["active"] for row in report_rows]),
     }
-    return render(request, 'reports/users_per_role.html', context)
+    return render(request, "reports/users_per_role.html", context)
 
 
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def export_users_per_role_csv(request):
-    if  _check_report_access_manager(request):
-        return redirect('home')
+    """
+    Eksportuje dane z raportu użytkowników według ról do pliku CSV.
+    """
+    if _manager_is_restricted(request):
+        return redirect("home")
 
     report_rows = _get_users_per_role_data()
-
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    filename_date = datetime.now().strftime("%Y-%m-%d")
-    response['Content-Disposition'] = f'attachment; filename="raport_role_{filename_date}.csv"'
-
-    writer = csv.writer(response, delimiter=';')
-    writer.writerow(['Rola', 'Liczba użytkowników', 'Aktywni', '% aktywnych'])
-    for row in report_rows:
-        writer.writerow([row['role'], row['total'], row['active'], f"{row['percent_active']}%"])
-
-    return response
-
-
-from datetime import datetime
+    rows = [
+        [row["role"], row["total"], row["active"], f"{row['percent_active']}%"]
+        for row in report_rows
+    ]
+    return _csv_response(
+        "raport_role",
+        ["Rola", "Liczba użytkowników", "Aktywni", "% aktywnych"],
+        rows,
+    )
 
 
 @login_required
 @role_required("can_export_requests")
 def export_users_per_role_pdf(request):
-    if _check_report_access_manager(request):
-        return redirect('home')
+    """
+    Generuje i zwraca raport w postaci pliku PDF przedstawiający podział
+    użytkowników na role wraz z wykresem kołowym.
+    """
+    if _manager_is_restricted(request):
+        return redirect("home")
 
     active_role = _get_active_role(request)
-    include_inactive = request.GET.get('include_inactive', 'true').lower() == 'true'
+    include_inactive = request.GET.get("include_inactive", "true").lower() == "true"
     report_rows = _get_users_per_role_data()
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=portrait(A4),
-        rightMargin=30, leftMargin=30, topMargin=35, bottomMargin=35,
-    )
-
+    styles = _pdf_styles()
+    buffer, doc = _new_pdf_document()
     elements = []
-    styles = getSampleStyleSheet()
 
-    # Style
-    title_style = ParagraphStyle(
-        'ReportTitle', parent=styles['Normal'], fontName=BOLD_FONT,
-        fontSize=16, leading=20, textColor=colors.HexColor('#1E293B'), spaceAfter=8,
-    )
-    meta_style = ParagraphStyle(
-        'ReportMeta', parent=styles['Normal'], fontName=DEFAULT_FONT,
-        fontSize=8.5, leading=12, textColor=colors.HexColor('#475569'), spaceAfter=3,
-    )
-    cell_style = ParagraphStyle(
-        'TableCell', parent=styles['Normal'], fontName=DEFAULT_FONT,
-        fontSize=9, leading=12, textColor=colors.HexColor('#334155'),
-    )
-    cell_header_style = ParagraphStyle(
-        'TableHeaderCell', parent=styles['Normal'], fontName=BOLD_FONT,
-        fontSize=9, leading=12, textColor=colors.HexColor('#0F172A'),
-    )
-    chart_title_style = ParagraphStyle(
-        'ChartTitle', parent=styles['Normal'], fontName=BOLD_FONT,
-        fontSize=10, leading=13, textColor=colors.HexColor('#475569'),
-        alignment=1, spaceAfter=10,
+    _add_report_header(
+        elements, styles,
+        title="Raport Użytkowników: Role",
+        request=request, active_role=active_role,
     )
 
-    # 1. Tytuł raportu
-    elements.append(Paragraph("Raport Użytkowników: Role", title_style))
-
-    # 2. Metadane raportu (Imię i nazwisko, Rola, Data)
-    author_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
-    author_role = active_role or getattr(request.user, 'role', '-')
-    generation_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-
-    elements.append(Paragraph(f"<b>Wygenerowano przez:</b> {author_name}", meta_style))
-    elements.append(Paragraph(f"<b>Rola użytkownika:</b> {author_role}", meta_style))
-    elements.append(Paragraph(f"<b>Data utworzenia:</b> {generation_date}", meta_style))
-
-    elements.append(Spacer(1, 15))
-
-    # 3. Tabela z danymi
-    table_data = [[
-        Paragraph("Rola", cell_header_style),
-        Paragraph("Liczba użytkowników", cell_header_style),
-        Paragraph("Aktywni", cell_header_style),
-        Paragraph("% aktywnych", cell_header_style),
-    ]]
-    for row in report_rows:
-        table_data.append([
-            Paragraph(str(row['role']), cell_style),
-            Paragraph(str(row['total']), cell_style),
-            Paragraph(str(row['active']), cell_style),
-            Paragraph(f"{row['percent_active']}%", cell_style),
-        ])
-
-    table = Table(table_data, colWidths=[160, 125, 125, 125], repeatRows=1)
-    table.setStyle(_pdf_table_style(len(table_data)))
-    elements.append(table)
+    table_rows = [
+        [row["role"], row["total"], row["active"], f"{row['percent_active']}%"]
+        for row in report_rows
+    ]
+    elements.append(_build_table(
+        ["Rola", "Liczba użytkowników", "Aktywni", "% aktywnych"],
+        table_rows,
+        [160, 125, 125, 125],
+        styles,
+    ))
     elements.append(Spacer(1, 20))
 
-    # 4. Wykres kołowy
     chart_info_text = (
         "* Wykres uwzględnia: Wszyscy użytkownicy (aktywni i nieaktywni)"
         if include_inactive else
         "* Wykres uwzględnia: Tylko aktywni użytkownicy"
     )
-    elements.append(Paragraph(chart_info_text, chart_title_style))
+    elements.append(Paragraph(chart_info_text, styles.chart_title))
     elements.append(Spacer(1, 10))
+    elements.append(_build_users_per_role_pie(report_rows, include_inactive))
 
-    pie_data = [row['total'] if include_inactive else row['active'] for row in report_rows]
+    return _pdf_response(buffer, doc, elements, "raport_role")
+
+
+def _build_users_per_role_pie(report_rows: list[dict], include_inactive: bool) -> Drawing:
+    """
+    Tworzy i konfiguruje obiekt wykresu kołowego ReportLab (Drawing) na potrzeby raportu PDF.
+    """
+    pie_data = [row["total"] if include_inactive else row["active"] for row in report_rows]
     pie_labels = [f"{row['role']} ({val})" for row, val in zip(report_rows, pie_data)]
 
     drawing = Drawing(535, 180)
     pie = Pie()
-    pie.x = 180
-    pie.y = 0
-    pie.width = 150
-    pie.height = 150
+    pie.x, pie.y = 180, 0
+    pie.width = pie.height = 150
     pie.data = pie_data if sum(pie_data) > 0 else [1]
     pie.labels = pie_labels
     pie.innerRadiusFraction = 0.55
@@ -304,63 +495,68 @@ def export_users_per_role_pdf(request):
         pie.slices[i].fontSize = 8.5
 
     drawing.add(pie)
-    elements.append(drawing)
+    return drawing
 
-    doc.build(elements, canvasmaker=NumberedCanvas)
-    buffer.seek(0)
 
-    filename_date = datetime.now().strftime("%Y-%m-%d_%H%M")
-    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="raport_role_{filename_date}.pdf"'
-    return response
+# =========================================================================
+# Raport: wykorzystanie urlopów per pracownik
+# =========================================================================
 
-def _leave_usage_profiles(request, active_role):
-    profiles = WorkerProfile.objects.select_related('user', 'team').filter(user__is_active=True)
+def _leave_usage_profiles(request, active_role: str | None):
+    """
+    Zwraca skorygowany zestaw profili pracowników (WorkerProfile)
+    uwzględniający uprawnienia i aktywną rolę użytkownika.
+    """
+    profiles = WorkerProfile.objects.select_related("user", "team").filter(user__is_active=True)
 
-    if active_role == 'Manager':
+    if active_role == "Manager":
         managed_teams = Team.get_teams_managed_by(request.user).filter(is_active=True)
         profiles = profiles.filter(team__in=managed_teams).distinct()
     else:
         active_teams = Team.objects.filter(is_active=True)
-        profiles = profiles.filter(
-            Q(team__in=active_teams) | Q(team__isnull=True)
-        ).distinct()
+        profiles = profiles.filter(Q(team__in=active_teams) | Q(team__isnull=True)).distinct()
 
     return profiles
 
 
-def _get_teams_info_for_profile(profile):
+def _get_teams_info_for_profile(profile) -> list[dict]:
+    """
+    Zwraca listę słowników zawierających ID i nazwy wszystkich zespołów,
+    do których należy lub którymi zarządza dany profil.
+    """
     teams_dict = {}
 
     if profile.team and profile.team.is_active:
         teams_dict[profile.team.id] = profile.team.name
 
-    managed_teams = list(profile.user.head_managed_teams.filter(is_active=True)) + \
-        list(profile.user.co_managed_teams.filter(is_active=True))
+    managed_teams = (
+        list(profile.user.head_managed_teams.filter(is_active=True))
+        + list(profile.user.co_managed_teams.filter(is_active=True))
+    )
     for team in managed_teams:
         teams_dict[team.id] = team.name
 
-    return [{'id': tid, 'name': name} for tid, name in teams_dict.items()]
+    return [{"id": tid, "name": name} for tid, name in teams_dict.items()]
 
 
-ROLE_HIERARCHY = {'COO': 1, 'HR': 2, 'Manager': 3, 'Worker': 4}
-
-
-def _leave_usage_rows(profiles, role_filter=None, team_filter=None):
+def _leave_usage_rows(profiles, role_filter: str | None = None, team_filter: str | None = None) -> list[dict]:
+    """
+    Przetwarza listę profili pracowników i wylicza dane dotyczące wykorzystania ich urlopów uwzględniając podane filtry.
+    """
     rows = []
     for profile in profiles:
-        role_display = getattr(profile.user, 'role', None) or '-'
+        role_display = getattr(profile.user, "role", None) or "-"
         teams_list = _get_teams_info_for_profile(profile)
 
-        if role_filter and role_filter != 'ALL' and role_display != role_filter:
+        if role_filter and role_filter != "ALL" and role_display != role_filter:
             continue
 
-        if team_filter and team_filter != 'ALL':
-            if team_filter == 'NONE':
+        if team_filter and team_filter != "ALL":
+            if team_filter == "NONE":
                 if teams_list:
                     continue
             else:
-                team_ids = [str(t['id']) for t in teams_list]
+                team_ids = [str(t["id"]) for t in teams_list]
                 if team_filter not in team_ids:
                     continue
 
@@ -370,211 +566,165 @@ def _leave_usage_rows(profiles, role_filter=None, team_filter=None):
         percent_used = round(used / total * 100, 1) if total else 0.0
 
         rows.append({
-            'profile_id': profile.id,
-            'user_id': profile.user.id,
-            'first_name': profile.user.first_name,
-            'last_name': profile.user.last_name,
-            'role': role_display,
-            'role_priority': ROLE_HIERARCHY.get(role_display, 99),
-            'teams': teams_list,
-            'total': total,
-            'used': used,
-            'remaining': remaining,
-            'percent_used': percent_used,
+            "profile_id": profile.id,
+            "user_id": profile.user.id,
+            "first_name": profile.user.first_name,
+            "last_name": profile.user.last_name,
+            "role": role_display,
+            "role_priority": ROLE_HIERARCHY.get(role_display, 99),
+            "teams": teams_list,
+            "total": total,
+            "used": used,
+            "remaining": remaining,
+            "percent_used": percent_used,
         })
 
-    rows.sort(key=lambda x: (x['role_priority'], x['last_name'].lower(), x['first_name'].lower()))
+    rows.sort(key=lambda x: (x["role_priority"], x["last_name"].lower(), x["first_name"].lower()))
     return rows
 
+
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def leave_usage_report(request):
-
+    """
+    Widok HTML raportu przedstawiającego wykorzystanie dni urlopowych przez poszczególnych pracowników z opcjami filtrowania.
+    """
     active_role = _get_active_role(request)
-    role_filter = request.GET.get('role', 'ALL')
-    team_filter = request.GET.get('team', 'ALL')
+    role_filter = request.GET.get("role", "ALL")
+    team_filter = request.GET.get("team", "ALL")
 
-    if active_role == 'Manager':
-        role_filter = 'ALL'
-        if team_filter == 'NONE':
-            team_filter = 'ALL'
+    if active_role == "Manager":
+        role_filter = "ALL"
+        if team_filter == "NONE":
+            team_filter = "ALL"
 
     profiles = _leave_usage_profiles(request, active_role)
     report_rows = _leave_usage_rows(profiles, role_filter, team_filter)
 
-    if active_role == 'Manager':
-        all_teams = Team.get_teams_managed_by(request.user).filter(is_active=True).order_by('name')
+    if active_role == "Manager":
+        all_teams = Team.get_teams_managed_by(request.user).filter(is_active=True).order_by("name")
         show_no_team_option = False
     else:
-        all_teams = Team.objects.filter(is_active=True).order_by('name')
+        all_teams = Team.objects.filter(is_active=True).order_by("name")
         show_no_team_option = True
 
     context = {
-        'report_rows': report_rows,
-        'all_roles': ['COO', 'HR', 'Manager', 'Worker'],
-        'all_teams': all_teams,
-        'selected_role': role_filter,
-        'selected_team': team_filter,
-        'show_no_team_option': show_no_team_option,
+        "report_rows": report_rows,
+        "all_roles": ["COO", "HR", "Manager", "Worker"],
+        "all_teams": all_teams,
+        "selected_role": role_filter,
+        "selected_team": team_filter,
+        "show_no_team_option": show_no_team_option,
     }
-    return render(request, 'reports/leave_usage.html', context)
+    return render(request, "reports/leave_usage.html", context)
 
 
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def export_leave_usage_csv(request):
-
+    """
+    Generuje plik CSV zawierający podsumowanie wykorzystania urlopów dla poszczególnych pracowników.
+    """
     active_role = _get_active_role(request)
-    role_filter = request.GET.get('role', 'ALL')
-    team_filter = request.GET.get('team', 'ALL')
+    role_filter = request.GET.get("role", "ALL")
+    team_filter = request.GET.get("team", "ALL")
 
     profiles = _leave_usage_profiles(request, active_role)
     report_rows = _leave_usage_rows(profiles, role_filter, team_filter)
 
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    filename_date = datetime.now().strftime("%Y-%m-%d")
-    response['Content-Disposition'] = f'attachment; filename="raport_pracownicy_{filename_date}.csv"'
-
-    writer = csv.writer(response, delimiter=';')
-    writer.writerow([
-        'Imię', 'Nazwisko', 'Rola', 'Zespół',
-        'Przydzielone dni', 'Wykorzystane dni', 'Pozostałe dni', '% wykorzystania',
-    ])
+    rows = []
     for row in report_rows:
-        teams_str = ", ".join(t['name'] for t in row['teams']) if row['teams'] else '-'
-        writer.writerow([
-            row['first_name'], row['last_name'], row['role'], teams_str,
-            row['total'], row['used'], row['remaining'], f"{row['percent_used']}%",
+        teams_str = ", ".join(t["name"] for t in row["teams"]) if row["teams"] else "-"
+        rows.append([
+            row["first_name"], row["last_name"], row["role"], teams_str,
+            row["total"], row["used"], row["remaining"], f"{row['percent_used']}%",
         ])
 
-    return response
+    return _csv_response(
+        "raport_pracownicy",
+        ["Imię", "Nazwisko", "Rola", "Zespół", "Przydzielone dni", "Wykorzystane dni",
+         "Pozostałe dni", "% wykorzystania"],
+        rows,
+    )
 
 
 @login_required
 @role_required("can_export_requests")
 def export_leave_usage_pdf(request):
+    """
+    Tworzy plik PDF przedstawiający indywidualny raport wykorzystania urlopów przez pracowników.
+    """
     active_role = _get_active_role(request)
-    role_filter = request.GET.get('role', 'ALL')
-    team_filter = request.GET.get('team', 'ALL')
+    role_filter = request.GET.get("role", "ALL")
+    team_filter = request.GET.get("team", "ALL")
 
     profiles = _leave_usage_profiles(request, active_role)
     report_rows = _leave_usage_rows(profiles, role_filter, team_filter)
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=portrait(A4),
-        rightMargin=30, leftMargin=30, topMargin=35, bottomMargin=35,
-    )
-
-    elements = []
-    styles = getSampleStyleSheet()
-
-    # Style
-    title_style = ParagraphStyle(
-        'ReportTitle', parent=styles['Normal'], fontName=BOLD_FONT,
-        fontSize=16, leading=20, textColor=colors.HexColor('#1E293B'), spaceAfter=8,
-    )
-    meta_style = ParagraphStyle(
-        'ReportMeta', parent=styles['Normal'], fontName=DEFAULT_FONT,
-        fontSize=8.5, leading=12, textColor=colors.HexColor('#475569'), spaceAfter=3,
-    )
-    cell_style = ParagraphStyle(
-        'TableCell', parent=styles['Normal'], fontName=DEFAULT_FONT,
-        fontSize=8.5, leading=11, textColor=colors.HexColor('#334155'),
-    )
-    cell_header_style = ParagraphStyle(
-        'TableHeaderCell', parent=styles['Normal'], fontName=BOLD_FONT,
-        fontSize=8.5, leading=11, textColor=colors.HexColor('#0F172A'),
-    )
-
-    # 1. Tytuł raportu
-    elements.append(Paragraph("Raport Wykorzystania Urlopów: Pracownicy", title_style))
-
-    # 2. Wyznaczenie czytelnych nazw filtrów
-    role_display_name = role_filter if role_filter != 'ALL' else 'Wszystkie'
-
-    if team_filter == 'ALL':
-        team_display_name = 'Wszystkie'
-    elif team_filter == 'NONE':
-        team_display_name = 'Brak zespołu'
+    role_display_name = role_filter if role_filter != "ALL" else "Wszystkie"
+    if team_filter == "ALL":
+        team_display_name = "Wszystkie"
+    elif team_filter == "NONE":
+        team_display_name = "Brak zespołu"
     else:
         team_obj = Team.objects.filter(id=team_filter).first()
         team_display_name = team_obj.name if team_obj else team_filter
 
-    # 3. Metadane raportu (Imię i nazwisko, Rola, Data, Filtry)
-    author_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
-    author_role = active_role or getattr(request.user, 'role', '-')
-    generation_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-
-    elements.append(Paragraph(f"<b>Wygenerowano przez:</b> {author_name}", meta_style))
-    elements.append(Paragraph(f"<b>Rola użytkownika:</b> {author_role}", meta_style))
-    elements.append(Paragraph(f"<b>Data utworzenia:</b> {generation_date}", meta_style))
-    if active_role == 'Manager':
-        filters_text = f"<b>Zastosowane filtry:</b> Zespół: <i>{team_display_name}</i>"
+    if active_role == "Manager":
+        filters_desc = f"Zespół: <i>{team_display_name}</i>"
     else:
-        filters_text = f"<b>Zastosowane filtry:</b> Rola: <i>{role_display_name}</i> | Zespół: <i>{team_display_name}</i>"
-    elements.append(Paragraph(filters_text, meta_style))
-    elements.append(Spacer(1, 15))
+        filters_desc = f"Rola: <i>{role_display_name}</i> | Zespół: <i>{team_display_name}</i>"
 
-    # 4. Tabela z danymi
-    table_data = [[
-        Paragraph("Pracownik", cell_header_style),
-        Paragraph("Rola", cell_header_style),
-        Paragraph("Zespół", cell_header_style),
-        Paragraph("Przydzielone", cell_header_style),
-        Paragraph("Wykorzystane", cell_header_style),
-        Paragraph("Pozostałe", cell_header_style),
-        Paragraph("% wykorzystania", cell_header_style),
-    ]]
+    styles = _pdf_styles(cell_font_size=8.5, cell_leading=11)
+    buffer, doc = _new_pdf_document()
+    elements = []
 
+    _add_report_header(
+        elements, styles,
+        title="Raport Wykorzystania Urlopów: Pracownicy",
+        request=request, active_role=active_role, filters_desc=filters_desc,
+    )
+
+    table_rows = []
     for row in report_rows:
         full_name = f"{row['first_name']} {row['last_name']}"
-        teams_pdf_html = "<br/>".join(t['name'] for t in row['teams']) if row['teams'] else "-"
-
-        table_data.append([
-            Paragraph(full_name, cell_style),
-            Paragraph(str(row['role']), cell_style),
-            Paragraph(teams_pdf_html, cell_style),
-            Paragraph(str(row['total']), cell_style),
-            Paragraph(str(row['used']), cell_style),
-            Paragraph(str(row['remaining']), cell_style),
-            Paragraph(f"{row['percent_used']}%", cell_style),
+        teams_pdf_html = "<br/>".join(t["name"] for t in row["teams"]) if row["teams"] else "-"
+        table_rows.append([
+            full_name, row["role"], teams_pdf_html,
+            row["total"], row["used"], row["remaining"], f"{row['percent_used']}%",
         ])
 
-    table = Table(table_data, colWidths=[95, 55, 85, 65, 75, 65, 95], repeatRows=1)
-    table.setStyle(_pdf_table_style(len(table_data)))
-    elements.append(table)
+    elements.append(_build_table(
+        ["Pracownik", "Rola", "Zespół", "Przydzielone", "Wykorzystane", "Pozostałe", "% wykorzystania"],
+        table_rows,
+        [95, 55, 85, 65, 75, 65, 95],
+        styles,
+    ))
 
-    doc.build(elements, canvasmaker=NumberedCanvas)
-    buffer.seek(0)
-
-    filename_date = datetime.now().strftime("%Y-%m-%d")
-    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="raport_pracownicy_{filename_date}.pdf"'
-    return response
+    return _pdf_response(buffer, doc, elements, "raport_pracownicy")
 
 
 # =========================================================================
 # Raport: wykorzystanie urlopów per zespół
 # =========================================================================
 
-def _default_team_agg(team_id, team_name):
-    return {
-        'team_id': team_id,
-        'team': team_name,
-        'members': 0,
-        'total': 0,
-        'used': 0,
-        'remaining': 0,
-    }
+def _default_team_agg(team_id, team_name: str) -> dict:
+    """
+    Tworzy słownik ze zczytanymi domyślnie pustymi wartościami agregacyjnymi dla pojedynczego zespołu.
+    """
+    return {"team_id": team_id, "team": team_name, "members": 0, "total": 0, "used": 0, "remaining": 0}
 
-def _team_rows(request):
+
+def _team_rows(request) -> list[dict]:
+    """
+    Agreguje i przelicza dane urlopowe pracowników w rozbiciu na poszczególne zespoły.
+    """
     active_role = _get_active_role(request)
     profiles = _leave_usage_profiles(request, active_role)
-    active_profiles = [p for p in profiles if getattr(p.user, 'is_active', True)]
+    active_profiles = [p for p in profiles if getattr(p.user, "is_active", True)]
     user_rows = _leave_usage_rows(active_profiles)
 
-    if active_role == 'Manager':
+    if active_role == "Manager":
         managed_teams = Team.get_teams_managed_by(request.user).filter(is_active=True)
         teams = {t.pk: _default_team_agg(t.pk, t.name) for t in managed_teams}
         allowed_team_ids = set(teams.keys())
@@ -583,137 +733,811 @@ def _team_rows(request):
         allowed_team_ids = None
 
     for row in user_rows:
-        if str(row['role']).upper() == 'MANAGER':
+        if str(row["role"]).upper() == "MANAGER":
             continue
 
-        teams_list = row['teams']
+        teams_list = row["teams"]
         if not teams_list:
-            if active_role == 'Manager':
+            if active_role == "Manager":
                 continue
-            targets = [('no_team', None, "Brak zespołu")]
+            targets = [("no_team", None, "Brak zespołu")]
         else:
-            targets = [(t['id'], t['id'], t['name']) for t in teams_list]
+            targets = [(t["id"], t["id"], t["name"]) for t in teams_list]
 
         for team_key, team_id, team_name in targets:
-            if allowed_team_ids is not None and team_key != 'no_team' and team_id not in allowed_team_ids:
+            if allowed_team_ids is not None and team_key != "no_team" and team_id not in allowed_team_ids:
                 continue
             agg = teams.setdefault(team_key, _default_team_agg(team_id, team_name))
-            agg['members'] += 1
-            agg['total'] += row['total']
-            agg['used'] += row['used']
-            agg['remaining'] += row['remaining']
+            agg["members"] += 1
+            agg["total"] += row["total"]
+            agg["used"] += row["used"]
+            agg["remaining"] += row["remaining"]
 
     report_rows = list(teams.values())
     for agg in report_rows:
-        agg['percent_used'] = round(agg['used'] / agg['total'] * 100, 1) if agg['total'] else 0
+        agg["percent_used"] = round(agg["used"] / agg["total"] * 100, 1) if agg["total"] else 0
 
-    report_rows.sort(key=lambda x: str(x['team']))
+    report_rows.sort(key=lambda x: str(x["team"]))
     return report_rows
 
+
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def team_report(request):
-    context = {'report_rows': _team_rows(request)}
-    return render(request, 'reports/team_report.html', context)
+    """
+    Widok raportu zawierający zbiorcze statystyki wykorzystania urlopów z podziałem na zespoły.
+    """
+    return render(request, "reports/team_report.html", {"report_rows": _team_rows(request)})
 
 
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def export_team_report_csv(request):
+    """
+    Generuje plik CSV zawierający podsumowanie zbiorczych statystyk urlopowych z rozbiciem na zespoły.
+    """
     report_rows = _team_rows(request)
-
-    response = HttpResponse(content_type='text/csv')
-    filename_date = datetime.now().strftime("%Y-%m-%d")
-    response['Content-Disposition'] = f'attachment; filename="raport_zespoly_{filename_date}.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow([
-        'Zespół', 'Liczba osób',
-        'Przydzielone dni (suma)', 'Wykorzystane dni (suma)',
-        'Pozostałe dni (suma)', '% wykorzystania',
-    ])
-    for row in report_rows:
-        writer.writerow([
-            row['team'], row['members'], row['total'],
-            row['used'], row['remaining'], row['percent_used'],
-        ])
-
-    return response
+    rows = [
+        [row["team"], row["members"], row["total"], row["used"], row["remaining"], row["percent_used"]]
+        for row in report_rows
+    ]
+    return _csv_response(
+        "raport_zespoly",
+        ["Zespół", "Liczba osób", "Przydzielone dni (suma)", "Wykorzystane dni (suma)",
+         "Pozostałe dni (suma)", "% wykorzystania"],
+        rows,
+        delimiter=",",
+    )
 
 
 @login_required
-@role_required ("can_export_requests")
+@role_required("can_export_requests")
 def export_team_report_pdf(request):
+    """
+    Tworzy plik PDF przedstawiający zestawienie statystyk wykorzystania urlopów zagregowanych według zespołów.
+    """
     active_role = _get_active_role(request)
     report_rows = _team_rows(request)
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=portrait(A4),
-        rightMargin=30, leftMargin=30, topMargin=35, bottomMargin=35,
-    )
-
+    styles = _pdf_styles(cell_font_size=8.5, cell_leading=11)
+    buffer, doc = _new_pdf_document()
     elements = []
-    styles = getSampleStyleSheet()
-    # Style nagłówków i tekstu
-    title_style = ParagraphStyle(
-        'ReportTitle', parent=styles['Normal'], fontName=BOLD_FONT,
-        fontSize=16, leading=20, textColor=colors.HexColor('#1E293B'), spaceAfter=8,
-    )
-    meta_style = ParagraphStyle(
-        'ReportMeta', parent=styles['Normal'], fontName=DEFAULT_FONT,
-        fontSize=8.5, leading=12, textColor=colors.HexColor('#475569'), spaceAfter=3,
-    )
-    cell_style = ParagraphStyle(
-        'TableCell', parent=styles['Normal'], fontName=DEFAULT_FONT,
-        fontSize=8.5, leading=11, textColor=colors.HexColor('#334155'),
-    )
-    cell_header_style = ParagraphStyle(
-        'TableHeaderCell', parent=styles['Normal'], fontName=BOLD_FONT,
-        fontSize=8.5, leading=11, textColor=colors.HexColor('#0F172A'),
+
+    _add_report_header(
+        elements, styles,
+        title="Raport Wykorzystania Urlopów: Zespoły",
+        request=request, active_role=active_role,
     )
 
-    # 1. Tytuł raportu
-    elements.append(Paragraph("Raport Wykorzystania Urlopów: Zespoły", title_style))
+    table_rows = [
+        [row["team"], row["members"], f"{row['total']} dni", f"{row['used']} dni",
+         f"{row['remaining']} dni", f"{row['percent_used']}%"]
+        for row in report_rows
+    ]
+    elements.append(_build_table(
+        ["Zespół", "Liczba osób", "Przydzielone (suma)", "Wykorzystane (suma)",
+         "Pozostałe (suma)", "% wykorzystania"],
+        table_rows,
+        [110, 75, 90, 90, 75, 85],
+        styles,
+    ))
 
-    # 2. Metadane (Imię i nazwisko, Rola, Data utworzenia)
-    author_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.username
-    author_role = active_role or getattr(request.user, 'role', '-')
-    generation_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+    return _pdf_response(buffer, doc, elements, "raport_zespoly")
 
-    elements.append(Paragraph(f"<b>Wygenerowano przez:</b> {author_name}", meta_style))
-    elements.append(Paragraph(f"<b>Rola użytkownika:</b> {author_role}", meta_style))
-    elements.append(Paragraph(f"<b>Data utworzenia:</b> {generation_date}", meta_style))
 
-    elements.append(Spacer(1, 15))
+# =========================================================================
+# Eksporty: Activity log
+# =========================================================================
 
-    # 3. Tabela z danymi zespołów
-    table_data = [[
-        Paragraph("Zespół", cell_header_style),
-        Paragraph("Liczba osób", cell_header_style),
-        Paragraph("Przydzielone (suma)", cell_header_style),
-        Paragraph("Wykorzystane (suma)", cell_header_style),
-        Paragraph("Pozostałe (suma)", cell_header_style),
-        Paragraph("% wykorzystania", cell_header_style),
-    ]]
+def _activity_log_filters(request) -> dict:
+    """
+    Pobiera filtry logów aktywności z parametrów zapytania HTTP (GET).
+    """
+    return {
+        "action": request.GET.get("action", ""),
+        "object_type": request.GET.get("object_type", ""),
+        "user": request.GET.get("user", ""),
+        "date_from": request.GET.get("date_from", ""),
+        "date_to": request.GET.get("date_to", ""),
+    }
 
-    for row in report_rows:
-        table_data.append([
-            Paragraph(str(row['team']), cell_style),
-            Paragraph(str(row['members']), cell_style),
-            Paragraph(f"{row['total']} dni", cell_style),
-            Paragraph(f"{row['used']} dni", cell_style),
-            Paragraph(f"{row['remaining']} dni", cell_style),
-            Paragraph(f"{row['percent_used']}%", cell_style),
+
+def _filtered_activity_logs(filters: dict) -> QuerySet:
+    """
+    Zwraca zapytanie QuerySet z filtrowanymi wpisami z logu aktywności (ActivityLog).
+    """
+    logs = ActivityLog.objects.select_related("who").order_by("-created_at")
+
+    if filters["action"]:
+        logs = logs.filter(action=filters["action"])
+    if filters["object_type"]:
+        logs = logs.filter(object_type=filters["object_type"])
+    if filters["user"]:
+        try:
+            logs = logs.filter(who_id=int(filters["user"]))
+        except ValueError:
+            pass
+
+    return _apply_date_range(logs, filters["date_from"], filters["date_to"], "created_at")
+
+
+@login_required
+@role_required("can_view_logs")
+def export_activity_log_csv(request):
+    """
+    Eksportuje wyfiltrowane logi aktywności do pliku CSV.
+    """
+    filters = _activity_log_filters(request)
+    logs = _filtered_activity_logs(filters)
+
+    rows = []
+    for log in logs:
+        local_time = dj_timezone.localtime(log.created_at).strftime("%Y-%m-%d %H:%M:%S") if log.created_at else "-"
+        rows.append([
+            local_time,
+            str(log.who) if log.who else "-",
+            log.get_action_display(),
+            log.get_object_type_display(),
+            log.object_id if log.object_id is not None else "-",
+            log.details or "-",
         ])
 
-    table = Table(table_data, colWidths=[110, 75, 90, 90, 75, 85], repeatRows=1)
-    table.setStyle(_pdf_table_style(len(table_data)))
-    elements.append(table)
+    return _csv_response(
+        "raport_log_aktywnosc",
+        ["Data i czas", "Użytkownik", "Akcja", "Typ obiektu", "ID obiektu", "Szczegóły"],
+        rows,
+    )
 
-    doc.build(elements, canvasmaker=NumberedCanvas)
-    buffer.seek(0)
-    filename_date = datetime.now().strftime("%Y-%m-%d")
-    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="raport_zespoly_{filename_date}.pdf"'
-    return response
+
+@login_required
+@role_required("can_view_logs")
+def export_activity_log_pdf(request):
+    """
+    Generuje plik PDF zawierający przefiltrowany raport logów aktywności systemowej.
+    """
+    filters = _activity_log_filters(request)
+    logs = _filtered_activity_logs(filters)
+    active_role = _get_active_role(request)
+
+    filters_desc = _get_applied_filters_text({
+        "Akcja": filters["action"],
+        "Typ obiektu": filters["object_type"],
+        "Użytkownik": _get_user_display_name(filters["user"]),
+        "Data od": filters["date_from"],
+        "Data do": filters["date_to"],
+    })
+
+    styles = _pdf_styles(cell_font_size=8, cell_leading=10)
+    buffer, doc = _new_pdf_document()
+    elements = []
+
+    _add_report_header(
+        elements, styles,
+        title="Raport Logów Aktywności",
+        request=request, active_role=active_role,
+        filters_desc=filters_desc, record_count=logs.count(),
+    )
+
+    table_rows = []
+    for log in logs:
+        local_time = dj_timezone.localtime(log.created_at).strftime("%Y-%m-%d %H:%M") if log.created_at else "-"
+        table_rows.append([
+            local_time,
+            str(log.who) if log.who else "-",
+            log.get_action_display(),
+            log.get_object_type_display(),
+            log.object_id if log.object_id is not None else "-",
+            log.details or "-",
+        ])
+
+    elements.append(_build_table(
+        ["Data i czas", "Użytkownik", "Akcja", "Typ obiektu", "ID obiektu", "Szczegóły"],
+        table_rows,
+        [75, 80, 70, 85, 55, 170],
+        styles,
+    ))
+
+    return _pdf_response(buffer, doc, elements, "raport_log_aktywnosc")
+
+
+# =========================================================================
+# Eksporty: Auth log
+# =========================================================================
+
+def _auth_log_filters(request) -> dict:
+    """
+    Pobiera parametry filtrowania logów zdarzeń uwierzytelniania z adresu URL.
+    """
+    return {
+        "action": request.GET.get("action", ""),
+        "severity": request.GET.get("severity", ""),
+        "user": request.GET.get("user", ""),
+        "date_from": request.GET.get("date_from", ""),
+        "date_to": request.GET.get("date_to", ""),
+    }
+
+
+def _filtered_auth_logs(filters: dict) -> QuerySet:
+    """
+    Zwraca QuerySet z wyfiltrowanymi wpisami logów uwierzytelniania (AuthLog).
+    """
+    logs = AuthLog.objects.select_related("user").order_by("-timestamp")
+
+    if filters["action"]:
+        logs = logs.filter(action=filters["action"])
+    if filters["severity"]:
+        logs = logs.filter(severity=filters["severity"])
+    if filters["user"]:
+        try:
+            logs = logs.filter(user_id=int(filters["user"]))
+        except ValueError:
+            pass
+
+    return _apply_date_range(logs, filters["date_from"], filters["date_to"], "timestamp")
+
+
+@login_required
+@role_required("can_view_logs")
+def export_auth_log_csv(request):
+    """
+    Eksportuje przefiltrowane logi uwierzytelniania do pliku w formacie CSV.
+    """
+    filters = _auth_log_filters(request)
+    logs = _filtered_auth_logs(filters)
+
+    rows = []
+    for log in logs:
+        local_time = dj_timezone.localtime(log.timestamp).strftime("%Y-%m-%d %H:%M:%S") if log.timestamp else "-"
+        rows.append([
+            local_time,
+            log.user.get_username() if log.user else "Anonim",
+            log.get_action_display(),
+            log.get_severity_display(),
+            log.ip_address or "-",
+            log.details or "-",
+        ])
+
+    return _csv_response(
+        "raport_log_autoryzacja",
+        ["Data i czas", "Użytkownik", "Akcja", "Poziom", "Adres IP", "Szczegóły"],
+        rows,
+    )
+
+
+@login_required
+@role_required("can_view_logs")
+def export_auth_log_pdf(request):
+    """
+    Generuje raport w formacie PDF zawierający przefiltrowaną listę logów uwierzytelniania.
+    """
+    filters = _auth_log_filters(request)
+    logs = _filtered_auth_logs(filters)
+    active_role = _get_active_role(request)
+
+    filters_desc = _get_applied_filters_text({
+        "Akcja": filters["action"],
+        "Poziom (severity)": filters["severity"],
+        "Użytkownik": _get_user_display_name(filters["user"]),
+        "Data od": filters["date_from"],
+        "Data do": filters["date_to"],
+    })
+
+    styles = _pdf_styles(cell_font_size=8, cell_leading=10)
+    buffer, doc = _new_pdf_document()
+    elements = []
+
+    _add_report_header(
+        elements, styles,
+        title="Raport Logów Uwierzytelniania",
+        request=request, active_role=active_role,
+        filters_desc=filters_desc, record_count=logs.count(),
+    )
+
+    table_rows = []
+    for log in logs:
+        local_time = dj_timezone.localtime(log.timestamp).strftime("%Y-%m-%d %H:%M") if log.timestamp else "-"
+        table_rows.append([
+            local_time,
+            log.user.get_username() if log.user else "Anonim",
+            log.get_action_display(),
+            log.get_severity_display(),
+            log.ip_address or "-",
+            log.details or "-",
+        ])
+
+    elements.append(_build_table(
+        ["Data i czas", "Użytkownik", "Akcja", "Poziom", "Adres IP", "Szczegóły"],
+        table_rows,
+        [80, 75, 100, 60, 80, 140],
+        styles,
+    ))
+
+    return _pdf_response(buffer, doc, elements, "raport_log_autoryzacja")
+
+
+# =========================================================================
+# Widoczność i filtracja wniosków urlopowych
+# =========================================================================
+
+def _get_manager_team_ids(user) -> list:
+    """
+    Zwraca listę identyfikatorów (PK) zespołów zarządzanych przez podanego użytkownika.
+    """
+    return list(Team.get_teams_managed_by(user).values_list("pk", flat=True))
+
+
+def _base_visible_queryset(request, active_role: str | None) -> QuerySet:
+    """
+    Konstruuje bazowy QuerySet wniosków urlopowych (LeaveRequest), do których zalogowany użytkownik ma dostęp wynikający z jego aktywnej roli.
+    """
+    qs = LeaveRequest.objects.select_related(
+        "employee", "who_confirmed",
+        "employee__worker_profile", "employee__worker_profile__team",
+    )
+
+    if active_role == "Worker":
+        return qs.filter(employee=request.user)
+
+    if active_role == "Manager":
+        managed_team_ids = _get_manager_team_ids(request.user)
+        if not managed_team_ids:
+            return qs.none()
+
+        team_members = WorkerProfile.objects.filter(
+            team_id__in=managed_team_ids
+        ).values_list("user", flat=True)
+
+        return qs.filter(employee__in=team_members, employee__role="Worker")
+
+    if active_role not in ("COO", "Admin", "HR"):
+        return qs.none()
+
+    return qs.exclude(employee__role="Admin")
+
+
+def _get_role_and_team_lists(active_role: str | None, base_qs: QuerySet) -> tuple[list, QuerySet]:
+    """
+    Wyznacza dostępne listy ról oraz zespołów służące do filtrowania w zależności od roli użytkownika.
+    """
+    if active_role == "Manager":
+        roles = []
+        teams = Team.objects.filter(
+            id__in=base_qs.values("employee__worker_profile__team")
+        ).distinct()
+    else:
+        roles = ["Worker", "Manager", "HR", "COO"]
+        teams = Team.objects.filter(is_active=True)
+
+    return roles, teams
+
+
+def _apply_report_filters(qs: QuerySet, filters: dict, all_roles_list: list) -> QuerySet:
+    """
+    Aplikuje zestaw filtrów (status, daty, ramy czasowe, użytkownik, zespół) do zapytania QuerySet wniosków urlopowych.
+    """
+    if user_id := filters["user"]:
+        if str(user_id).isdigit():
+            qs = qs.filter(employee_id=int(user_id))
+    elif query := filters["search"]:
+        qs = qs.filter(
+            Q(employee__first_name__icontains=query)
+            | Q(employee__last_name__icontains=query)
+            | Q(employee__username__icontains=query)
+        )
+
+    if status := filters["status"]:
+        if status in LeaveRequest.Status.values:
+            qs = qs.filter(status=status)
+
+    proc = filters["processed"]
+    if proc == "unprocessed":
+        qs = qs.filter(status="pending")
+    elif proc == "processed":
+        qs = qs.filter(status__in=["approved", "rejected", "canceled"])
+    elif proc in ("approved", "rejected", "canceled"):
+        qs = qs.filter(status=proc)
+
+    if date_from_str := filters["date_from"]:
+        try:
+            date_from = datetime.strptime(date_from_str, DATE_FMT).date()
+            qs = qs.filter(end_date__gte=date_from)
+        except ValueError:
+            pass
+
+    if date_to_str := filters["date_to"]:
+        try:
+            date_to = datetime.strptime(date_to_str, DATE_FMT).date()
+            qs = qs.filter(start_date__lte=date_to)
+        except ValueError:
+            pass
+
+    if (role := filters["role"]) and role in all_roles_list:
+        qs = qs.filter(employee__role=role)
+
+    if team_id := filters["team"]:
+        if str(team_id).isdigit():
+            qs = qs.filter(employee__worker_profile__team_id=int(team_id))
+
+    return qs.order_by("-created_at")
+
+
+def _get_applied_leave_filters_text(filters: dict) -> str:
+    """
+    Tworzy opisu tekstowy przedstawiający listę nałożonych filtrów na wnioski urlopowe do zaprezentowania w raporcie.
+    """
+    active_filters = []
+
+    if filters.get("status"):
+        active_filters.append(f"Status: {filters['status']}")
+    if filters.get("processed"):
+        active_filters.append(f"Stan: {filters['processed']}")
+    if filters.get("role"):
+        active_filters.append(f"Rola: {filters['role']}")
+
+    if (team_id := filters.get("team")) and str(team_id).isdigit():
+        team_obj = Team.objects.filter(id=int(team_id)).first()
+        active_filters.append(f"Zespół: {team_obj.name if team_obj else team_id}")
+
+    if (user_id := filters.get("user")) and str(user_id).isdigit():
+        user_obj = User.objects.filter(id=int(user_id)).first()
+        active_filters.append(f"Użytkownik: {user_obj.username if user_obj else user_id}")
+
+    if search := filters.get("search"):
+        active_filters.append(f'Szukaj: "{search}"')
+    if filters.get("date_from"):
+        active_filters.append(f"Data od: {filters['date_from']}")
+    if filters.get("date_to"):
+        active_filters.append(f"Data do: {filters['date_to']}")
+
+    return ", ".join(active_filters) if active_filters else "Brak (wszystkie widoczne wnioski)"
+
+
+def _leave_request_filters_from_get(request) -> dict:
+    """
+    Zwraca słownik zawierający parametry filtrowania wniosków urlopowych pobrane z zapytania GET.
+    """
+    return {
+        "status": request.GET.get("status", "").lower(),
+        "processed": request.GET.get("processed", "").lower(),
+        "date_from": request.GET.get("date_from", ""),
+        "date_to": request.GET.get("date_to", ""),
+        "team": request.GET.get("team", ""),
+        "role": request.GET.get("role", ""),
+        "user": request.GET.get("user", ""),
+        "search": request.GET.get("search", "").strip(),
+    }
+
+
+def _employee_team_name(employee) -> str:
+    """
+    Zwraca nazwę zespołu przypisanego do danego pracownika lub znak '-' w przypadku braku zespołu.
+    """
+    profile = getattr(employee, "worker_profile", None)
+    return profile.team.name if profile and profile.team else "-"
+
+
+def _confirmer_name(leave_request) -> str:
+    """
+    Pomocnicza funkcja formatująca i zwracająca imię oraz nazwisko (lub username) osoby zatwierdzającej lub odrzucającej wniosek urlopowy.
+    """
+    if not leave_request.who_confirmed:
+        return "-"
+    who = leave_request.who_confirmed
+    return f"{who.first_name} {who.last_name}".strip() or who.username
+
+
+# =========================================================================
+# Widok raportu wniosków (płaska tabela z paginacją)
+# =========================================================================
+
+@login_required
+@role_required("can_see_all_requests")
+def leave_requests_report_list(request):
+    """
+    Paginowany widok listy raportu wniosków urlopowych zawierający formularze i opcje filtrów.
+    """
+    active_role = _get_active_role(request)
+    base_qs = _base_visible_queryset(request, active_role)
+    all_roles_list, all_teams_list = _get_role_and_team_lists(active_role, base_qs)
+
+    filters = _leave_request_filters_from_get(request)
+    queryset = _apply_report_filters(base_qs, filters, all_roles_list)
+
+    paginator = Paginator(queryset, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    context = {
+        "page_obj": page_obj,
+        "requests": page_obj.object_list,
+        "active_role": active_role,
+        "proc_filter": filters["processed"],
+        "status_filter": filters["status"],
+        "date_from": filters["date_from"],
+        "date_to": filters["date_to"],
+        "team_filter": filters["team"],
+        "role_filter": filters["role"],
+        "user_filter": filters["user"],
+        "search_query": filters["search"],
+        "all_teams_list": all_teams_list,
+        "all_roles_list": all_roles_list,
+        "applied_filters_text": _get_applied_leave_filters_text(filters),
+    }
+    return render(request, "reports/leave_requests_report_list.html", context)
+
+
+# =========================================================================
+# Eksporty: leave requests
+# =========================================================================
+
+@login_required
+@role_required("can_see_all_requests")
+def export_leave_requests_csv(request):
+    """
+    Eksportuje wyfiltrowane wnioski urlopowe do pliku w formacie CSV.
+    """
+    active_role = _get_active_role(request)
+    base_qs = _base_visible_queryset(request, active_role)
+    all_roles_list, _ = _get_role_and_team_lists(active_role, base_qs)
+
+    filters = _leave_request_filters_from_get(request)
+    requests_qs = _apply_report_filters(base_qs, filters, all_roles_list)
+
+    rows = []
+    for req in requests_qs:
+        emp = req.employee
+        emp_name = f"{emp.first_name} {emp.last_name}".strip() or emp.username
+        emp_role = emp.get_role_display() if hasattr(emp, "get_role_display") else emp.role
+
+        rows.append([
+            req.id,
+            emp_name,
+            emp_role,
+            _employee_team_name(emp),
+            req.start_date.strftime(DATE_FMT) if req.start_date else "-",
+            req.end_date.strftime(DATE_FMT) if req.end_date else "-",
+            req.amount_days,
+            req.get_status_display(),
+            _confirmer_name(req),
+        ])
+
+    return _csv_response(
+        "raport_wnioskow",
+        ["ID Wniosku", "Pracownik", "Rola", "Zespół", "Od", "Do", "Dni", "Status", "Zatwierdził/Odrzucił"],
+        rows,
+    )
+
+
+@login_required
+@role_required("can_see_all_requests")
+def export_leave_requests_pdf(request):
+    """
+    Generuje dokument PDF zawierający tabelę z wyfiltrowanymi wnioskami urlopowymi.
+    """
+    active_role = _get_active_role(request)
+    base_qs = _base_visible_queryset(request, active_role)
+    all_roles_list, _ = _get_role_and_team_lists(active_role, base_qs)
+
+    filters = _leave_request_filters_from_get(request)
+    requests_qs = _apply_report_filters(base_qs, filters, all_roles_list)
+    filters_desc = _get_applied_leave_filters_text(filters)
+
+    styles = _pdf_styles(cell_font_size=8, cell_leading=10)
+    buffer, doc = _new_pdf_document()
+    elements = []
+
+    _add_report_header(
+        elements, styles,
+        title="Raport Wniosków Urlopowych",
+        request=request, active_role=active_role,
+        filters_desc=filters_desc, record_count=requests_qs.count(),
+    )
+
+    table_rows = []
+    for req in requests_qs:
+        emp = req.employee
+        emp_name = f"{emp.first_name} {emp.last_name}".strip() or emp.username
+        table_rows.append([
+            emp_name,
+            _employee_team_name(emp),
+            req.start_date.strftime(DATE_FMT) if req.start_date else "-",
+            req.end_date.strftime(DATE_FMT) if req.end_date else "-",
+            req.amount_days,
+            req.get_status_display(),
+            _confirmer_name(req),
+        ])
+
+    elements.append(_build_table(
+        ["Pracownik", "Zespół", "Od", "Do", "Dni", "Status", "Zatwierdził(a)"],
+        table_rows,
+        [110, 85, 65, 65, 35, 75, 100],
+        styles,
+    ))
+
+    return _pdf_response(buffer, doc, elements, "raport_wnioskow")
+
+
+# =========================================================================
+# JSON API - helpery
+# =========================================================================
+
+def _json_ok(data, **extra) -> JsonResponse:
+    """
+    Struktura odpowiedzi: {"results": [...], ...dodatkowe_pola}.
+    """
+    payload = {"results": data, **extra}
+    return JsonResponse(payload, encoder=DjangoJSONEncoder, safe=True)
+
+
+def _paginate_for_json(request, queryset_or_list, default_page_size: int = 20) -> tuple[list, dict]:
+    """
+    Paginuje `queryset_or_list` za pomocą parametrów zapytania ?page= i ?page_size=.
+    Zwraca (elementy_strony, metadane_paginacji). Wartość page_size jest ograniczona do maksymalnie 200,
+    aby zapobiec przypadkowemu pobraniu całej tabeli w jednym zapytaniu.
+    """
+    try:
+        page_size = min(int(request.GET.get("page_size", default_page_size)), 200)
+    except ValueError:
+        page_size = default_page_size
+
+    paginator = Paginator(queryset_or_list, page_size)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    meta = {
+        "page": page_obj.number,
+        "num_pages": paginator.num_pages,
+        "count": paginator.count,
+        "page_size": page_size,
+        "has_next": page_obj.has_next(),
+        "has_previous": page_obj.has_previous(),
+    }
+    return list(page_obj.object_list), meta
+
+# =========================================================================
+# JSON API - endpointy
+# =========================================================================
+
+@login_required
+@role_required("can_export_requests")
+def api_users_per_role(request):
+    """
+    Zwraca dane statystyczne o liczbie i aktywności użytkowników w podziale na role w formacie JSON.
+    """
+    if _manager_is_restricted(request):
+        return JsonResponse({"detail": "Brak dostępu dla Manager."}, status=403)
+
+    return _json_ok(_get_users_per_role_data())
+
+
+@login_required
+@role_required("can_export_requests")
+def api_leave_usage(request):
+    """
+    Zwraca spaginowaną listę wykorzystania urlopów przez pracowników w formacie JSON z uwzględnieniem filtrów ról i zespołów.
+    """
+    active_role = _get_active_role(request)
+    role_filter = request.GET.get("role", "ALL")
+    team_filter = request.GET.get("team", "ALL")
+
+    if active_role == "Manager":
+        role_filter = "ALL"
+        if team_filter == "NONE":
+            team_filter = "ALL"
+
+    profiles = _leave_usage_profiles(request, active_role)
+    report_rows = _leave_usage_rows(profiles, role_filter, team_filter)
+
+    page_items, meta = _paginate_for_json(request, report_rows)
+    return _json_ok(page_items, filters={"role": role_filter, "team": team_filter}, **meta)
+
+
+@login_required
+@role_required("can_export_requests")
+def api_team_report(request):
+    """
+    Zwraca spaginowane dane zbiorcze dotyczące wykorzystania urlopów w podziale na zespoły w formacie JSON.
+    """
+    report_rows = _team_rows(request)
+    page_items, meta = _paginate_for_json(request, report_rows)
+    return _json_ok(page_items, **meta)
+
+
+@login_required
+@role_required("can_view_logs")
+def api_activity_log(request):
+    """
+    Zwraca przefiltrowaną i spaginowaną listę logów aktywności systemowych w formacie JSON.
+    """
+    filters = _activity_log_filters(request)
+    logs = _filtered_activity_logs(filters)
+
+    page_items, meta = _paginate_for_json(request, logs)
+    results = [
+        {
+            "id": log.id,
+            "created_at": dj_timezone.localtime(log.created_at) if log.created_at else None,
+            "who": str(log.who) if log.who else None,
+            "action": log.action,
+            "action_display": log.get_action_display(),
+            "object_type": log.object_type,
+            "object_type_display": log.get_object_type_display(),
+            "object_id": log.object_id,
+            "details": log.details or "",
+        }
+        for log in page_items
+    ]
+    return _json_ok(
+        results,
+        filters={k: v for k, v in filters.items() if v},
+        **meta,
+    )
+
+
+@login_required
+@role_required("can_view_logs")
+def api_auth_log(request):
+    """
+    Zwraca przefiltrowaną i spaginowaną listę logów uwierzytelniania w formacie JSON.
+    """
+    filters = _auth_log_filters(request)
+    logs = _filtered_auth_logs(filters)
+
+    page_items, meta = _paginate_for_json(request, logs)
+    results = [
+        {
+            "id": log.id,
+            "timestamp": dj_timezone.localtime(log.timestamp) if log.timestamp else None,
+            "user": log.user.get_username() if log.user else None,
+            "action": log.action,
+            "action_display": log.get_action_display(),
+            "severity": log.severity,
+            "severity_display": log.get_severity_display(),
+            "ip_address": log.ip_address or "",
+            "details": log.details or "",
+        }
+        for log in page_items
+    ]
+    return _json_ok(
+        results,
+        filters={k: v for k, v in filters.items() if v},
+        **meta,
+    )
+
+
+@login_required
+@role_required("can_see_all_requests")
+def api_leave_requests(request):
+    """
+    Zwraca przefiltrowaną i spaginowaną listę wniosków urlopowych w formacie JSON z opisem zastosowanych filtrów.
+    """
+    active_role = _get_active_role(request)
+    base_qs = _base_visible_queryset(request, active_role)
+    all_roles_list, _ = _get_role_and_team_lists(active_role, base_qs)
+
+    filters = _leave_request_filters_from_get(request)
+    requests_qs = _apply_report_filters(base_qs, filters, all_roles_list)
+
+    page_items, meta = _paginate_for_json(request, requests_qs)
+    results = []
+    for req in page_items:
+        emp = req.employee
+        emp_name = f"{emp.first_name} {emp.last_name}".strip() or emp.username
+        emp_role = emp.get_role_display() if hasattr(emp, "get_role_display") else emp.role
+
+        results.append({
+            "id": req.id,
+            "employee": emp_name,
+            "employee_role": emp_role,
+            "team": _employee_team_name(emp),
+            "start_date": req.start_date,
+            "end_date": req.end_date,
+            "amount_days": req.amount_days,
+            "status": req.status,
+            "status_display": req.get_status_display(),
+            "confirmed_by": _confirmer_name(req),
+        })
+
+    return _json_ok(
+        results,
+        applied_filters=_get_applied_leave_filters_text(filters),
+        **meta,
+    )
