@@ -9,6 +9,8 @@ from accounts.models import User
 from logs.models import LoginAttempt
 from logs.utils import get_client_ip
 from django.core.mail import send_mail
+from logs.models import EmailVerificationCode, PasswordResetToken
+
 
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_WINDOW_MINUTES = 5
@@ -145,3 +147,37 @@ def verify_2fa(request):
             return redirect('login')
     
     return render(request, 'verify_2fa.html')
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            token = PasswordResetToken.objects.create(user=user)
+            reset_link = f"http://127.0.0.1:8000/login/reset-password/{token.token}/"
+            print(f"LINK RESETU: {reset_link}")  # TODO: zastąpić send_mail
+        except User.DoesNotExist:
+            pass  
+    return render(request, 'forgot_password.html')
+
+
+def reset_password_confirm(request, token):
+    try:
+        reset_token = PasswordResetToken.objects.get(token=token, is_used=False)
+    except PasswordResetToken.DoesNotExist:
+        return render(request, 'reset_password_confirm.html', {'error': 'Nieprawidłowy lub wygasły link.'})
+
+    if reset_token.is_expired():
+       return render(request, 'reset_password_confirm.html', {'error': 'Link wygasł.'})
+    
+    if request.method == 'POST':
+        new_password = request.POST.get('password')
+        if len(new_password) < 6:
+            return render(request, 'reset_password_confirm.html', {'error': 'Hasło musi mieć co najmniej 6 znaków.'})
+        reset_token.user.set_password(new_password)
+        reset_token.user.save()
+        reset_token.is_used = True
+        reset_token.save()
+        return redirect('login')
+
+    return render(request, 'reset_password_confirm.html')
