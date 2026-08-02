@@ -5,6 +5,9 @@ from accounts.models import User
 from django.http import HttpResponse
 from leaves.models import WorkerProfile
 import csv
+from leaves.models import LeaveRequest
+from django.db.models.functions import TruncMonth
+import json
 
 def reports_index(request):
     return render(request, 'reports/index.html')
@@ -212,3 +215,42 @@ def export_team_report_csv(request):
         ])
 
     return response
+
+@login_required
+def chart_leave_over_time(request):
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Admin', 'Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    data = (
+        LeaveRequest.objects
+        .annotate(month=TruncMonth('start_date'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+
+    labels = [row['month'].strftime('%Y-%m') for row in data]
+    values = [row['count'] for row in data]
+
+    return render(request, 'reports/chart_leave_over_time.html', {
+        'labels': json.dumps(labels),
+        'values': json.dumps(values),
+    })
+
+
+@login_required
+def chart_team_workload(request):
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Admin', 'Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    rows = _team_rows(request, active_role)
+    
+    labels = [row['team'] for row in rows]
+    values = [row['used'] for row in rows]
+
+    return render(request, 'reports/chart_team_workload.html', {
+        'labels': json.dumps(labels),
+        'values': json.dumps(values),
+})

@@ -8,4 +8,6 @@ urlpatterns = [
     path('leave-usage/export/', views.export_leave_usage_csv, name='export_leave_usage_csv'),
     path('team/', views.team_report, name='team_report'),
     path('team/export/', views.export_team_report_csv, name='export_team_report_csv'),
+    path('charts/leave-over-time/', views.chart_leave_over_time, name='chart_leave_over_time'),
+    path('charts/team-workload/', views.chart_team_workload, name='chart_team_workload'),  
 ]
