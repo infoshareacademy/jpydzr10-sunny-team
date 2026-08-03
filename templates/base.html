@@ -20,13 +20,22 @@
         </a>
         {% if user.is_authenticated %}
         <ul class="nav-links">
-            <li><a href="{% url 'dashboard' %}">{% trans "Pulpit" %}</a></li>
-            <li><a href="{% url 'my_vacations' %}">{% trans "Moje Urlopy" %}</a></li>
-            <li><a href="{% url 'new_request' %}">{% trans "Nowy Wniosek" %}</a></li>
-            {% if active_role == 'HR' or active_role == 'Manager' or active_role == 'Admin' %}
-            <li><a href="{% url 'reports_index' %}">{% trans "Raporty" %}</a></li>
-            {% endif %}
-        </ul>
+        <li><a href="{% url 'dashboard' %}">{% trans "Pulpit" %}</a></li>
+        <li><a href="{% url 'my_vacations' %}">{% trans "Moje Urlopy" %}</a></li>
+        <li><a href="{% url 'new_request' %}">{% trans "Nowy Wniosek" %}</a></li>
+        {% if active_role == 'HR' or active_role == 'Manager' or active_role == 'Admin' %}
+        <li><a href="{% url 'reports_index' %}">{% trans "Raporty" %}</a></li>
+        {% endif %}
+        {% if active_role == 'HR' %}
+        <li><a href="{% url 'chart_leave_over_time' %}">{% trans "Wykres urlopów" %}</a></li>
+        {% endif %}
+        {% if active_role == 'Manager' %}
+        <li><a href="{% url 'chart_team_workload' %}">{% trans "Obciążenie zespołu" %}</a></li>
+        {% endif %}
+        {% if active_role == 'Admin' %}
+        <li><a href="{% url 'log_history' %}">{% trans "Logi" %}</a></li>
+        {% endif %}
+         </ul>
         <div class="user-section">
             {% blocktrans with first=user.first_name last=user.last_name role=active_role %}
             Witaj {{ first }} {{ last }} ({{ role }}) !
