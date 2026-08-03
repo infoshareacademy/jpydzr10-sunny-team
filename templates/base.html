@@ -267,111 +267,45 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
 {% block nav %}
-    <nav class="navbar navbar-expand mynavbar">
-        <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div class="d-flex align-items-center flex-wrap gap-4">
-                <a class="brand-logo" href="{% url 'home' %}">
-                    <i class="bi bi-sun-fill"></i>
-                    <span class="d-none d-sm-inline">Sunny</span>
-                </a>
-                {% if active_role in 'Worker,Manager,HR,COO,Admin' %}
-                <ul class="navbar-nav d-flex flex-row align-items-center gap-3  m-0 p-0 flex-wrap">
-                    {% if active_role in 'Worker,Manager,HR,COO' %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-postcard-fill"></i>
-                            <span class="d-none d-lg-inline">{% translate "Wnioski Urlopowe" %}</span>
-                        </a>
-                        <ul class="dropdown-menu shadow-sm">
-                            {% if active_role == 'Worker' %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'new_request' %}"><i class="bi bi-file-earmark-plus-fill text-muted"></i> {% translate "Nowy" %} </a></li>
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'my_vacations' %}"><i class="bi bi-folder-fill text-muted"></i> {% translate "Lista" %} </a></li>
-                            {% else %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'pending_requests_list' %}"><i class="bi bi-stopwatch-fill text-muted"></i> {% translate "Oczekujące" %}</a></li>
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'history_requests_list' %}"><i class="bi bi-archive-fill text-muted"></i> {% translate "Historia" %}</a></li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-                    {% if active_role in 'Manager,HR,COO, Admin' %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-bar-chart-line-fill"></i>
-                            <span class="d-none d-lg-inline">{% translate "Zarządzanie" %}</span>
-                        </a>
-                        <ul class="dropdown-menu shadow-sm">
-                    {% if active_role in 'HR,COO,Admin,Manager' %}
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'reports_index' %}"><i class="bi bi-clipboard-data-fill text-muted"></i> {% translate "Raporty" %}</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'user_list' %}"><i class="bi bi-person-fill text-muted"></i> {% translate "Pracownicy" %}</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'team-list' %}"><i class="bi bi-people-fill text-muted"></i> {% translate "Zespoły" %}</a></li>
-                    {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-                    {% if active_role == 'Admin' %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-terminal-fill"></i>
-                            <span class="d-none d-lg-inline">{% translate "Panel Admina" %}</span>
-                        </a>
-                        <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'activity_log' %}"><i class="bi bi-keyboard-fill text-muted"></i> {% translate "Logi Aktywności" %}</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'auth_log' %}"><i class="bi bi-key-fill text-muted"></i> {% translate "Logi Autoryzacji" %}</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'add_user' %}"><i class="bi bi-person-plus-fill text-muted"></i> {% translate "Dodaj użytkownika" %}</a></li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                </ul>
-                {% endif %}
-            </div>
-{% if user.is_authenticated %}
-<div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
-    <span class="navbar-text text-light fs-5 fw-bold text-nowrap">
-        <span class="d-none d-sm-inline">{% translate "Rola:" %} </span><strong style="color: #ffdf22;">{{ active_role }}</strong>
-    </span>
-    <div class="dropdown profile-wrapper">
-        <a class="nav-link dropdown-toggle profile-trigger" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-fill fs-4"></i>
+<nav class="mynavbar">
+    <div class="nav-container">
+        <a class="brand-logo">
+            <i class="bi bi-sun-fill"></i>
+            <span>Sunny</span>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end mt-2 shadow p-2" style="min-width: 260px;">
-            {% if active_role != 'Admin' %}
-                <div class="px-2 py-2 mb-1 bg-white border-bottom">
-                    <div class="fw-bold text-dark fs-5 text-nowrap px-1">{{ user.first_name }} {{ user.last_name }}</div>
-                </div>
-
-                    {% if available_roles|length == 1 %}
-                        <li>
-                            <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-single" class="m-0">
-                                {% csrf_token %}
-                                <input type="hidden" name="role" value="{{ available_roles.0 }}">
-                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" href="#" onclick="document.getElementById('switch-role-form-single').submit(); return false;">
-                                    <i class="bi bi-compass-fill text-secondary"></i>
-                                    {% blocktrans with role_name=available_roles.0 %}Zmień rolę: {{ role_name }}{% endblocktrans %}
-                                </a>
-                            </form>
-                        </li>
-                    {% elif available_roles|length > 1 %}
-                        <li>
-                            <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-select" class="m-0">
-                                {% csrf_token %}
-                                <div class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" style="background: none; cursor: default;">
-                                    <i class="bi bi-compass-fill text-secondary"></i>
-                                    <span class="text-dark me-1">{% translate "Zmień rolę" %}:</span>
-                                    <select name="role" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
-                                        <option value="" disabled selected>{% translate "Wybierz..." %}</option>
-                                        {% for role in available_roles %}
-                                            <option value="{{ role }}">{{ role }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </form>
-                        </li>
-                    {% endif %}
-                <li>
-                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" href="{% url 'profile' user.id %}">
-                        <i class="bi bi-info-square-fill text-secondary"></i> {% translate "Szczegóły profilu" %}
-                    </a>
-                </li>
+        {% if user.is_authenticated %}
+        <ul class="nav-links">
+        <li><a href="{% url 'dashboard' %}">{% trans "Pulpit" %}</a></li>
+        <li><a href="{% url 'my_vacations' %}">{% trans "Moje Urlopy" %}</a></li>
+        <li><a href="{% url 'new_request' %}">{% trans "Nowy Wniosek" %}</a></li>
+        {% if active_role == 'HR' or active_role == 'Manager' or active_role == 'Admin' %}
+        <li><a href="{% url 'reports_index' %}">{% trans "Raporty" %}</a></li>
+        {% endif %}
+        {% if active_role == 'HR' %}
+        <li><a href="{% url 'chart_leave_over_time' %}">{% trans "Wykres urlopów" %}</a></li>
+        {% endif %}
+        {% if active_role == 'Manager' %}
+        <li><a href="{% url 'chart_team_workload' %}">{% trans "Obciążenie zespołu" %}</a></li>
+        {% endif %}
+        {% if active_role == 'Admin' %}
+        <li><a href="{% url 'log_history' %}">{% trans "Logi" %}</a></li>
+        {% endif %}
+         </ul>
+        <div class="user-section">
+            {% blocktrans with first=user.first_name last=user.last_name role=active_role %}
+            Witaj {{ first }} {{ last }} ({{ role }}) !
+            {% endblocktrans %}
+            {% if available_roles|length > 1 %}
+            <label for="Role">{% trans "Wybierz rolę:" %}</label>
+            <form action="{% url 'switch_role' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <select name="role">
+                    {% for role in available_roles %}
+                    <option value="{{ role }}" {% if role == active_role %}selected{% endif %}>{{ role }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-secondary">{% trans "Przełącz" %}</button>
+            </form>
             {% endif %}
             {% get_current_language as LANGUAGE_CODE %}
 
