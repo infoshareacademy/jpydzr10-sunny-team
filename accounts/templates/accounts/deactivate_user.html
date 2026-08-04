@@ -1,17 +1,18 @@
 {% extends "base.html" %}
- 
-{% block title %}Deaktywuj{{ target_user.username }}{% endblock %}
- 
+{% load i18n %}
+
+{% block title %}{% blocktrans with username=target_user.username %}Deaktywuj {{ username }}{% endblocktrans %}{% endblock %}
+
 {% block content %}
-  <h1>Dezaktywacja konta</h1>
- 
-  <p>Jestes pewny, czy chcesz dezaktywowac konto <strong>{{ target_user.username }}</strong> ({{ target_user.role }})?</p>
-  <p>Ten uzytkownik nie bedzie w stanie ponownie sie zalogowac.</p>
- 
+  <h1>{% trans "Dezaktywacja konta" %}</h1>
+
+  <p>{% blocktrans with username=target_user.username role=target_user.role %}Jestes pewny, czy chcesz dezaktywowac konto <strong>{{ username }}</strong> ({{ role }})?{% endblocktrans %}</p>
+  <p>{% trans "Ten uzytkownik nie bedzie w stanie ponownie sie zalogowac." %}</p>
+
   <form method="post">
     {% csrf_token %}
-    <button type="submit">Tak, dezaktywuj</button>
-    <a href="{% url 'user_list' %}">Anuluj</a>
+    <button type="submit">{% trans "Tak, dezaktywuj" %}</button>
+    <a href="{% url 'user_list' %}">{% trans "Anuluj" %}</a>
   </form>
 {% endblock %}
  
