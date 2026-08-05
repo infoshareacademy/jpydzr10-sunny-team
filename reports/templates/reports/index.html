@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raporty{% endblock %}
+{% block title %}{% trans "Raporty" %}{% endblock %}
 
 {% block content %}
 <div style="max-width: 900px; margin: 30px auto; padding: 20px;">
-    <h1>Raporty</h1>
+    <h1>{% trans "Raporty" %}</h1>
     <ul>
-        <li><a href="{% url 'users_per_role_report' %}">Liczba użytkowników wg roli, % aktywnych</a></li>
-        <li><a href="{% url 'leave_usage_report' %}">Wykorzystanie urlopów per użytkownik</a></li>
-        <li><a href="{% url 'team_report' %}">Urlopy per zespół</a></li>
+        <li><a href="{% url 'users_per_role_report' %}">{% trans "Liczba użytkowników wg roli, % aktywnych" %}</a></li>
+        <li><a href="{% url 'leave_usage_report' %}">{% trans "Wykorzystanie urlopów per użytkownik" %}</a></li>
+        <li><a href="{% url 'team_report' %}">{% trans "Urlopy per zespół" %}</a></li>
     </ul>
 </div>
 {% endblock %}
