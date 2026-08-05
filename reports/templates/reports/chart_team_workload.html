@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Obciążenie zespołów{% endblock %}
+{% block title %}{% trans "Obciążenie zespołów" %}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-center mb-4">Obciążenie zespołów</h2>
+    <h2 class="text-center mb-4">{% trans "Obciążenie zespołów" %}</h2>
     <canvas id="teamChart" width="800" height="400"></canvas>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,7 +16,7 @@
         data: {
             labels: {{ labels|safe }},
             datasets: [{
-                label: 'Wykorzystane dni',
+                label: '{% trans "Wykorzystane dni" %}',
                 data: {{ values|safe }},
                 backgroundColor: 'rgba(54, 162, 235, 0.5)',
             }]
