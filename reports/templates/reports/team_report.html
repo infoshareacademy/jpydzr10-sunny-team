@@ -1,26 +1,27 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raport: urlopy per zespół{% endblock %}
+{% block title %}{% trans "Raport: urlopy per zespół" %}{% endblock %}
 
 {% block content %}
 <div style="max-width: 1000px; margin: 30px auto; padding: 20px;">
-    <h1>Urlopy per zespół</h1>
+    <h1>{% trans "Urlopy per zespół" %}</h1>
 
     <p>
         <a href="{% url 'export_team_report_csv' %}" class="btn btn-secondary">
-            Eksportuj do CSV
+            {% trans "Eksportuj do CSV" %}
         </a>
     </p>
 
     <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
         <thead>
             <tr style="background: #0d6efd; color: white;">
-                <th style="padding: 12px; text-align: left;">Zespół</th>
-                <th style="padding: 12px; text-align: center;">Liczba osób</th>
-                <th style="padding: 12px; text-align: center;">Przydzielone (suma)</th>
-                <th style="padding: 12px; text-align: center;">Wykorzystane (suma)</th>
-                <th style="padding: 12px; text-align: center;">Pozostałe (suma)</th>
-                <th style="padding: 12px; text-align: center;">% wykorzystania</th>
+                <th style="padding: 12px; text-align: left;">{% trans "Zespół" %}</th>
+                <th style="padding: 12px; text-align: center;">{% trans "Liczba osób" %}</th>
+                <th style="padding: 12px; text-align: center;">{% trans "Przydzielone (suma)" %}</th>
+                <th style="padding: 12px; text-align: center;">{% trans "Wykorzystane (suma)" %}</th>
+                <th style="padding: 12px; text-align: center;">{% trans "Pozostałe (suma)" %}</th>
+                <th style="padding: 12px; text-align: center;">{% trans "% wykorzystania" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -40,14 +41,14 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="padding: 12px; text-align: center;">Brak danych.</td>
+                <td colspan="6" style="padding: 12px; text-align: center;">{% trans "Brak danych." %}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <p style="margin-top: 20px;">
-        <a href="{% url 'reports_index' %}">&laquo; Wróć do raportów</a>
+        <a href="{% url 'reports_index' %}">&laquo; {% trans "Wróć do raportów" %}</a>
     </p>
 </div>
 {% endblock %}
