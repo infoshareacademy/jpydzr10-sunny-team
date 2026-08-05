@@ -1,20 +1,21 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Historia logów{% endblock %}
+{% block title %}{% trans "Historia logów" %}{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-center mb-4">Historia logów</h2>
+    <h2 class="text-center mb-4">{% trans "Historia logów" %}</h2>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Użytkownik</th>
-                <th>Akcja</th>
-                <th>Typ obiektu</th>
-                <th>IP</th>
+                <th>{% trans "Użytkownik" %}</th>
+                <th>{% trans "Akcja" %}</th>
+                <th>{% trans "Typ obiektu" %}</th>
+                <th>{% trans "IP" %}</th>
                 <th>Severity</th>
-                <th>Data</th>
-                <th>Szczegóły</th>
+                <th>{% trans "Data" %}</th>
+                <th>{% trans "Szczegóły" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -26,10 +27,10 @@
                 <td>{{ log.ip_address }}</td>
                 <td>{{ log.severity }}</td>
                 <td>{{ log.created_at }}</td>
-                <td><a href="{% url 'log_detail' log.pk %}">Zobacz</a></td>
+                <td><a href="{% url 'log_detail' log.pk %}">{% trans "Zobacz" %}</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="7">Brak logów.</td></tr>
+            <tr><td colspan="7">{% trans "Brak logów." %}</td></tr>
             {% endfor %}
         </tbody>
     </table>
