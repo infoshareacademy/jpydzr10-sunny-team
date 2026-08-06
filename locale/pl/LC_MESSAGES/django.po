@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-19 02:23+0200\n"
+"POT-Creation-Date: 2026-08-06 18:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,13 +20,173 @@ msgstr ""
 "(n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && "
 "n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
 
-#: calendar_app/settings.py:136
+#: accounts/templates/accounts/deactivate_user.html:4
+#, python-format
+msgid "Deaktywuj %(username)s"
+msgstr "Deaktywuj %(username)s"
+
+#: accounts/templates/accounts/deactivate_user.html:7
+msgid "Dezaktywacja konta"
+msgstr "Dezaktywacja konta"
+
+#: accounts/templates/accounts/deactivate_user.html:9
+#, python-format
+msgid ""
+"Jestes pewny, czy chcesz dezaktywowac konto <strong>%(username)s</strong> "
+"(%(role)s)?"
+msgstr ""
+"Jestes pewny, czy chcesz dezaktywowac konto <strong>%(username)s</strong> "
+"(%(role)s)?"
+
+#: accounts/templates/accounts/deactivate_user.html:10
+msgid "Ten uzytkownik nie bedzie w stanie ponownie sie zalogowac."
+msgstr "Ten uzytkownik nie bedzie w stanie ponownie sie zalogowac."
+
+#: accounts/templates/accounts/deactivate_user.html:14
+msgid "Tak, dezaktywuj"
+msgstr "Tak, dezaktywuj"
+
+#: accounts/templates/accounts/deactivate_user.html:15
+#: leaves/templates/leaves/all_requests_list.html:197
+#: leaves/templates/leaves/my_vacations.html:130
+#: templates/request_base.html:125
+msgid "Anuluj"
+msgstr "Anuluj"
+
+#: accounts/templates/accounts/user_list.html:3
+#, fuzzy
+#| msgid "Lista użytkowników"
+msgid "Lista uzytkownikow"
+msgstr "Lista użytkowników"
+
+#: accounts/templates/accounts/user_list.html:6
+#, fuzzy
+#| msgid "Użytkownik"
+msgid "Użytkownicy"
+msgstr "Użytkownik"
+
+#: accounts/templates/accounts/user_list.html:12
+#: leaves/templates/leaves/team_calendar.html:277
+#: reports/templates/reports/leave_usage.html:20
+#: reports/templates/reports/team_report.html:19
+msgid "Zespół"
+msgstr "Zespół:"
+
+#: accounts/templates/accounts/user_list.html:13
+msgid "Imie"
+msgstr "Imie"
+
+#: accounts/templates/accounts/user_list.html:14
+msgid "Nazwisko"
+msgstr "Nazwisko"
+
+#: accounts/templates/accounts/user_list.html:15
+#: reports/templates/reports/users_per_role.html:13
+msgid "Rola"
+msgstr "Rola"
+
+#: accounts/templates/accounts/user_list.html:16
+msgid "Czy aktywny"
+msgstr "Czy aktywny"
+
+#: accounts/templates/accounts/user_list.html:17
+#: leaves/templates/leaves/all_requests_list.html:103
+#: leaves/templates/leaves/all_requests_list.html:149
+#: leaves/templates/leaves/my_vacations.html:99
+msgid "Akcje"
+msgstr "Akcje"
+
+#: accounts/templates/accounts/user_list.html:35
+#: templates/request_base.html:126
+msgid "Tak"
+msgstr "Tak"
+
+#: accounts/templates/accounts/user_list.html:37
+msgid "Nie"
+msgstr "Nie"
+
+#: accounts/templates/accounts/user_list.html:43
+msgid "Dezaktywuj"
+msgstr "Dezaktywuj"
+
+#: accounts/templates/accounts/user_list.html:46
+msgid "Nieaktywny"
+msgstr "Nieaktywny"
+
+#: accounts/templates/accounts/user_list.html:52
+msgid "Nie znaleziono uzytkownikow."
+msgstr "Nie znaleziono uzytkownikow."
+
+#: calendar_app/settings.py:140 calendar_app/settings_prod.py:124
 msgid "Polski"
 msgstr "Polski"
 
-#: calendar_app/settings.py:137
+#: calendar_app/settings.py:141 calendar_app/settings_prod.py:125
 msgid "English"
 msgstr "Angielski"
+
+#: leaves/templates/leaves/access_denied.html:4 templates/403.html:10
+msgid "Brak dostępu"
+msgstr "Brak dostępu"
+
+#: leaves/templates/leaves/access_denied.html:8
+msgid "Brak uprawnień"
+msgstr "Brak uprawnień"
+
+#: leaves/templates/leaves/access_denied.html:9
+msgid "Nie masz dostępu do tej strony."
+msgstr "Nie masz dostępu do tej strony."
+
+#: leaves/templates/leaves/access_denied.html:10
+msgid "Wróć do dashboardu"
+msgstr "Wróć do pulpitu"
+
+#: leaves/templates/leaves/add_user.html:4
+#: leaves/templates/leaves/add_user.html:41
+msgid "Dodaj nowego użytkownika"
+msgstr "Dodaj nowego użytkownika"
+
+#: leaves/templates/leaves/add_user.html:61
+msgid "Nazwa użytkownika:"
+msgstr "Nazwa użytkownika:"
+
+#: leaves/templates/leaves/add_user.html:67
+msgid "Imię:"
+msgstr "Imię:"
+
+#: leaves/templates/leaves/add_user.html:73
+msgid "Nazwisko:"
+msgstr "Nazwisko:"
+
+#: leaves/templates/leaves/add_user.html:79
+msgid "Email:"
+msgstr "Email:"
+
+#: leaves/templates/leaves/add_user.html:85
+msgid "Rola:"
+msgstr "Rola:"
+
+#: leaves/templates/leaves/add_user.html:91
+msgid "Hasło:"
+msgstr "Hasło:"
+
+#: leaves/templates/leaves/add_user.html:97
+msgid "Powtórz hasło:"
+msgstr "Powtórz hasło:"
+
+#: leaves/templates/leaves/add_user.html:103
+msgid "Zespół:"
+msgstr "Zespół:"
+
+#: leaves/templates/leaves/add_user.html:109
+
+msgid "Data zatrudnienia:"
+msgstr "Data zatrudnienia:"
+
+#: leaves/templates/leaves/add_user.html:115
+#: leaves/templates/leaves/dashboard.html:138
+msgid "Dodaj użytkownika"
+msgstr "Dodaj użytkkownika"
 
 #: leaves/templates/leaves/all_requests_list.html:3
 #: leaves/templates/leaves/all_requests_list.html:52
@@ -72,6 +232,8 @@ msgid "Reset"
 msgstr "Reset"
 
 #: leaves/templates/leaves/all_requests_list.html:85
+#: reports/templates/reports/leave_usage.html:12
+#: reports/templates/reports/team_report.html:12
 msgid "Eksportuj do CSV"
 msgstr "Eksportuj do CSV"
 
@@ -84,6 +246,7 @@ msgstr "Zespół: %(name)s"
 #: leaves/templates/leaves/all_requests_list.html:96
 #: leaves/templates/leaves/all_requests_list.html:142
 #: leaves/templates/leaves/team_leave_balance.html:24
+#: reports/templates/reports/leave_usage.html:19
 msgid "Pracownik"
 msgstr "Pracownik"
 
@@ -128,12 +291,6 @@ msgstr "Kto zatwierdził"
 #: leaves/templates/leaves/all_requests_list.html:148
 msgid "Data wniosku"
 msgstr "Data wniosku"
-
-#: leaves/templates/leaves/all_requests_list.html:103
-#: leaves/templates/leaves/all_requests_list.html:149
-#: leaves/templates/leaves/my_vacations.html:99
-msgid "Akcje"
-msgstr "Akcje"
 
 #: leaves/templates/leaves/all_requests_list.html:109
 #: leaves/templates/leaves/all_requests_list.html:155
@@ -212,12 +369,6 @@ msgstr "Następna"
 #: leaves/templates/leaves/all_requests_list.html:194
 msgid "Potwierdź akcję"
 msgstr "Potwierdź akcję"
-
-#: leaves/templates/leaves/all_requests_list.html:197
-#: leaves/templates/leaves/my_vacations.html:130
-#: templates/request_base.html:125
-msgid "Anuluj"
-msgstr "Anuluj"
 
 #: leaves/templates/leaves/all_requests_list.html:198
 msgid "Tak, wykonaj"
@@ -315,10 +466,6 @@ msgstr "Złóż nowy wniosek"
 msgid "Zarządzanie użytkownikami"
 msgstr "Zarządzanie użytkownikami"
 
-#: leaves/templates/leaves/dashboard.html:138
-msgid "Dodaj użytkownika"
-msgstr "Dodaj użytkkownika"
-
 #: leaves/templates/leaves/dashboard.html:139
 msgid "Lista użytkowników"
 msgstr "Lista użytkowników"
@@ -372,14 +519,20 @@ msgid "Data i godzina"
 msgstr "Data i godzina"
 
 #: leaves/templates/leaves/log_history.html:70
+#: logs/templates/logs/log_detail.html:12
+#: logs/templates/logs/log_history.html:12
 msgid "Użytkownik"
 msgstr "Użytkownik"
 
 #: leaves/templates/leaves/log_history.html:71
+#: logs/templates/logs/log_detail.html:13
+#: logs/templates/logs/log_history.html:13
 msgid "Akcja"
 msgstr "Akcja"
 
 #: leaves/templates/leaves/log_history.html:72
+#: logs/templates/logs/log_detail.html:14
+#: logs/templates/logs/log_history.html:14
 msgid "Typ obiektu"
 msgstr "Typ obiektu"
 
@@ -442,6 +595,32 @@ msgstr "Wyślij wniosek"
 #: leaves/templates/leaves/new_request.html:9
 msgid "wysłać"
 msgstr "wysłać"
+
+#: leaves/templates/leaves/reset_password.html:4
+#: login/templates/reset_password_confirm.html:4
+msgid "Reset hasła"
+msgstr "Reset hasła"
+
+#: leaves/templates/leaves/reset_password.html:8
+msgid "Reset hasła użytkownika"
+msgstr "Reset hasła użytkownika"
+
+#: leaves/templates/leaves/reset_password.html:21
+msgid "Wybierz użytkownika:"
+msgstr "Wybierz użytkownika:"
+
+#: leaves/templates/leaves/reset_password.html:23
+
+msgid "--- Wybierz użytkownika ---"
+msgstr "--- Wybierz użytkownika ---"
+
+#: leaves/templates/leaves/reset_password.html:29
+msgid "Nowe hasło (min. 6 znaków):"
+msgstr "Nowe hasło (min. 6 znaków):"
+
+#: leaves/templates/leaves/reset_password.html:33
+msgid "Zresetuj hasło"
+msgstr "Zresetuj hasło"
 
 #: leaves/templates/leaves/team_calendar.html:3
 msgid "Kalendarz urlopów zespołu"
@@ -507,10 +686,6 @@ msgstr ""
 "                                        </span>\n"
 "                                        "
 
-#: leaves/templates/leaves/team_calendar.html:277
-msgid "Zespół"
-msgstr "Zespół:"
-
 #: leaves/templates/leaves/team_calendar.html:285
 msgid "Brak pracowników"
 msgstr "Brak pracowników"
@@ -552,6 +727,100 @@ msgstr "Brak pracowników w zespole lub brak przypisanego zespołu."
 msgid "Brak danych do wyświetlenia."
 msgstr "Brak danych do wyświetlenia."
 
+#: leaves/views.py:203
+msgid "Pracownik nie ma przypisanego zespołu."
+msgstr "Pracownik nie ma przypisanego zespołu."
+
+#: leaves/views.py:212
+msgid "Możesz zatwierdzać tylko wnioski swojego zespołu."
+msgstr "Możesz zatwierdzać tylko wnioski swojego zespołu."
+
+#: leaves/views.py:215
+msgid "Nie masz przypisanego zespołu."
+msgstr "Nie masz przypisanego zespołu."
+
+#: leaves/views.py:233
+#, python-brace-format
+msgid ""
+"Manager zespołu {employee_team} jest dostępny. HR może zatwierdzać tylko gdy "
+"manager jest na urlopie."
+msgstr ""
+"Manager zespołu {employee_team} jest dostępny. HR może zatwierdzać tylko gdy "
+"manager jest na urlopie."
+
+#: leaves/views.py:256
+#, python-brace-format
+msgid "Błąd podczas zatwierdzania: {e}"
+msgstr "Błąd podczas zatwierdzania: {e}"
+
+#: leaves/views.py:281
+#, python-brace-format
+msgid "Błąd podczas odrzucania: {e}"
+msgstr "Błąd podczas odrzucania: {e}"
+
+#: leaves/views.py:412
+msgid "Można edytować tylko wnioski oczekujące."
+msgstr "Można edytować tylko wnioski oczekujące."
+
+#: leaves/views.py:417
+msgid "Możesz edytować tylko własne wnioski."
+msgstr "Możesz edytować tylko własne wnioski."
+
+#: leaves/views.py:489
+msgid "Możesz anulować tylko własne wnioski."
+msgstr "Możesz anulować tylko własne wnioski."
+
+#: leaves/views.py:493
+msgid "Można anulować tylko wnioski oczekujące."
+msgstr "Można anulować tylko wnioski oczekujące."
+
+#: leaves/views.py:497
+msgid "Wniosek został anulowany."
+msgstr "Wniosek został anulowany."
+
+#: leaves/views.py:716
+#, python-brace-format
+msgid "Użytkownik {user.username} został pomyślnie dodany."
+msgstr "Użytkownik {user.username} został pomyślnie dodany."
+
+#: leaves/views.py:731
+msgid "Brak ID użytkownika lub hasła."
+msgstr "Brak ID użytkownika lub hasła."
+
+#: leaves/views.py:739
+msgid "Hasło musi mieć conajmniej 6 znaków."
+msgstr "Hasło musi mieć conajmniej 6 znaków."
+
+#: leaves/views.py:752
+#, python-brace-format
+msgid "Hasło dla użytkownika {user.username} zostało zresetowane."
+msgstr "Hasło dla użytkownika {user.username} zostało zresetowane."
+
+#: leaves/views.py:756
+msgid "Nie znaleziono użytkownika."
+msgstr "Nie znaleziono użytkownika."
+
+#: leaves/views.py:758
+#, python-brace-format
+msgid "Błąd podczas resetowania hasła: {e}"
+msgstr "Błąd podczas resetowania hasła: {e}"
+
+#: login/templates/forgot_password.html:4
+msgid "Przypomnienie hasła"
+msgstr "Przypomnienie hasła"
+
+#: login/templates/forgot_password.html:10
+msgid "Przypomnij hasło"
+msgstr "Przypomnij hasło"
+
+#: login/templates/forgot_password.html:17
+msgid "Adres email"
+msgstr "Adres email"
+
+#: login/templates/forgot_password.html:20
+msgid "Wyślij link resetu"
+msgstr "Wyślij link resetu"
+
 #: login/templates/login.html:7
 msgid "Logowanie – Sunny"
 msgstr "Logowanie – Sunny"
@@ -584,6 +853,213 @@ msgstr "Zaloguj się"
 msgid "© 2026 SunnyTeam"
 msgstr "© 2026 SunnyTeam"
 
+#: login/templates/reset_password_confirm.html:10
+msgid "Ustaw nowe hasło"
+msgstr "Ustaw nowe hasło"
+
+#: login/templates/reset_password_confirm.html:17
+msgid "Nowe hasło"
+msgstr "Nowe hasło"
+
+#: login/templates/reset_password_confirm.html:20
+msgid "Ustaw hasło"
+msgstr "Ustaw hasło"
+
+#: login/templates/verify_2fa.html:4
+msgid "Weryfikacja 2FA"
+msgstr "Weryfikacja 2FA"
+
+#: login/templates/verify_2fa.html:10
+msgid "Weryfikacja dwuetapowa"
+msgstr "Weryfikacja dwuetapowa"
+
+#: login/templates/verify_2fa.html:17
+msgid "Kod weryfikacyjny"
+msgstr "Kod weryfikacyjny"
+
+#: login/templates/verify_2fa.html:20
+msgid "Zweryfikuj"
+msgstr "Zweryfikuj"
+
+#: logs/templates/logs/log_detail.html:4
+msgid "Szczegóły logu"
+msgstr "Szczegóły logu"
+
+#: logs/templates/logs/log_detail.html:15
+#: logs/templates/logs/log_history.html:15
+msgid "IP"
+msgstr "IP"
+
+#: logs/templates/logs/log_detail.html:16
+msgid "Severity"
+msgstr "Severity"
+
+#: logs/templates/logs/log_detail.html:17
+msgid "Details"
+msgstr "Details"
+
+#: logs/templates/logs/log_detail.html:18
+#: logs/templates/logs/log_history.html:17
+msgid "Data"
+msgstr "Data"
+
+#: logs/templates/logs/log_detail.html:20
+msgid "Powrót"
+msgstr "Powrót"
+
+#: logs/templates/logs/log_history.html:4
+#: logs/templates/logs/log_history.html:8
+msgid "Historia logów"
+msgstr "Historia logów"
+
+#: logs/templates/logs/log_history.html:18
+msgid "Szczegóły"
+msgstr "Szczegóły"
+
+#: logs/templates/logs/log_history.html:30
+msgid "Zobacz"
+msgstr "Zobacz"
+
+#: logs/templates/logs/log_history.html:33
+msgid "Brak logów."
+msgstr "Brak logów."
+
+#: reports/templates/reports/chart_leave_over_time.html:4
+#: reports/templates/reports/chart_leave_over_time.html:8
+msgid "Urlopy w czasie"
+msgstr "Urlopy w czasie"
+
+#: reports/templates/reports/chart_team_workload.html:4
+#: reports/templates/reports/chart_team_workload.html:8
+msgid "Obciążenie zespołów"
+msgstr "Obciążenie zespołów"
+
+#: reports/templates/reports/chart_team_workload.html:19
+msgid "Wykorzystane dni"
+msgstr "Wykorzystane dni"
+
+#: reports/templates/reports/index.html:4
+#: reports/templates/reports/index.html:8 templates/base.html:27
+msgid "Raporty"
+msgstr "Raporty"
+
+#: reports/templates/reports/index.html:10
+#, python-format
+msgid "Liczba użytkowników wg roli, %% aktywnych"
+msgstr "Liczba użytkowników wg roli, %% aktywnych"
+
+#: reports/templates/reports/index.html:11
+#: reports/templates/reports/leave_usage.html:8
+msgid "Wykorzystanie urlopów per użytkownik"
+msgstr "Wykorzystanie urlopów per użytkownik"
+
+#: reports/templates/reports/index.html:12
+#: reports/templates/reports/team_report.html:8
+msgid "Urlopy per zespół"
+msgstr "Urlopy per zespół"
+
+#: reports/templates/reports/leave_usage.html:4
+msgid "Raport: wykorzystanie urlopów"
+msgstr "Raport: wykorzystanie urlopów"
+
+#: reports/templates/reports/leave_usage.html:21
+msgid "Przydzielone"
+msgstr "Przydzielone"
+
+#: reports/templates/reports/leave_usage.html:22
+msgid "Wykorzystane"
+msgstr "Wykorzystane"
+
+#: reports/templates/reports/leave_usage.html:23
+msgid "Pozostałe"
+msgstr "Pozostałe"
+
+#: reports/templates/reports/leave_usage.html:24
+#: reports/templates/reports/team_report.html:24
+msgid "%% wykorzystania"
+msgstr "%% wykorzystania"
+
+#: reports/templates/reports/leave_usage.html:44
+#: reports/templates/reports/team_report.html:44
+#: reports/templates/reports/users_per_role.html:31
+msgid "Brak danych."
+msgstr "Brak danych."
+
+#: reports/templates/reports/leave_usage.html:51
+#: reports/templates/reports/team_report.html:51
+#: reports/templates/reports/users_per_role.html:38
+msgid "Wróć do raportów"
+msgstr "Wróć do raportów"
+
+#: reports/templates/reports/team_report.html:4
+msgid "Raport: urlopy per zespół"
+msgstr "Raport: urlopy per zespół"
+
+#: reports/templates/reports/team_report.html:20
+msgid "Liczba osób"
+msgstr "Liczba osób"
+
+#: reports/templates/reports/team_report.html:21
+msgid "Przydzielone (suma)"
+msgstr "Przydzielone (suma)"
+
+#: reports/templates/reports/team_report.html:22
+msgid "Wykorzystane (suma)"
+msgstr "Wykorzystane (suma)"
+
+#: reports/templates/reports/team_report.html:23
+msgid "Pozostałe (suma)"
+msgstr "Pozostałe (suma)"
+
+#: reports/templates/reports/users_per_role.html:4
+msgid "Raport: użytkownicy wg roli"
+msgstr "Raport: użytkownicy wg roli"
+
+#: reports/templates/reports/users_per_role.html:8
+msgid "Liczba użytkowników wg roli"
+msgstr "Liczba użytkowników wg roli"
+
+#: reports/templates/reports/users_per_role.html:14
+msgid "Liczba użytkowników"
+msgstr "Liczba użytkowników"
+
+#: reports/templates/reports/users_per_role.html:15
+msgid "Aktywni"
+msgstr "Aktywni"
+
+#: reports/templates/reports/users_per_role.html:16
+#, python-format
+msgid "%% aktywnych"
+msgstr "%% aktywnych"
+
+#: templates/403.html:5
+msgid "403 - Brak dostępu"
+msgstr "403 - Brak dostępu"
+
+#: templates/403.html:11
+msgid "Nie masz uprawnień do przeglądania tej strony."
+msgstr "Nie masz uprawnień do przeglądania tej strony."
+
+#: templates/403.html:12 templates/404.html:12
+msgid "Wróć na Dashboard"
+msgstr "Wróć na Pulpit"
+
+#: templates/404.html:5
+msgid "404 - Strona nie znaleziona"
+msgstr "404 - Strona nie znaleziona"
+
+#: templates/404.html:10
+msgid "Strona nie została znaleziona"
+msgstr "Strona nie została znaleziona"
+
+#: templates/404.html:11
+msgid ""
+"Przepraszamy, ale strona, której szukasz, nie istnieje lub została "
+"przeniesiona."
+msgstr ""
+"Przepraszamy, ale strona, której szukasz, nie istnieje lub została "
+"przeniesiona."
+
 #: templates/base.html:23
 msgid "Pulpit"
 msgstr "Pulpit"
@@ -591,10 +1067,6 @@ msgstr "Pulpit"
 #: templates/base.html:25
 msgid "Nowy Wniosek"
 msgstr "Nowy Wniosek"
-
-#: templates/base.html:27
-msgid "Raporty"
-msgstr "Raporty"
 
 #: templates/base.html:31
 #, python-format
@@ -642,7 +1114,3 @@ msgstr "Wnioskowane / Dostępne dni:"
 #: templates/request_base.html:122
 msgid "dni"
 msgstr "dni"
-
-#: templates/request_base.html:126
-msgid "Tak"
-msgstr "Tak"
