@@ -1,16 +1,8 @@
-from django.db import models
-from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.db.models import Q
-from datetime import date
 from dateutil.relativedelta import relativedelta
-
 from team.models import Team
 from django.db import models
 from django.conf import settings
 from datetime import date
-
-TEAM_ASSIGNABLE_ROLES = ("Worker")
 
 
 class WorkerProfile(models.Model):
@@ -18,14 +10,16 @@ class WorkerProfile(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="worker_profile",
+        verbose_name="Profil pracownika"
     )
 
     team = models.ForeignKey(
-        Team,
+        "team.Team",
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
         related_name="members",
+        verbose_name="Aktualny zespół"
     )
 
     hire_date = models.DateField(verbose_name="Data zatrudnienia")
@@ -38,30 +32,9 @@ class WorkerProfile(models.Model):
         verbose_name_plural = "Profile pracowników"
 
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name}"
+        team_str = self.team.name if self.team else "Brak zespołu"
+        return f"Profil: {self.user.get_full_name() or self.user.username} ({team_str})"
 
-    def clean(self):
-        role = getattr(self.user, "role", None)
-        if role not in TEAM_ASSIGNABLE_ROLES and self.team is not None:
-            raise ValidationError({
-                "team": f"Użytkownik z rolą '{role}' nie może mieć bezpośrednio przypisanego "
-                        f"zespołu (pole 'team' dotyczy wyłącznie roli Worker)."
-            })
-
-    def save(self, *args, **kwargs):
-        role = getattr(self.user, "role", None)
-        if role not in TEAM_ASSIGNABLE_ROLES:
-            self.team = None
-
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    @property
-    def managed_teams(self):
-        """Dla Managera: zespoły, którymi zarządza. Dla innych ról: pusty QuerySet."""
-        if getattr(self.user, "role", None) != "Manager":
-            return Team.objects.none()
-        return Team.get_teams_managed_by(self.user)
 
     def _total_experience_years(self) -> int:
         adjusted_hire_date = self.hire_date - relativedelta(
@@ -96,9 +69,6 @@ class WorkerProfile(models.Model):
         self.save()
 
 
-
-
-
 class LeaveRequest(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Oczekujący"
@@ -112,6 +82,16 @@ class LeaveRequest(models.Model):
         related_name="leave_requests",
         verbose_name="Pracownik",
     )
+
+    team = models.ForeignKey(
+        "team.Team",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leave_requests",
+        verbose_name="Zespół w momencie wnioskowania",
+    )
+
     start_date = models.DateField(verbose_name="Data od")
     end_date = models.DateField(verbose_name="Data do")
     amount_days = models.PositiveIntegerField(verbose_name="Liczba dni roboczych")
@@ -160,8 +140,16 @@ class LeaveRequest(models.Model):
         )
 
     def save(self, *args, **kwargs):
+        if not self.pk and hasattr(self.employee, "worker_profile") and self.employee.worker_profile.team:
+            self.team = self.employee.worker_profile.team
+
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def team_display_name(self) -> str:
+        """Zwraca nazwę zespołu lub informację o jego braku."""
+        return self.team.name if self.team else "Brak zespołu"
 
     def check_is_pending(self):
         if self.status != self.Status.PENDING:

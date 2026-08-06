@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block title %}Profil Użytkownika - SunnyTeamProject{% endblock %}
 
 {% block content %}
@@ -38,12 +39,7 @@
                 </div>
 
                 <ul class="meta-list">
-                    <li class="meta-item">
-                        <span class="meta-label">Stanowisko</span>
-                        <span class="meta-value">{{ position }}</span>
-                    </li>
-
-                    {% if active_role in 'HR,COO,Admin' %}
+                    {% if active_role == 'Admin' %}
                         <li class="meta-item">
                             <span class="meta-label">Status konta</span>
                             <span class="meta-value">
@@ -55,27 +51,38 @@
                             </span>
                         </li>
                     {% endif %}
-
+                    <!-- ZAWSZE: ZESPÓŁ, DO KTÓREGO NALEŻY UŻYTKOWNIK -->
                     <li class="meta-item">
-                        <span class="meta-label">Data zatrudnienia</span>
-                        <span class="meta-value">{{ profile.hire_date|date:"d.m.Y"|default:"—" }}</span>
+                        <span class="meta-label">Należy do zespołu</span>
+                        <span class="meta-value">
+                            {% if team %}
+                                {% if team.pk in accessible_team_ids %}
+                                    <a href="{% url 'team-detail' pk=team.pk %}" class="text-dark text-decoration-none hover-underline">
+                                        {{ team.name }}
+                                    </a>
+                                {% else %}
+                                    {{ team.name }}
+                                {% endif %}
+                            {% else %}
+                                Brak
+                            {% endif %}
+                        </span>
                     </li>
 
-                    {% if position == 'Worker' or position == 'Manager' %}
+                    <!-- DODATKOWO DLA ROLI MANAGER LUB HR -->
+                    {% if position == 'Manager' or position == 'HR' %}
                         <li class="meta-item">
-                            <span class="meta-label">
-                                {% if managed_teams %}Zarządzane zespoły{% else %}Zespół{% endif %}
-                            </span>
+                            <span class="meta-label">{% if position == 'Manager' %}Manager dla{% else %}HR dla{% endif %}</span>
                             <span class="meta-value">
                                 {% if managed_teams %}
                                     {% for t in managed_teams %}
                                         {% if forloop.counter <= 2 %}
-                                            {% if active_role == 'Worker' %}
-                                                <span class="text-dark">{{ t.name }}</span>
-                                            {% else %}
+                                            {% if t.pk in accessible_team_ids %}
                                                 <a href="{% url 'team-detail' pk=t.pk %}" class="text-dark text-decoration-none hover-underline">
                                                     {{ t.name }}
                                                 </a>
+                                            {% else %}
+                                                {{ t.name }}
                                             {% endif %}
                                             {% if not forloop.last and forloop.counter < 2 %}, {% endif %}
                                         {% endif %}
@@ -88,10 +95,10 @@
                                                 <div class="dropdown-title">Pozostałe zespoły</div>
                                                 {% for t in managed_teams %}
                                                     {% if forloop.counter > 2 %}
-                                                        {% if active_role == 'Worker' %}
-                                                            <span class="text-dark">{{ t.name }}</span>
-                                                        {% else %}
+                                                        {% if t.pk in accessible_team_ids %}
                                                             <a href="{% url 'team-detail' pk=t.pk %}">{{ t.name }}</a>
+                                                        {% else %}
+                                                            <span class="d-block py-1 text-dark">{{ t.name }}</span>
                                                         {% endif %}
                                                     {% endif %}
                                                 {% endfor %}
@@ -99,27 +106,22 @@
                                         </span>
                                     {% endif %}
                                 {% else %}
-                                    {% if profile.team %}
-                                        {% if active_role == 'Worker' %}
-                                            {{ worker_team_name|default:profile.team.name }}
-                                        {% else %}
-                                            <a href="{% url 'team-detail' pk=profile.team.pk %}" class="text-dark text-decoration-none hover-underline">
-                                                {{ worker_team_name|default:profile.team.name }}
-                                            </a>
-                                        {% endif %}
-                                    {% else %}
-                                        Brak
-                                    {% endif %}
+                                    Brak
                                 {% endif %}
                             </span>
                         </li>
                     {% endif %}
 
                     <li class="meta-item">
+                        <span class="meta-label">Data zatrudnienia</span>
+                        <span class="meta-value">{{ profile.hire_date|date:"d.m.Y"|default:"—" }}</span>
+                    </li>
+
+                    <li class="meta-item">
                         <span class="meta-label">Staż zewnętrzny</span>
                         <span class="meta-value">
                             {% if profile.other_experience_years or profile.other_experience_days %}
-                                {{ profile.other_experience_years }}l, {{ profile.other_experience_days }}d
+                                {{ profile.other_experience_years|default:0 }}l, {{ profile.other_experience_days|default:0 }}d
                             {% else %}
                                 0l, 0d
                             {% endif %}
@@ -127,50 +129,26 @@
                     </li>
                 </ul>
 
-            <!-- SEKCJA AKCJI ZARZĄDZANIA PROFILEM -->
-            {% if is_own_profile and profile_owner.is_active %}
-                <div class="d-grid gap-2 mt-3 pt-3 border-top">
-                    <a href="{% url 'change_own_password' %}" class="btn btn-warning fw-bold position-relative text-center py-2">
-                        <i class="bi bi-unlock-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
-                        <span>{% trans "Zmień hasło" %}</span>
-                    </a>
-                {% if not is_own_profile and profile_owner.is_active %}
-                    <!-- 1. PRZYCISK: Edycja profilu pracownika -->
-                    {% if request.user.is_superuser or active_role == 'COO' or active_role == 'Admin' %}
-                        <a href="{% url 'edit_worker_profile' user_id=profile_owner.id %}" class="btn btn-primary fw-bold position-relative text-center py-2">
-                            <i class="bi bi-sliders position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
-                            <span>{% trans "Edytuj profil" %}</span>
-                        </a>
-                    {% elif active_role == 'HR' and profile_owner.role == 'Worker' or active_role == 'HR' and profile_owner.role == 'Manager' %}
-                        <a href="{% url 'edit_worker_profile' user_id=profile_owner.id %}" class="btn btn-primary fw-bold position-relative text-center py-2">
-                            <i class="bi bi-sliders position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
-                            <span>{% trans "Edytuj profil" %}</span>
-                        </a>
-                    {% endif %}
-
-                    <!-- 2. PRZYCISK: Ustawienia konta (tylko Admin / Superuser) -->
-                    {% if request.user.is_superuser or active_role == 'Admin' %}
-                        <a href="{% url 'edit_user' user_id=profile_owner.id %}" class="btn btn-success fw-bold position-relative text-center py-2">
-                            <i class="bi bi-pencil-square position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
-                            <span>{% trans "Ustawienia konta" %}</span>
-                        </a>
-                    {% endif %}
-
-                    <!-- 3. PRZYCISK: Dezaktywacja użytkownika -->
-                    {% if request.user.is_superuser or active_role == 'COO' or active_role == 'Admin' %}
-                        <a href="{% url 'deactivate_user' pk=profile_owner.id %}" class="btn btn-danger fw-bold position-relative text-center py-2">
-                            <i class="bi bi-exclamation-triangle-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
-                            <span>{% trans "Dezaktywuj" %}</span>
-                        </a>
-                    {% elif active_role == 'HR' and profile_owner.role == 'Worker' or active_role == 'HR' and profile_owner.role == 'Manager' %}
-                        <a href="{% url 'deactivate_user' pk=profile_owner.id %}" class="btn btn-danger fw-bold position-relative text-center py-2">
-                            <i class="bi bi-exclamation-triangle-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
-                            <span>{% trans "Dezaktywuj" %}</span>
-                        </a>
-                    {% endif %}
-                    {% endif %}
-                </div>
-            {% endif %}
+                <!-- SEKCJA AKCJI ZARZĄDZANIA PROFILEM -->
+                {% if profile_owner.is_active %}
+                    <div class="d-grid gap-2 mt-3 pt-3 border-top">
+                        {% if is_own_profile %}
+                            <a href="{% url 'change_own_password' %}" class="btn btn-warning fw-bold position-relative text-center py-2">
+                                <i class="bi bi-unlock-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                                <span>{% trans "Zmień hasło" %}</span>
+                            </a>
+                        {% elif is_admin %}
+                            <a href="{% url 'edit_worker_profile' user_id=profile_owner.id %}" class="btn btn-primary fw-bold position-relative text-center py-2">
+                                <i class="bi bi-sliders position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                                <span>{% trans "Edytuj profil" %}</span>
+                            </a>
+                            <a href="{% url 'deactivate_user' pk=profile_owner.id %}" class="btn btn-danger fw-bold position-relative text-center py-2">
+                                <i class="bi bi-exclamation-triangle-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                                <span>{% trans "Dezaktywuj" %}</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
         </div>
 
@@ -197,8 +175,8 @@
 
                 <div class="info-card">
                     <h3>Aktywne wnioski</h3>
-                    <div class="number text-primary">{{ active_count }}</div>
-                    <p class="mt-2"><strong>{{ pending_count }}</strong> oczekuje na decyzję</p>
+                    <div class="number text-primary">{{ active_count|default:0 }}</div>
+                    <p class="mt-2"><strong>{{ pending_count|default:0 }}</strong> oczekuje na decyzję</p>
                 </div>
 
                 <div class="info-card">
@@ -224,18 +202,12 @@
                 <!-- KOLUMNA TABELI: PLANOWANE URLOPY -->
                 <div class="profile-section flex-fill-custom-1">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-1">
-                    {% if is_own_profile and active_role == 'Worker' %}
-                        <a href="{% url 'my_vacations' %}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
+
+                        <a class="m-0 fs-5 text-dark text-decoration-none fw-bold">
                             Planowane urlopy
                         </a>
-                    {% elif not is_own_profile %}
-                        <a href="{% url 'all_requests_list' %}?user={{ profile_owner.id }}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
-                            Planowane urlopy
-                        </a>
-                    {% else %}
-                        <h2 class="m-0 fs-5">Planowane urlopy</h2>
-                    {% endif %}
-                </div>
+
+                    </div>
                     <div class="table-responsive">
                         <table>
                             <tbody>
@@ -260,7 +232,7 @@
                                 {% empty %}
                                     <tr>
                                         <td colspan="2" class="text-center text-muted py-4 small">
-                                            Brak wniosków urlopowych.
+                                            Brak przyszłych urlopów.
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -272,14 +244,14 @@
                 <!-- KOLUMNA TABELI: NAJNOWSZA AKTYWNOŚĆ -->
                 <div class="profile-section flex-fill-custom-2">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-3">
-    {% if active_role in 'Admin' %}
-        <a href="{% url 'activity_log' %}?user={{ profile_owner.id }}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
-            Najnowsza aktywność
-        </a>
-    {% else %}
-        <h2 class="m-0 fs-5">Najnowsza aktywność</h2>
-    {% endif %}
-</div>
+                        {% if active_role == 'Admin' %}
+                            <a href="{% url 'activity_log' %}?user={{ profile_owner.id }}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
+                                Najnowsza aktywność
+                            </a>
+                        {% else %}
+                            <h2 class="m-0 fs-5">Najnowsza aktywność</h2>
+                        {% endif %}
+                    </div>
                     <div class="table-responsive">
                         <table>
                             <tbody>
@@ -417,20 +389,6 @@
     .meta-label { color: #718096; font-weight: 500; }
     .meta-value { color: #1a202c; font-weight: 700; text-align: right; }
 
-    /* AKCJE ADMINISTRATORA */
-    .admin-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 2px dashed #e2e8f0; }
-    .btn-admin-danger {
-        display: block; width: 100%; padding: 12px; background: #e53e3e; color: #ffffff; border: none;
-        border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;
-    }
-    .btn-admin-danger:hover { background: #c53030; }
-    .btn-admin-secondary {
-        display: block; width: 100%; padding: 10px; background: #ffffff; color: #4a5568;
-        border: 2px solid #cbd5e0; border-radius: 8px; text-decoration: none; font-weight: 600;
-        transition: all 0.2s; text-align: center;
-    }
-    .btn-admin-secondary:hover { background: #edf2f7; color: #1a202c; }
-
     /* KONTENER WYKRESU */
     .chart-container { position: relative; height: 300px; width: 100%; margin-top: 10px; }
 
@@ -482,6 +440,7 @@
             dropdown.classList.add('show');
         }
     }
+
     document.addEventListener('click', function() {
         document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => el.classList.remove('show'));
     });
@@ -504,59 +463,60 @@
         if (isOwnWorkerProfile) {
             return `{% url 'my_vacations' %}?date_from=${dateFrom}&date_to=${dateTo}`;
         }
-        return `{% url 'all_requests_list' %}?user=${profileOwnerId}&processed=processed&date_from=${dateFrom}&date_to=${dateTo}`;
+        return `{% url 'history_requests_list' %}?user=${profileOwnerId}&status=approved&date_from=${dateFrom}&date_to=${dateTo}`;
     }
 
     const leaveChartCanvas = document.getElementById('leaveChart');
-    leaveChartCanvas.style.cursor = 'pointer';
+    if (leaveChartCanvas) {
+        leaveChartCanvas.style.cursor = 'pointer';
 
-    new Chart(leaveChartCanvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: chartLabels,
-            datasets: [{
-                label: 'Wykorzystane dni urlopu',
-                data: chartValues,
-                backgroundColor: '#007bff',
-                borderRadius: 4,
-                maxBarThickness: 40
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            onClick: (event, elements) => {
-                if (elements.length === 0) return;
-                window.location.href = buildMonthRangeUrl(elements[0].index);
+        new Chart(leaveChartCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Wykorzystane dni urlopu',
+                    data: chartValues,
+                    backgroundColor: '#007bff',
+                    borderRadius: 4,
+                    maxBarThickness: 40
+                }]
             },
-            scales: {
-                y: {
-                    min: 0,
-                    max: chartMax,
-                    ticks: { stepSize: 2, color: '#718096', font: { weight: '500' } },
-                    grid: { color: '#e2e8f0' },
-                    title: { display: true, text: 'Dni urlopu', color: '#4a5568', font: { weight: '600' } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                onClick: (event, elements) => {
+                    if (elements.length === 0) return;
+                    window.location.href = buildMonthRangeUrl(elements[0].index);
                 },
-                x: {
-                    ticks: { color: '#718096', font: { weight: '500' } },
-                    grid: { display: false },
-                    title: { display: true, text: 'Miesiąc', color: '#4a5568', font: { weight: '600' } }
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1a202c',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    padding: 10,
-                    cornerRadius: 6,
-                    displayColors: false,
-                    callbacks: { label: (ctx) => `${ctx.parsed.y} dni urlopu` }
+                scales: {
+                    y: {
+                        min: 0,
+                        max: chartMax,
+                        ticks: { stepSize: 2, color: '#718096', font: { weight: '500' } },
+                        grid: { color: '#e2e8f0' },
+                        title: { display: true, text: 'Dni urlopu', color: '#4a5568', font: { weight: '600' } }
+                    },
+                    x: {
+                        ticks: { color: '#718096', font: { weight: '500' } },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1a202c',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 10,
+                        cornerRadius: 6,
+                        displayColors: false,
+                        callbacks: { label: (ctx) => `${ctx.parsed.y} dni urlopu` }
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 </script>
 {% endblock %}

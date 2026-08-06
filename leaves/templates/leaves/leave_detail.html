@@ -19,7 +19,7 @@
             </div>
 
             <p class="mb-0 mt-1">
-                <a href="{% url 'all_requests_list' %}?user={{ target_user.id }}" class="text-primary text-decoration-none fw-medium back-link">
+                <a href="{% url 'pending_requests_list' %}?user={{ target_user.id }}" class="text-primary text-decoration-none fw-medium back-link">
                     Zobacz wszystkie wnioski właściciela
                 </a>
             </p>
@@ -61,54 +61,25 @@
                         </span>
                     </div>
 
+                    <!-- ZESPOŁ PRZYPISANY DO WNIOSKU (leaverequest.team) -->
                     <div class="detail-item">
-                        <span class="detail-label">Rola</span>
+                        <span class="detail-label">Zespół </span>
                         <span class="detail-value">
-                            {{ target_user.get_role_display|default:target_user.role }}
-                        </span>
-                    </div>
-
-                    {% if target_user.role != 'HR' and target_user.role != 'COO' %}
-                    <div class="detail-item">
-                        <span class="detail-label">Zespół</span>
-                        <span class="detail-value">
-                            {% if user_teams %}
-                                {% for team in user_teams %}
-                                    {% if forloop.counter <= 2 %}
-                                        {% if active_role == 'Worker' %}
-                                            <span class="text-dark">{{ team.name }}</span>
-                                        {% else %}
-                                            <a href="{% url 'team-detail' pk=team.id %}" class="text-dark text-decoration-none hover-underline">
-                                                {{ team.name }}
-                                            </a>
-                                        {% endif %}
-                                        {% if not forloop.last and forloop.counter < 2 %}, {% endif %}
-                                    {% endif %}
-                                {% endfor %}
-
-                                {% if user_teams|length > 2 %}
-                                    <span class="more-teams-trigger" onclick="event.stopPropagation(); toggleTeamsDropdown(event, this)">
-                                        +{{ user_teams|length|add:"-2" }}
-                                        <div class="floating-teams-dropdown">
-                                            <div class="dropdown-title">Pozostałe zespoły</div>
-                                            {% for team in user_teams %}
-                                                {% if forloop.counter > 2 %}
-                                                    {% if active_role == 'Worker' %}
-                                                        <span class="text-dark">{{ team.name }}</span>
-                                                    {% else %}
-                                                        <a href="{% url 'team-detail' pk=team.id %}">{{ team.name }}</a>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                    </span>
+                            {% if leave.team %}
+                                {% if active_role == 'Worker' %}
+                                    <span class="text-dark">{{ leave.team.name }}</span>
+                                {% else %}
+                                    <a href="{% url 'team-detail' pk=leave.team.id %}" class="text-dark text-decoration-none hover-underline">
+                                        {{ leave.team.name }}
+                                    </a>
                                 {% endif %}
                             {% else %}
                                 <span class="text-muted">&mdash;</span>
                             {% endif %}
                         </span>
                     </div>
-                    {% endif %}
+
+
 
                     <!-- OKRES URLOPU -->
                     <div class="detail-item">
@@ -122,6 +93,7 @@
                         <span class="detail-value">{{ amount_days }}</span>
                     </div>
                 </div>
+
                 <!-- ODDZIELONA SEKCJA: DECYZJA PODJĘTA PRZEZ -->
                 {% if status_code != 'pending' %}
                     <div class="decision-banner decision-{{ status_code }} mb-4">
@@ -151,9 +123,9 @@
                         </div>
                     </div>
                 {% endif %}
-                <!-- --- SEKCJA KOMENTARZY (Dymki dopasowujące się do treści) --- -->
+
+                <!-- SEKCJA KOMENTARZY -->
                 <div class="comments-section mt-4 mb-4 d-flex flex-column gap-3">
-                    <!-- Komentarz pracownika (od lewej, dopasowany do treści) -->
                     {% if leave.request_comment %}
                         <div class="d-flex justify-content-start w-100">
                             <div class="card bg-light border-0 rounded-3 shadow-sm chat-bubble-left">
@@ -168,7 +140,6 @@
                         </div>
                     {% endif %}
 
-                    <!-- Komentarz akceptującego (od prawej, dopasowany do treści) -->
                     {% if status_code != 'pending' and leave.answer_comment %}
                         <div class="d-flex justify-content-end w-100">
                             <div class="card border-0 rounded-3 shadow-sm text-end chat-bubble-right {% if status_code == 'approved' %}bg-success-subtle{% elif status_code == 'rejected' %}bg-danger-subtle{% else %}bg-secondary-subtle{% endif %}">
@@ -190,7 +161,7 @@
                         {% if is_owner and active_role == 'Worker' %}
                             <a href="{% url 'leave_request_edit' pk=leave_id %}" class="btn-action btn-edit">Edytuj wniosek</a>
                             <button type="button" class="btn-action btn-cancel" onclick="openLeaveActionModal('cancel', '{% url 'leave_request_cancel' pk=leave_id %}', 'Wniosek #{{ leave_id }}')">Anuluj wniosek</button>
-                        {% elif not is_owner and active_role not in 'Worker, Admin' %}
+                        {% elif can_approve_or_reject or not is_owner and active_role not in 'Worker, Admin' %}
                             <button type="button" class="btn-action btn-approve" onclick="openLeaveActionModal('approve', '{% url 'approve_request' request_id=leave_id %}', 'Wniosek #{{ leave_id }} - {{ owner_full_name }}')">Akceptuj</button>
                             <button type="button" class="btn-action btn-reject" onclick="openLeaveActionModal('reject', '{% url 'reject_request' request_id=leave_id %}', 'Wniosek #{{ leave_id }} - {{ owner_full_name }}')">Odrzuć</button>
                         {% endif %}
@@ -318,7 +289,7 @@
 </div>
 
 <style>
-    /* STYL DYMKÓW CZATU (Dopasowanie szerokości do zawartości) */
+    /* STYL DYMKÓW CZATU */
     .chat-bubble-left {
         display: inline-block;
         width: fit-content;

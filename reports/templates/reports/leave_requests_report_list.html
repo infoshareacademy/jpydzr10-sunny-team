@@ -156,19 +156,6 @@
                     {% endfor %}
                 </select>
             </div>
-
-            <div class="col-md-3">
-                {% if active_role != 'Manager' %}
-                    <label for="role" class="form-label font-weight-bold text-dark">Filtruj po roli:</label>
-                    <select name="role" id="role" class="form-select">
-                        <option value="">Wszystkie role</option>
-                        {% for r in all_roles_list %}
-                            <option value="{{ r }}" {% if role_filter == r %}selected{% endif %}>{{ r }}</option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
-            </div>
-
             <div class="col-md-3">
                 <label for="date_from" class="form-label font-weight-bold text-dark">Data urlopu od:</label>
                 <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
@@ -192,7 +179,6 @@
                 <thead>
                     <tr>
                         <th>Pracownik</th>
-                        <th>Rola</th>
                         <th>Zespół</th>
                         <th style="text-align: center;">Okres</th>
                         <th style="text-align: center;">Dni</th>
@@ -211,9 +197,6 @@
                             {% else %}
                                 {{ req.employee.username }}
                             {% endif %}
-                        </td>
-                        <td style="color: #4a5568;">
-                            {{ req.employee.get_role_display|default:req.employee.role }}
                         </td>
                         <td>
                             {% if req.employee.worker_profile.team %}

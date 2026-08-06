@@ -32,7 +32,7 @@ def deactivate_user(request, pk):
 
     required_action = (
         'can_deactivate_staff'
-        if target_user.role in ('Admin', 'COO', 'HR') or target_user.is_superuser
+        if target_user.role in ('Admin', 'HR') or target_user.is_superuser
         else 'can_deactivate_worker'
     )
 
@@ -56,213 +56,99 @@ def deactivate_user(request, pk):
 
     return render(request, 'accounts/deactivate_user.html', {'target_user': target_user})
 
-
-
-def _apply_user_filters_and_ordering( qs, filters, request):
-    active_role = request.session.get('active_role', request.user.role)
-
-    if active_role == 'Manager':
-
-        managed_team_ids = list(
-            request.user.head_managed_teams.values_list('id', flat=True)
-        ) + list(
-            request.user.co_managed_teams.values_list('id', flat=True)
-        )
-
-        qs = qs.filter(
-            worker_profile__team_id__in=managed_team_ids,
-            is_active=True
-        )
-
-        filters['role'] = ''
-        filters['status'] = ''
-
-    # Wyszukiwanie frazy
-    if query := filters['search']:
-        qs = qs.filter(
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query) |
-            Q(email__icontains=query) |
-            Q(username__icontains=query)
-        )
-
-    # Filtr roli
-    if role := filters['role']:
-        qs = qs.filter(role=role)
-
-    # Filtr statusu konta
-    if filters['status'] == 'active':
-        qs = qs.filter(is_active=True)
-    elif filters['status'] == 'inactive':
-        qs = qs.filter(is_active=False)
-
-    # Filtr zespołu
-    if team_id := filters['team']:
-        if active_role == 'Manager':
-            managed_team_ids = list(
-                request.user.head_managed_teams.values_list('id', flat=True)
-            ) + list(
-                request.user.co_managed_teams.values_list('id', flat=True)
-            )
-            if team_id.isdigit() and int(team_id) in managed_team_ids:
-                qs = qs.filter(worker_profile__team_id=team_id)
-        else:
-            qs = qs.filter(
-                Q(worker_profile__team_id=team_id) |
-                Q(head_managed_teams__id=team_id) |
-                Q(co_managed_teams__id=team_id),
-                is_active=True
-            ).distinct()
-
-    # Priorytetyzacja ról i statusu profilu
-    # 0 = Brak profilu, 1 = COO, 2 = HR, 3 = Manager, 4 = Worker
-    return qs.annotate(
-        profile_priority=Case(
-            When(worker_profile__isnull=True, then=Value(0)),
-            default=Value(1),
-            output_field=IntegerField(),
-        ),
-        role_priority=Case(
-            When(role='COO', then=Value(1)),
-            When(role='HR', then=Value(2)),
-            When(role='Manager', then=Value(3)),
-            When(role='Worker', then=Value(4)),
-            default=Value(5),
-            output_field=IntegerField(),
-        )
-    ).order_by(
-        '-is_active',
-        'profile_priority',
-        'role_priority',
-        'worker_profile__team__name',
-        'first_name',
-        'last_name'
-    )
-
-
-def _can_see_actions_for(current_user, target_role):
-    if current_user.is_superuser or getattr(current_user, 'role', '') in ('COO', 'Admin'):
-        return True
-    if getattr(current_user, 'role', '') == 'HR':
-        return target_role not in ('HR', 'COO', 'Admin')
-    return False
-
-
-def _build_user_sections(page_items, current_user, team_filter):
-    active_users = [u for u in page_items if u.is_active]
-    inactive_users = [u for u in page_items if not u.is_active] if not team_filter else []
-    no_profile_users = [u for u in active_users if not u.has_profile] if not team_filter else []
-    with_profile_users = [u for u in active_users if u.has_profile]
-
-    coo_users = [u for u in with_profile_users if u.role == 'COO'] if not team_filter else []
-    hr_users = [u for u in with_profile_users if u.role == 'HR'] if not team_filter else []
-    manager_users = [u for u in with_profile_users if u.role == 'Manager']
-    worker_users = [u for u in with_profile_users if u.role == 'Worker']
-
-    w_unassigned = [
-        u for u in worker_users
-        if not getattr(u.worker_profile, 'team_id', None)
-    ] if not team_filter else []
-    teams_map = {}
-    for u in worker_users:
-        team = getattr(u.worker_profile, 'team', None)
-        if team:
-            if team.id not in teams_map:
-                teams_map[team.id] = {
-                    'team': team,
-                    'users': []
-                }
-            teams_map[team.id]['users'].append(u)
-
-    sections = {
-        'no_profile': {
-            'users': no_profile_users,
-            'show_hire_date': False,
-            'show_actions': _can_see_actions_for(current_user, 'NO_PROFILE'),
-            'has_items': bool(no_profile_users)
-        },
-        'coo': {
-            'users': coo_users,
-            'show_hire_date': True,
-            'show_actions': _can_see_actions_for(current_user, 'COO'),
-            'has_items': bool(coo_users)
-        },
-        'hr': {
-            'users': hr_users,
-            'show_hire_date': True,
-            'show_actions': _can_see_actions_for(current_user, 'HR'),
-            'has_items': bool(hr_users)
-        },
-        'managers': {
-            'users': manager_users,
-            'show_hire_date': True,
-            'show_actions': _can_see_actions_for(current_user, 'Manager'),
-            'has_items': bool(manager_users)
-        },
-        'workers': {
-            'unassigned': w_unassigned,
-            'teams': list(teams_map.values()),
-            'total_count': len(worker_users),
-            'show_hire_date': True,
-            'show_actions': _can_see_actions_for(current_user, 'Worker'),
-            'has_items': bool(w_unassigned or teams_map)
-        }
-    }
-
-    return sections, inactive_users
-
-
 @login_required
-@role_required("can_view_user_list")
+@role_required('can_view_user_list')
 def user_list(request):
-    active_role = request.session.get('active_role', request.user.role)
-    filters = {
-        'search': request.GET.get('search', '').strip(),
-        'role': request.GET.get('role', '').strip(),
-        'team': request.GET.get('team', '').strip(),
-        'status': request.GET.get('status', '').strip(),
-    }
-    qs = User.objects.exclude(
-        Q(role='Admin') | Q(is_superuser=True) | Q(is_staff=True)
-    ).select_related(
-        'worker_profile', 'worker_profile__team'
-    ).prefetch_related(
-        'head_managed_teams', 'co_managed_teams'
+    viewer = request.user
+    active_role = request.session.get('active_role', viewer.role)
+
+    role_order = Case(
+        When(role='Admin', then=0),
+        When(role='Manager', then=1),
+        When(role='HR', then=2),
+        When(role='Worker', then=3),
+        default=4,
+        output_field=IntegerField(),
     )
 
-    queryset = _apply_user_filters_and_ordering(qs, filters, request    )
-    paginator = Paginator(queryset, 20)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    page_items = list(page_obj.object_list)
-    for u in page_items:
-        u.has_profile = hasattr(u, 'worker_profile') and u.worker_profile is not None
-        managed_set = set(u.head_managed_teams.all()) | set(u.co_managed_teams.all())
-        u.managed_teams = sorted(list(managed_set), key=lambda x: x.name.lower())
+    base_qs = User.objects.exclude(role='Admin').exclude(is_superuser=True)
 
-    sections, inactive_users = _build_user_sections(page_items, request.user, filters['team'])
-
-    if active_role == 'Manager':
-        teams_qs = (
-                request.user.head_managed_teams.filter(is_active=True) |
-                request.user.co_managed_teams.filter(is_active=True)
-        ).distinct().order_by('name')
+    if active_role == 'Admin':
+        users = base_qs
+    elif active_role in ('Manager', 'HR'):
+        managed_team_ids = Team.objects.for_user(viewer).values_list('pk', flat=True)
+        users = base_qs.filter(worker_profile__team_id__in=managed_team_ids)
     else:
-        teams_qs = Team.objects.filter(is_active=True).order_by('name')
+        messages.info(request, 'Nie masz uprawnień do przeglądania listy użytkowników.')
+        return redirect('home')
+
+    # Filtr wyszukiwania
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        users = users.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(username__icontains=search_query)
+        )
+
+    # Filtr zespołu dla HR
+    selected_team_id = ''
+    if active_role == 'HR':
+        selected_team_id = request.GET.get('team', '').strip()
+        if selected_team_id.isdigit():
+            users = users.filter(worker_profile__team_id=selected_team_id)
+
+    # Filtry dla Admina
+    selected_status = ''
+    selected_role = request.GET.get('role', '')
+    no_team_only = False
+    no_profile_only = False
+
+    if active_role == 'Admin':
+        selected_status = request.GET.get('status', '').strip()
+        if selected_status == 'active':
+            users = users.filter(is_active=True)
+        elif selected_status == 'inactive':
+            users = users.filter(is_active=False)
+
+        no_team_only = request.GET.get('no_team') == '1'
+        if no_team_only:
+            users = users.filter(
+                Q(worker_profile__isnull=True) | Q(worker_profile__team__isnull=True)
+            )
+
+        no_profile_only = request.GET.get('no_profile') == '1'
+        if no_profile_only:
+            users = users.filter(worker_profile__isnull=True)
+
+        if selected_role:
+            users = users.filter(role=selected_role)
+
+    users = users.annotate(role_order=role_order).order_by(
+        '-is_active', 'role_order', 'last_name', 'first_name'
+    ).select_related('worker_profile', 'worker_profile__team').distinct()
+
+    # Wyciągnięcie zespołów zarządzanych przez każdego z użytkowników
+    user_list_data = list(users)
+    for u in user_list_data:
+        # Sprawdzamy, czy użytkownik jest wpisany jako manager lub hr w danym zespole
+        managed_by_user = Team.objects.filter(
+            Q(manager_id=u.id) | Q(hr_id=u.id)
+        ).distinct()
+        u.managed_teams_list = list(managed_by_user)
 
     context = {
-        'page_obj': page_obj,
-        'sections': sections,
-        'inactive_users': inactive_users,
-        'search_query': filters['search'],
-        'role_filter': filters['role'],
-        'team_filter': filters['team'],
-        'status_filter': filters['status'],
-        'all_teams_list': teams_qs,
-        'all_roles_list': ['Worker', 'Manager', 'HR', 'COO'],
-        'current_user_role': getattr(request.user, 'role', ''),
+        'users': user_list_data,
+        'active_role': active_role,
+        'search_query': search_query,
+        'managed_teams': (
+            Team.objects.for_user(viewer) if active_role in ('Manager', 'HR') else Team.objects.none()
+        ),
+        'selected_team_id': int(selected_team_id) if selected_team_id.isdigit() else '',
+        'selected_status': selected_status,
+        'no_team_only': no_team_only,
+        'no_profile_only': no_profile_only,
     }
-
     return render(request, 'accounts/user_list.html', context)
 
 @login_required
@@ -304,7 +190,7 @@ def _render_profile_form(request, target_user, allowed_roles, instance, template
         messages.error(request, 'Nie możesz edytować własnego profilu.')
         return redirect('user_list')
 
-    if request.user.role == 'HR' and target_user.role in 'COO, HR':
+    if request.user.role == 'HR' and target_user.role in 'HR':
         messages.error(request, 'Nie możesz edytować tego profilu.')
         return redirect('user_list')
 
@@ -504,6 +390,8 @@ def reset_password(request):
     return render(request, 'accounts/reset_password.html', {'users': users})
 
 MONTH_NAMES_PL = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
+
+
 class ProfileView(LoginRequiredMixin, DetailView):
     model = WorkerProfile
     template_name = 'accounts/profile.html'
@@ -514,7 +402,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
         target_user = get_object_or_404(User, pk=user_id) if user_id else request.user
 
         try:
-            profile = WorkerProfile.objects.get(user=target_user)
+            profile = WorkerProfile.objects.select_related('team').get(user=target_user)
         except WorkerProfile.DoesNotExist:
             messages.error(request, f'Użytkownik {target_user.username} nie ma przypisanego profilu.')
             return redirect('home')
@@ -549,24 +437,32 @@ class ProfileView(LoginRequiredMixin, DetailView):
         )
 
     def _has_access(self, viewer, target_user, active_role):
+        """
+        - Własny profil -> zawsze DOSTĘP
+        - Admin -> zawsze DOSTĘP
+        - Manager / HR -> dostęp TYLKO gdy target_user należy do zespołu, którym zarządzają
+        """
         if target_user == viewer:
             return True
-        if active_role in ["HR", "COO", "Admin"]:
+
+        if active_role == 'Admin':
             return True
-        if active_role == 'Manager':
-            return self._is_same_team_manager(viewer, target_user)
+
+        if active_role in ['Manager', 'HR']:
+            return self._is_user_in_managed_teams(viewer, target_user)
+
         return False
 
-    def _is_same_team_manager(self, viewer, target_user):
-        if target_user.role != 'Worker':
-            return False
+    def _is_user_in_managed_teams(self, viewer, target_user) -> bool:
         try:
             target_team_id = target_user.worker_profile.team_id
         except WorkerProfile.DoesNotExist:
             return False
-        if target_team_id is None:
+
+        if not target_team_id:
             return False
-        managed_team_ids = Team.get_teams_managed_by(viewer).values_list('pk', flat=True)
+
+        managed_team_ids = Team.objects.for_user(viewer).values_list('pk', flat=True)
         return target_team_id in managed_team_ids
 
     def get_context_data(self, **kwargs):
@@ -578,14 +474,14 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
         context['profile_owner'] = target_user
         context['is_own_profile'] = (self.request.user == target_user)
-        context['is_admin'] = active_role == 'Admin'
+        context['is_admin'] = (active_role == 'Admin')
         context['active_role'] = active_role
         context['position'] = position
 
         self._add_leave_balance_context(context, profile)
         self._add_team_context(context, profile, target_user)
         self._add_chart_context(context, target_user)
-        self._add_requests_context(context, target_user)
+        self._add_requests_context(context, target_user, active_role)
         self._add_activity_log_context(context, target_user, active_role)
 
         return context
@@ -596,7 +492,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
             used_days = profile.used_leave_days
             remaining_days = profile.get_leave_days()
             progress_percent = round((used_days / total_days) * 100) if total_days > 0 else 0
-        except WorkerProfile.DoesNotExist:
+        except (WorkerProfile.DoesNotExist, AttributeError, TypeError, ZeroDivisionError):
             total_days = used_days = remaining_days = None
             progress_percent = 0
 
@@ -606,13 +502,26 @@ class ProfileView(LoginRequiredMixin, DetailView):
         context['progress_percent'] = progress_percent
 
     def _add_team_context(self, context, profile, target_user):
-        try:
-            worker_team_name = Team.objects.get(pk=profile.team_id).name
-        except Team.DoesNotExist:
-            worker_team_name = None
+        """
+        - team: zespół profilowanego użytkownika
+        - worker_team_name: jego nazwa
+        - managed_teams: zespoły, którymi zarządza WŁAŚCICIEL profilu (jeśli HR/Manager)
+        - accessible_team_ids: zespoły, którymi zarządza OSOBA PRZEGLĄDAJĄCA (self.request.user)
+          -> tylko do nich pokazujemy link w szablonie
+        """
+        user_team = profile.team if profile else None
+        context['team'] = user_team
+        context['worker_team_name'] = user_team.name if user_team else None
 
-        context['worker_team_name'] = worker_team_name
-        context['managed_teams'] = Team.get_teams_managed_by(target_user)
+        target_user_role = target_user.role
+        if target_user_role in ['HR', 'Manager']:
+            context['managed_teams'] = Team.objects.active().for_user(target_user)
+        else:
+            context['managed_teams'] = Team.objects.none()
+
+        context['accessible_team_ids'] = set(
+            Team.objects.for_user(self.request.user).values_list('pk', flat=True)
+        )
 
     def _add_chart_context(self, context, target_user):
         current_year = date.today().year
@@ -639,9 +548,9 @@ class ProfileView(LoginRequiredMixin, DetailView):
         context['current_year'] = current_year
         context['chart_labels'] = MONTH_NAMES_PL
         context['chart_values'] = monthly_days
-        context['chart_max'] = context['total_days']
+        context['chart_max'] = context.get('total_days') or 26
 
-    def _add_requests_context(self, context, target_user):
+    def _add_requests_context(self, context, target_user, active_role):
         target_requests = LeaveRequest.objects.filter(
             employee=target_user,
             end_date__gte=date.today(),
@@ -655,7 +564,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
     def _add_activity_log_context(self, context, target_user, active_role):
         has_access_to_activity = (
-                context['is_own_profile'] or active_role in ['Admin', 'HR', 'Manager']
+            context['is_own_profile'] or active_role in ['Admin', 'HR', 'Manager']
         )
 
         if has_access_to_activity:

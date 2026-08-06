@@ -1,84 +1,68 @@
 {% extends 'base.html' %}
-{% load i18n %}
-
-{% block title %}{% trans "Lista Użytkowników" %}{% endblock %}
+{% block title %}Lista Użytkowników{% endblock %}
 
 {% block content %}
 <style>
-    .logs-wrapper {
+    .users-wrapper {
         max-width: 100%;
         margin: 0 auto;
         padding: 0 5%;
     }
 
-    .logs-header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-
-    .logs-header-title {
-        font-weight: 800;
-        color: #1a202c;
-        margin: 0;
-        font-size: 2.2rem;
-    }
-
-    .logs-section {
-        margin-bottom: 50px;
-        background: #ffffff;
-        padding: 30px;
+    .users-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         border: 1px solid #cbd5e0;
         overflow: hidden;
     }
 
-    .section-no-profile {
-        background: #fffbeb !important;
-        border: 1px solid #fde68a !important;
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
     }
 
-    .section-title-no-profile {
-        color: #b45309 !important;
-        border-bottom-color: #fcd34d !important;
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
     }
 
-    .section-title {
-        font-weight: 800;
-        color: #1a202c;
-        font-size: 1.5rem;
-        margin-bottom: 25px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #cbd5e0;
-    }
-
-    .group-title {
-        font-weight: 700;
+    th {
+        background-color: #ebf1f5 !important;
         color: #2d3748;
-        font-size: 1.15rem;
-        margin: 35px 0 12px 0;
-        padding-bottom: 6px;
-        border-bottom: 1px dashed #cbd5e0;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
     }
 
-    .group-title-link {
-        color: #2d3748 !important;
-        text-decoration: none !important;
-        transition: color 0.2s;
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+        vertical-align: middle;
     }
 
-    .group-title-link:hover {
-        color: #0284c7 !important;
-        text-decoration: underline !important;
+    tr:last-child td {
+        border-bottom: none;
     }
 
-    /* Filtry */
+    tr:hover td {
+        background-color: #f7fafc;
+    }
+
     .filters {
-        margin-bottom: 35px;
+        margin-bottom: 25px;
         padding: 20px;
         background: #f1f5f9;
         border-radius: 12px;
@@ -107,17 +91,27 @@
         white-space: nowrap;
     }
 
-    .filters select,
-    .filters input {
+    .filters select, .filters input[type="text"] {
         width: 100%;
         padding: 10px 14px;
         border: 2px solid #cbd5e0;
         border-radius: 8px;
-        background-color: #ffffff;
+        background-color: #fff;
         color: #1a202c;
         font-size: 0.95rem;
         font-weight: 500;
         outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a5568;
+        cursor: pointer;
     }
 
     .actions-group {
@@ -129,399 +123,294 @@
     .btn-filter {
         padding: 10px 24px;
         background: #007bff;
-        color: #ffffff;
+        color: white;
         border: none;
         border-radius: 8px;
         font-size: 0.95rem;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
     }
-
-    .btn-filter:hover { background: #0056b3; }
 
     .btn-reset {
         padding: 10px 24px;
-        background: #ffffff;
+        background: #fff;
         color: #4a5568;
         border: 2px solid #cbd5e0;
         border-radius: 8px;
         text-decoration: none;
         font-size: 0.95rem;
         font-weight: 600;
-        text-align: center;
-    }
-
-    .table-responsive-wrapper {
-        width: 100%;
-        overflow-x: auto;
-        border: 1px solid #cbd5e0;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        background: #ffffff;
-    }
-
-    .unified-app-table {
-        width: 100%;
-        min-width: 900px;
-        border-collapse: collapse;
-        table-layout: fixed !important;
-    }
-
-    .unified-app-table th {
-        background-color: #f1f5f9;
-        color: #475569;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.78rem;
-        padding: 12px 14px;
-        border-bottom: 2px solid #cbd5e0;
-        white-space: nowrap;
-        text-align: left;
-    }
-
-    .unified-app-table td {
-        padding: 12px 14px;
-        border-bottom: 1px solid #e2e8f0;
-        color: #1e293b;
-        font-size: 0.92rem;
-        vertical-align: middle;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .unified-app-table tr:last-child td { border-bottom: none; }
-
-    .clickable-row { cursor: pointer; }
-    .clickable-row:hover td { background-color: #f8fafc; }
-
-    .btn-action {
-        padding: 6px 16px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        border-radius: 6px;
-        text-decoration: none !important;
         display: inline-block;
-        transition: opacity 0.2s;
-        white-space: nowrap;
     }
 
-    .btn-action:hover { opacity: 0.9; }
-
-    .btn-edit {
-        background-color: #0284c7;
-        color: #ffffff !important;
-    }
-
-    .btn-assign {
-        background-color: #d97706;
-        color: #ffffff !important;
-    }
-    .btn-assign:hover {
-        background-color: #b45309;
-    }
-
-    .table-link {
-        color: #0f172a !important;
-        text-decoration: none !important;
-    }
-
-    .table-link:hover {
-        text-decoration: underline !important;
-        color: #0f172a !important;
-    }
-
-    .more-teams-trigger {
-        display: inline-block;
-        margin-left: 3px;
-        font-weight: 900;
-        color: #64748b;
-        cursor: pointer;
-        padding: 0 4px;
-        user-select: none;
-    }
-
-    .more-teams-trigger:hover { color: #0284c7; }
-
-    .floating-teams-dropdown {
-        display: none;
-        position: fixed;
-        z-index: 999999 !important;
-        background: #ffffff;
-        border: 1px solid #cbd5e0;
-        border-radius: 8px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
-        padding: 10px 14px;
-        min-width: 170px;
-        text-align: left;
-    }
-
-    .floating-teams-dropdown.show { display: block !important; }
-
-    .floating-teams-dropdown .dropdown-title {
-        font-size: 0.72rem;
-        color: #94a3b8;
+    .user-link, .team-link {
+        color: #1a202c;
         font-weight: 700;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-        padding-bottom: 4px;
-        border-bottom: 1px solid #f1f5f9;
+        text-decoration: none;
     }
 
-    .floating-teams-dropdown a {
-        display: block;
-        padding: 4px 0;
-        color: #0f172a !important;
-        text-decoration: none !important;
-        font-size: 0.85rem;
-        font-weight: 600;
+    .user-link:hover, .team-link:hover {
+        text-decoration: underline;
     }
 
-    .floating-teams-dropdown a:hover { color: #0284c7 !important; }
-
-    .text-center { text-align: center !important; }
-    .text-muted { color: #64748b; }
-    .font-bold { font-weight: 700; }
-
-    /* Paginacja */
-    .pagination-container {
-        display: flex;
-        justify-content: center;
+    .badge {
+        display: inline-flex;
         align-items: center;
-        margin: 30px 0 50px 0;
-        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        white-space: nowrap;
     }
 
-    .pagination-container .page-link {
-        padding: 8px 16px;
-        border: 1px solid #cbd5e0;
-        background-color: #ffffff;
-        color: #2d3748;
+    .badge-admin { background-color: #fde8e8; color: #9b1c1c; }
+    .badge-manager { background-color: #fef3c7; color: #92400e; }
+    .badge-hr { background-color: #e1effe; color: #1e429f; }
+    .badge-worker { background-color: #def7ec; color: #03543f; }
+
+    /* Stylizacja Przycisków Akcji Admina */
+    .btn-action-edit {
+        padding: 6px 12px;
+        background-color: #3182ce;
+        color: white;
         border-radius: 6px;
         text-decoration: none;
+        font-size: 0.85rem;
         font-weight: 600;
+        transition: background-color 0.2s;
+        display: inline-block;
+    }
+    .btn-action-edit:hover { background-color: #2b6cb0; color: white; }
+
+    .btn-action-deactivate {
+        padding: 6px 12px;
+        background-color: #e53e3e;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .btn-action-deactivate:hover { background-color: #c53030; }
+
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
         transition: all 0.2s;
     }
 
-    .pagination-container .page-link:hover {
-        background-color: #f1f5f9;
-        border-color: #94a3b8;
+    .btn-create {
+        background-color: #2b6cb0;
+        color: white;
+        border: none;
     }
-
-    .pagination-container .active .page-link {
-        background-color: #007bff;
-        color: #ffffff;
-        border-color: #007bff;
-    }
-
-    .pagination-container .disabled .page-link {
-        color: #a0aec0;
-        pointer-events: none;
-        background-color: #f7fafc;
+    .btn-create:hover {
+        background-color: #2c5282;
+        color: white;
     }
 </style>
 
-<div class="logs-wrapper mt-4">
-    <!-- NAGŁÓWEK Z PRZYCISKIEM RAPORTU -->
-    <div class="logs-header-container">
-        <h1 class="logs-header-title">
-            {% trans "Lista Użytkowników" %}
-        </h1>
-        {% if current_user_role in 'Manager, HR, COO, Admin' %}
-        <a href="{% url 'leave_usage_report' %}" class="btn btn-success d-inline-flex gap-2 ms-auto">
-            <i class="bi bi-clipboard-data-fill "></i>
-            <span>{% trans "Raport Użytkowników" %}</span>
-        </a>
-        {% endif %}
-        {% if current_user_role == 'Admin' %}
-            <a href="{% url 'add_user' %}" class="btn btn-primary justify-content: flex-end;">+ Dodaj użytkownika</a>
-        {% endif %}
+<div class="users-wrapper mt-4">
+    <!-- Nagłówek z wyrównaniem przycisków do prawej strony -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Lista Użytkowników</h1>
+            <p style="margin: 4px 0 0 0; color: #718096; font-size: 1rem;">
+                {% if active_role == 'Admin' %}
+                    Panel zarządzania kontami użytkowników w systemie
+                {% else %}
+                    Przegląd użytkowników
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Grupa przycisków akcji -->
+        <div class="d-flex gap-2 align-items-stretch">
+            {% if active_role in 'Manager,HR,Admin' %}
+                <a href="{% url 'leave_usage_report' %}" class="btn btn-success btn-custom">
+                    <i class="bi bi-clipboard-data-fill"></i>
+                    <span>Raport użytkowników</span>
+                </a>
+            {% endif %}
+
+            {% if active_role in 'Admin' %}
+                <a href="{% url 'add_user' %}" class="btn-custom btn-create">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Dodaj użytkownika</span>
+                </a>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- PANEL FILTRÓW -->
+    <!-- Filtry -->
     <section class="filters">
         <form method="get">
-            <!-- Wyszukiwanie frazy -->
             <div class="filter-group">
-                <label for="id_search">{% trans "Szukaj:" %}</label>
-                <input type="text" name="search" id="id_search" value="{{ search_query }}" placeholder="{% trans 'Imię, nazwisko, e-mail...' %}">
+                <label for="id_search">Szukaj:</label>
+                <input type="text" name="search" id="id_search" placeholder="Imię, nazwisko, login..." value="{{ search_query }}">
             </div>
 
-            <!-- Filtr Roli (ukryty dla Managera) -->
-            {% if active_role != 'Manager' and all_roles_list %}
+            {% if active_role == 'HR' %}
             <div class="filter-group">
-                <label for="id_role">{% trans "Rola:" %}</label>
-                <select name="role" id="id_role">
-                    <option value="">{% trans "Wszystkie" %}</option>
-                    {% for r in all_roles_list %}
-                        {% if r|lower != 'admin' and r|lower != 'administrator' and r|lower != 'superuser' %}
-                            <option value="{{ r }}" {% if role_filter == r %}selected{% endif %}>{{ r }}</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-
-            <!-- Filtr Zespołu -->
-            <div class="filter-group">
-                <label for="id_team">{% trans "Zespół:" %}</label>
+                <label for="id_team">Zespół:</label>
                 <select name="team" id="id_team">
-                    <option value="">
-                        {% if active_role == 'Manager' %}
-                            {% trans "Wszystkie moje zespoły" %}
-                        {% else %}
-                            {% trans "Wszystkie" %}
-                        {% endif %}
-                    </option>
-                    {% for t in all_teams_list %}
-                        <option value="{{ t.id }}" {% if team_filter == t.id|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
+                    <option value="">Wszystkie zespoły</option>
+                    {% for team in managed_teams %}
+                    <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
                     {% endfor %}
-                </select>
-            </div>
-
-            <!-- Filtr Statusu (ukryty dla Managera) -->
-            {% if active_role != 'Manager' %}
-            <div class="filter-group">
-                <label for="id_status">{% trans "Status:" %}</label>
-                <select name="status" id="id_status">
-                    <option value="">{% trans "Wszystkie" %}</option>
-                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>{% trans "Aktywni" %}</option>
-                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>{% trans "Nieaktywni" %}</option>
                 </select>
             </div>
             {% endif %}
 
-            <!-- Przyciski akcji -->
+            {% if active_role == 'Admin' %}
+            <!-- Filtr Roli dla Admina -->
+            <div class="filter-group">
+                <label for="id_role">Rola:</label>
+                <select name="role" id="id_role">
+                    <option value="">Wszystkie role</option>
+                    <option value="Admin" {% if selected_role == 'Admin' %}selected{% endif %}>Admin</option>
+                    <option value="Manager" {% if selected_role == 'Manager' %}selected{% endif %}>Manager</option>
+                    <option value="HR" {% if selected_role == 'HR' %}selected{% endif %}>HR</option>
+                    <option value="Worker" {% if selected_role == 'Worker' %}selected{% endif %}>Pracownik</option>
+                </select>
+            </div>
+
+            <!-- Filtr Statusu (Aktywności) dla Admina -->
+            <div class="filter-group">
+                <label for="id_status">Status:</label>
+                <select name="status" id="id_status">
+                    <option value="">Wszyscy</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Aktywni</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Nieaktywni</option>
+                </select>
+            </div>
+
+            <label class="checkbox-group">
+                <input type="checkbox" name="no_team" value="1" {% if no_team_only %}checked{% endif %}> Bez zespołu
+            </label>
+
+            <label class="checkbox-group">
+                <input type="checkbox" name="no_profile" value="1" {% if no_profile_only %}checked{% endif %}> Bez profilu
+            </label>
+            {% endif %}
+
             <div class="actions-group">
-                <button type="submit" class="btn-filter">{% trans "Filtruj" %}</button>
-                <a href="{% url 'user_list' %}" class="btn-reset">{% trans "Reset" %}</a>
+                <button type="submit" class="btn-filter">Filtruj</button>
+                <a href="{% url 'user_list' %}" class="btn-reset">Reset</a>
             </div>
         </form>
     </section>
 
-    <!-- 0. UŻYTKOWNICY BEZ PROFILU -->
-    {% if sections.no_profile.has_items %}
-    <section class="logs-section section-no-profile">
-        <div class="section-title section-title-no-profile">
-            {% trans "Użytkownicy bez przypisanego profilu" %} ({{ sections.no_profile.users|length }})
+    <!-- Tabela z Użytkownikami -->
+    <section class="users-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <!-- 1. Imię i Nazwisko -->
+                        <th>Imię i Nazwisko</th>
+
+                        <!-- 2. Należy do zespołu -->
+                        <th>Należy do zespołu</th>
+
+                        <!-- 3. Rola (Ukryta dla Manager oraz HR) -->
+                        {% if active_role not in 'Manager,HR' %}
+                        <th>Rola</th>
+                        {% endif %}
+
+                        <!-- 4. Zarządza zespołami (TYLKO ADMIN) -->
+                        {% if active_role == 'Admin' %}
+                        <th>Zarządza zespołami</th>
+
+                        <!-- 5. Akcje (TYLKO ADMIN) -->
+                        <th style="text-align: right;">Akcje</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr {% if not u.is_active %}style="opacity: 0.6; background-color: #fff5f5;"{% endif %}>
+                        <!-- 1. Imię i Nazwisko -->
+                        <td>
+                            <a href="{% url 'profile' user_id=u.id %}" class="user-link">
+                                {{ u.get_full_name|default:u.username }}
+                            </a>
+                            <div style="font-size: 0.85rem; color: #718096; font-family: monospace; font-weight: 600;">
+                                @{{ u.username }}
+                            </div>
+                        </td>
+
+                        <!-- 2. Należy do zespołu -->
+                        <td style="color: #2d3748; font-weight: 500;">
+                            {% if u.worker_profile and u.worker_profile.team %}
+                                <a href="{% url 'team-detail' pk=u.worker_profile.team.id %}" class="team-link">
+                                    {{ u.worker_profile.team.name }}
+                                </a>
+                            {% else %}
+                                <span style="color: #a0aec0; font-style: italic;">&mdash; Brak &mdash;</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 3. Rola (Ukryta dla Manager oraz HR) -->
+                        {% if active_role not in 'Manager,HR' %}
+                        <td>
+                            <span class="badge badge-{{ u.role|lower }}">
+                                {{ u.get_role_display|default:u.role }}
+                            </span>
+                        </td>
+                        {% endif %}
+
+                        <!-- Dostępne tylko dla Admina -->
+                        {% if active_role == 'Admin' %}
+                        <!-- 4. Zarządza zespołami -->
+                        <td>
+                            {% if u.managed_teams_list %}
+                                {% for team in u.managed_teams_list %}
+                                    <a href="{% url 'team-detail' pk=team.id %}" class="team-link">{{ team.name }}</a>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: #a0aec0; font-style: italic;">&mdash; Brak &mdash;</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 5. Akcje -->
+                        <td style="text-align: right; white-space: nowrap;">
+                            <div style="display: inline-flex; gap: 6px; align-items: center;">
+                                {% if u.is_active %}
+                                    <!-- Edycja profilu widoczna tylko dla aktywnych użytkowników -->
+                                    <a href="{% url 'edit_worker_profile' user_id=u.id %}" class="btn-action-edit" title="Edytuj profil użytkownika">
+                                        Edytuj profil
+                                    </a>
+
+                                    <form method="post" action="{% url 'deactivate_user' pk=u.id %}" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz dezaktywować tego użytkownika?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action-deactivate">
+                                            Dezaktywuj
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if active_role == 'Admin' %}5{% elif active_role in 'Manager,HR' %}2{% else %}3{% endif %}" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">
+                            Brak użytkowników spełniających podane kryteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        {% include 'accounts/user_tables/user_table.html' with users_list=sections.no_profile.users show_team_column=False show_hire_date=False show_actions_column=sections.no_profile.show_actions %}
     </section>
-    {% endif %}
-
-    <!-- 1. ZARZĄD / COO -->
-    {% if sections.coo.has_items %}
-    <section class="logs-section">
-        <div class="section-title">{% trans "Zarząd" %} ({{ sections.coo.users|length }})</div>
-        {% include 'accounts/user_tables/user_table.html' with users_list=sections.coo.users show_team_column=False show_hire_date=True show_actions_column=sections.coo.show_actions %}
-    </section>
-    {% endif %}
-
-    <!-- 2. HR -->
-    {% if sections.hr.has_items %}
-    <section class="logs-section">
-        <div class="section-title">{% trans "Dział HR" %} ({{ sections.hr.users|length }})</div>
-        {% include 'accounts/user_tables/user_table.html' with users_list=sections.hr.users show_team_column=False show_hire_date=True show_actions_column=sections.hr.show_actions %}
-    </section>
-    {% endif %}
-
-    <!-- 3. MENEDŻEROWIE -->
-    {% if sections.managers.has_items %}
-    <section class="logs-section">
-        <div class="section-title">{% trans "Menedżerowie" %} ({{ sections.managers.users|length }})</div>
-        {% include 'accounts/user_tables/user_table.html' with users_list=sections.managers.users show_team_column=True show_hire_date=True show_actions_column=sections.managers.show_actions %}
-    </section>
-    {% endif %}
-
-    <!-- 4. PRACOWNICY -->
-    {% if sections.workers.has_items %}
-    <section class="logs-section">
-        <div class="section-title">{% trans "Pracownicy" %} ({{ sections.workers.total_count }})</div>
-
-        {% if sections.workers.unassigned %}
-            <div class="group-title">{% trans "Brak zespołu" %} ({{ sections.workers.unassigned|length }})</div>
-            {% include 'accounts/user_tables/user_table.html' with users_list=sections.workers.unassigned show_team_column=False show_hire_date=True show_actions_column=sections.workers.show_actions %}
-        {% endif %}
-
-        {% for t_item in sections.workers.teams %}
-            <div class="group-title">
-                <a href="{% url 'team-detail' pk=t_item.team.pk %}" class="group-title-link">
-                    {{ t_item.team.name }}
-                </a>
-                ({{ t_item.users|length }})
-            </div>
-            {% include 'accounts/user_tables/user_table.html' with users_list=t_item.users show_team_column=False show_hire_date=True show_actions_column=sections.workers.show_actions %}
-        {% endfor %}
-    </section>
-    {% endif %}
-
-    <!-- 5. NIEAKTYWNI UŻYTKOWNICY -->
-    {% if inactive_users %}
-    <section class="logs-section">
-        <div class="section-title" style="color: #64748b;">
-            {% trans "Nieaktywni użytkownicy" %} ({{ inactive_users|length }})
-        </div>
-        {% include 'accounts/user_tables/user_table.html' with users_list=inactive_users show_team_column=False show_hire_date=True show_actions_column=False %}
-    </section>
-    {% endif %}
-
-    <!-- BLOK PAGINACJI Z ZACHOWANIEM FILTRÓW -->
-    {% if page_obj.has_other_pages %}
-    <div class="pagination-container">
-        {% if page_obj.has_previous %}
-            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">&laquo; {% trans "Pierwsza" %}</a>
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">&lsaquo; {% trans "Poprzednia" %}</a>
-        {% else %}
-            <span class="page-link disabled">&laquo; {% trans "Pierwsza" %}</span>
-            <span class="page-link disabled">&lsaquo; {% trans "Poprzednia" %}</span>
-        {% endif %}
-
-        <span class="page-link active">
-            {% trans "Strona" %} {{ page_obj.number }} {% trans "z" %} {{ page_obj.paginator.num_pages }}
-        </span>
-
-        {% if page_obj.has_next %}
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{% trans "Następna" %} &rsaquo;</a>
-            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{% trans "Ostatnia" %} &raquo;</a>
-        {% else %}
-            <span class="page-link disabled">{% trans "Następna" %} &rsaquo;</span>
-            <span class="page-link disabled">{% trans "Ostatnia" %} &raquo;</span>
-        {% endif %}
-    </div>
-    {% endif %}
 </div>
-
-<script>
-    function toggleTeamsDropdown(event, triggerElem) {
-        if (event.target.closest('a')) return;
-        event.stopPropagation();
-        event.preventDefault();
-        const dropdown = triggerElem.querySelector('.floating-teams-dropdown');
-        const isAlreadyOpen = dropdown.classList.contains('show');
-
-        document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => {
-            el.classList.remove('show');
-        });
-
-        if (!isAlreadyOpen) {
-            const rect = triggerElem.getBoundingClientRect();
-            dropdown.style.top = (rect.bottom + 4) + 'px';
-            dropdown.style.left = rect.left + 'px';
-            dropdown.classList.add('show');
-        }
-    }
-
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => {
-            el.classList.remove('show');
-        });
-    });
-
-    function navigateToProfile(event, url) {
-        const selection = window.getSelection();
-        if (selection.toString().length > 0) return;
-        window.location.href = url;
-    }
-</script>
 {% endblock %}

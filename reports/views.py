@@ -36,7 +36,7 @@ User = get_user_model()
 DATE_FMT = "%Y-%m-%d"
 DATETIME_DISPLAY_FMT = "%d.%m.%Y %H:%M"
 
-ROLE_HIERARCHY = {"COO": 1, "HR": 2, "Manager": 3, "Worker": 4}
+ROLE_HIERARCHY = {"HR": 2, "Manager": 3, "Worker": 4}
 
 
 # =========================================================================
@@ -335,7 +335,6 @@ def _get_users_per_role_data() -> list[dict]:
         ("Worker", "Worker"),
         ("Manager", "Manager"),
         ("HR", "HR"),
-        ("COO", "COO"),
     ]
 
     allowed_role_keys = [key for key, _ in target_roles if key is not None]
@@ -378,7 +377,7 @@ def _get_users_per_role_data() -> list[dict]:
 
 
 @login_required
-@role_required("can_export_requests")
+@role_required("can_view_logs")
 def users_per_role_report(request):
     """
     Widok raportu podsumowującego użytkowników według ról z danymi do wykresów.
@@ -397,7 +396,7 @@ def users_per_role_report(request):
 
 
 @login_required
-@role_required("can_export_requests")
+@role_required("can_view_logs")
 def export_users_per_role_csv(request):
     """
     Eksportuje dane z raportu użytkowników według ról do pliku CSV.
@@ -418,7 +417,7 @@ def export_users_per_role_csv(request):
 
 
 @login_required
-@role_required("can_export_requests")
+@role_required("can_view_logs")
 def export_users_per_role_pdf(request):
     """
     Generuje i zwraca raport w postaci pliku PDF przedstawiający podział
@@ -509,8 +508,8 @@ def _leave_usage_profiles(request, active_role: str | None):
     """
     profiles = WorkerProfile.objects.select_related("user", "team").filter(user__is_active=True)
 
-    if active_role == "Manager":
-        managed_teams = Team.get_teams_managed_by(request.user).filter(is_active=True)
+    if active_role in ("Manager", "HR"):
+        managed_teams = Team.objects.for_user(request.user).filter(is_active=True)
         profiles = profiles.filter(team__in=managed_teams).distinct()
     else:
         active_teams = Team.objects.filter(is_active=True)
@@ -529,10 +528,7 @@ def _get_teams_info_for_profile(profile) -> list[dict]:
     if profile.team and profile.team.is_active:
         teams_dict[profile.team.id] = profile.team.name
 
-    managed_teams = (
-        list(profile.user.head_managed_teams.filter(is_active=True))
-        + list(profile.user.co_managed_teams.filter(is_active=True))
-    )
+    managed_teams = Team.objects.for_user(profile.user)
     for team in managed_teams:
         teams_dict[team.id] = team.name
 
@@ -586,23 +582,18 @@ def _leave_usage_rows(profiles, role_filter: str | None = None, team_filter: str
 @login_required
 @role_required("can_export_requests")
 def leave_usage_report(request):
-    """
-    Widok HTML raportu przedstawiającego wykorzystanie dni urlopowych przez poszczególnych pracowników z opcjami filtrowania.
-    """
     active_role = _get_active_role(request)
-    role_filter = request.GET.get("role", "ALL")
     team_filter = request.GET.get("team", "ALL")
 
-    if active_role == "Manager":
-        role_filter = "ALL"
+    if active_role in ("Manager", "HR"):
         if team_filter == "NONE":
             team_filter = "ALL"
 
     profiles = _leave_usage_profiles(request, active_role)
-    report_rows = _leave_usage_rows(profiles, role_filter, team_filter)
+    report_rows = _leave_usage_rows(profiles, team_filter=team_filter)
 
-    if active_role == "Manager":
-        all_teams = Team.get_teams_managed_by(request.user).filter(is_active=True).order_by("name")
+    if active_role in ("Manager", "HR"):
+        all_teams = Team.objects.for_user(request.user).filter(is_active=True).order_by("name")
         show_no_team_option = False
     else:
         all_teams = Team.objects.filter(is_active=True).order_by("name")
@@ -610,9 +601,8 @@ def leave_usage_report(request):
 
     context = {
         "report_rows": report_rows,
-        "all_roles": ["COO", "HR", "Manager", "Worker"],
+        "all_roles": ["HR", "Manager", "Worker"],
         "all_teams": all_teams,
-        "selected_role": role_filter,
         "selected_team": team_filter,
         "show_no_team_option": show_no_team_option,
     }
@@ -626,23 +616,22 @@ def export_leave_usage_csv(request):
     Generuje plik CSV zawierający podsumowanie wykorzystania urlopów dla poszczególnych pracowników.
     """
     active_role = _get_active_role(request)
-    role_filter = request.GET.get("role", "ALL")
     team_filter = request.GET.get("team", "ALL")
 
     profiles = _leave_usage_profiles(request, active_role)
-    report_rows = _leave_usage_rows(profiles, role_filter, team_filter)
+    report_rows = _leave_usage_rows(profiles, team_filter)
 
     rows = []
     for row in report_rows:
         teams_str = ", ".join(t["name"] for t in row["teams"]) if row["teams"] else "-"
         rows.append([
-            row["first_name"], row["last_name"], row["role"], teams_str,
+            row["first_name"], row["last_name"], teams_str,
             row["total"], row["used"], row["remaining"], f"{row['percent_used']}%",
         ])
 
     return _csv_response(
         "raport_pracownicy",
-        ["Imię", "Nazwisko", "Rola", "Zespół", "Przydzielone dni", "Wykorzystane dni",
+        ["Imię", "Nazwisko", "Zespół", "Przydzielone dni", "Wykorzystane dni",
          "Pozostałe dni", "% wykorzystania"],
         rows,
     )
@@ -655,13 +644,11 @@ def export_leave_usage_pdf(request):
     Tworzy plik PDF przedstawiający indywidualny raport wykorzystania urlopów przez pracowników.
     """
     active_role = _get_active_role(request)
-    role_filter = request.GET.get("role", "ALL")
     team_filter = request.GET.get("team", "ALL")
 
     profiles = _leave_usage_profiles(request, active_role)
-    report_rows = _leave_usage_rows(profiles, role_filter, team_filter)
+    report_rows = _leave_usage_rows(profiles, team_filter)
 
-    role_display_name = role_filter if role_filter != "ALL" else "Wszystkie"
     if team_filter == "ALL":
         team_display_name = "Wszystkie"
     elif team_filter == "NONE":
@@ -670,10 +657,9 @@ def export_leave_usage_pdf(request):
         team_obj = Team.objects.filter(id=team_filter).first()
         team_display_name = team_obj.name if team_obj else team_filter
 
-    if active_role == "Manager":
+    if active_role in ("Manager", "HR"):
         filters_desc = f"Zespół: <i>{team_display_name}</i>"
-    else:
-        filters_desc = f"Rola: <i>{role_display_name}</i> | Zespół: <i>{team_display_name}</i>"
+
 
     styles = _pdf_styles(cell_font_size=8.5, cell_leading=11)
     buffer, doc = _new_pdf_document()
@@ -690,14 +676,14 @@ def export_leave_usage_pdf(request):
         full_name = f"{row['first_name']} {row['last_name']}"
         teams_pdf_html = "<br/>".join(t["name"] for t in row["teams"]) if row["teams"] else "-"
         table_rows.append([
-            full_name, row["role"], teams_pdf_html,
+            full_name,  teams_pdf_html,
             row["total"], row["used"], row["remaining"], f"{row['percent_used']}%",
         ])
 
     elements.append(_build_table(
-        ["Pracownik", "Rola", "Zespół", "Przydzielone", "Wykorzystane", "Pozostałe", "% wykorzystania"],
+        ["Pracownik", "Zespół", "Przydzielone", "Wykorzystane", "Pozostałe", "% wykorzystania"],
         table_rows,
-        [95, 55, 85, 65, 75, 65, 95],
+        [100, 95, 75, 85, 75, 95],
         styles,
     ))
 
@@ -718,27 +704,31 @@ def _default_team_agg(team_id, team_name: str) -> dict:
 def _team_rows(request) -> list[dict]:
     """
     Agreguje i przelicza dane urlopowe pracowników w rozbiciu na poszczególne zespoły.
+    Do agregacji wliczani są wszyscy członkowie zespołu niezależnie od roli,
+    z wyjątkiem osoby pełniącej funkcję Managera lub HR danego zespołu.
     """
     active_role = _get_active_role(request)
     profiles = _leave_usage_profiles(request, active_role)
     active_profiles = [p for p in profiles if getattr(p.user, "is_active", True)]
     user_rows = _leave_usage_rows(active_profiles)
 
-    if active_role == "Manager":
-        managed_teams = Team.get_teams_managed_by(request.user).filter(is_active=True)
-        teams = {t.pk: _default_team_agg(t.pk, t.name) for t in managed_teams}
-        allowed_team_ids = set(teams.keys())
+    if active_role in ("Manager", "HR"):
+        managed_teams_qs = Team.objects.for_user(request.user).filter(is_active=True)
+        allowed_team_ids = set(managed_teams_qs.values_list("pk", flat=True))
     else:
-        teams = {t.pk: _default_team_agg(t.pk, t.name) for t in Team.objects.filter(is_active=True)}
+        managed_teams_qs = Team.objects.filter(is_active=True)
         allowed_team_ids = None
 
-    for row in user_rows:
-        if str(row["role"]).upper() == "MANAGER":
-            continue
+    # Mapa pk -> obiekt zespołu (potrzebne manager_id/hr_id do wykluczeń)
+    team_objs = {t.pk: t for t in managed_teams_qs}
+    teams = {pk: _default_team_agg(pk, t.name) for pk, t in team_objs.items()}
 
+    for row in user_rows:
         teams_list = row["teams"]
+        user_id = row["user_id"]
+
         if not teams_list:
-            if active_role == "Manager":
+            if active_role in ("Manager", "HR"):
                 continue
             targets = [("no_team", None, "Brak zespołu")]
         else:
@@ -747,6 +737,13 @@ def _team_rows(request) -> list[dict]:
         for team_key, team_id, team_name in targets:
             if allowed_team_ids is not None and team_key != "no_team" and team_id not in allowed_team_ids:
                 continue
+
+            # Wykluczamy Managera/HR TEGO KONKRETNEGO zespołu z agregacji
+            if team_key != "no_team":
+                team_obj = team_objs.get(team_id)
+                if team_obj and (team_obj.manager_id == user_id or team_obj.hr_id == user_id):
+                    continue
+
             agg = teams.setdefault(team_key, _default_team_agg(team_id, team_name))
             agg["members"] += 1
             agg["total"] += row["total"]
@@ -759,7 +756,6 @@ def _team_rows(request) -> list[dict]:
 
     report_rows.sort(key=lambda x: str(x["team"]))
     return report_rows
-
 
 @login_required
 @role_required("can_export_requests")
@@ -1059,16 +1055,21 @@ def export_auth_log_pdf(request):
 # Widoczność i filtracja wniosków urlopowych
 # =========================================================================
 
-def _get_manager_team_ids(user) -> list:
+def _get_managed_team_ids(user) -> list:
     """
-    Zwraca listę identyfikatorów (PK) zespołów zarządzanych przez podanego użytkownika.
+    Zwraca listę identyfikatorów (PK) zespołów, którymi zarządza podany użytkownik
+    (Manager lub HR). Admin obsługiwany osobno w miejscach wywołania.
     """
-    return list(Team.get_teams_managed_by(user).values_list("pk", flat=True))
+    return list(Team.objects.for_user(user).values_list("pk", flat=True))
 
 
 def _base_visible_queryset(request, active_role: str | None) -> QuerySet:
     """
-    Konstruuje bazowy QuerySet wniosków urlopowych (LeaveRequest), do których zalogowany użytkownik ma dostęp wynikający z jego aktywnej roli.
+    Konstruuje bazowy QuerySet wniosków urlopowych, do których zalogowany użytkownik
+    ma dostęp wynikający z jego aktywnej roli:
+    - Worker: tylko własne wnioski
+    - Manager / HR: wnioski osób z zespołów, którymi zarządzają (rola pracownika bez znaczenia)
+    - Admin: wszystkie wnioski (poza wnioskami innych Adminów)
     """
     qs = LeaveRequest.objects.select_related(
         "employee", "who_confirmed",
@@ -1078,18 +1079,13 @@ def _base_visible_queryset(request, active_role: str | None) -> QuerySet:
     if active_role == "Worker":
         return qs.filter(employee=request.user)
 
-    if active_role == "Manager":
-        managed_team_ids = _get_manager_team_ids(request.user)
+    if active_role in ("Manager", "HR"):
+        managed_team_ids = _get_managed_team_ids(request.user)
         if not managed_team_ids:
             return qs.none()
+        return qs.filter(employee__worker_profile__team_id__in=managed_team_ids)
 
-        team_members = WorkerProfile.objects.filter(
-            team_id__in=managed_team_ids
-        ).values_list("user", flat=True)
-
-        return qs.filter(employee__in=team_members, employee__role="Worker")
-
-    if active_role not in ("COO", "Admin", "HR"):
+    if active_role != "Admin":
         return qs.none()
 
     return qs.exclude(employee__role="Admin")
@@ -1099,13 +1095,13 @@ def _get_role_and_team_lists(active_role: str | None, base_qs: QuerySet) -> tupl
     """
     Wyznacza dostępne listy ról oraz zespołów służące do filtrowania w zależności od roli użytkownika.
     """
-    if active_role == "Manager":
+    if active_role in ("Manager", "HR"):
         roles = []
         teams = Team.objects.filter(
             id__in=base_qs.values("employee__worker_profile__team")
         ).distinct()
     else:
-        roles = ["Worker", "Manager", "HR", "COO"]
+        roles = ["Worker", "Manager", "HR"]
         teams = Team.objects.filter(is_active=True)
 
     return roles, teams
@@ -1151,9 +1147,6 @@ def _apply_report_filters(qs: QuerySet, filters: dict, all_roles_list: list) -> 
         except ValueError:
             pass
 
-    if (role := filters["role"]) and role in all_roles_list:
-        qs = qs.filter(employee__role=role)
-
     if team_id := filters["team"]:
         if str(team_id).isdigit():
             qs = qs.filter(employee__worker_profile__team_id=int(team_id))
@@ -1171,8 +1164,6 @@ def _get_applied_leave_filters_text(filters: dict) -> str:
         active_filters.append(f"Status: {filters['status']}")
     if filters.get("processed"):
         active_filters.append(f"Stan: {filters['processed']}")
-    if filters.get("role"):
-        active_filters.append(f"Rola: {filters['role']}")
 
     if (team_id := filters.get("team")) and str(team_id).isdigit():
         team_obj = Team.objects.filter(id=int(team_id)).first()
@@ -1202,7 +1193,6 @@ def _leave_request_filters_from_get(request) -> dict:
         "date_from": request.GET.get("date_from", ""),
         "date_to": request.GET.get("date_to", ""),
         "team": request.GET.get("team", ""),
-        "role": request.GET.get("role", ""),
         "user": request.GET.get("user", ""),
         "search": request.GET.get("search", "").strip(),
     }
@@ -1255,7 +1245,6 @@ def leave_requests_report_list(request):
         "date_from": filters["date_from"],
         "date_to": filters["date_to"],
         "team_filter": filters["team"],
-        "role_filter": filters["role"],
         "user_filter": filters["user"],
         "search_query": filters["search"],
         "all_teams_list": all_teams_list,
@@ -1286,12 +1275,10 @@ def export_leave_requests_csv(request):
     for req in requests_qs:
         emp = req.employee
         emp_name = f"{emp.first_name} {emp.last_name}".strip() or emp.username
-        emp_role = emp.get_role_display() if hasattr(emp, "get_role_display") else emp.role
 
         rows.append([
             req.id,
             emp_name,
-            emp_role,
             _employee_team_name(emp),
             req.start_date.strftime(DATE_FMT) if req.start_date else "-",
             req.end_date.strftime(DATE_FMT) if req.end_date else "-",
@@ -1302,7 +1289,7 @@ def export_leave_requests_csv(request):
 
     return _csv_response(
         "raport_wnioskow",
-        ["ID Wniosku", "Pracownik", "Rola", "Zespół", "Od", "Do", "Dni", "Status", "Zatwierdził/Odrzucił"],
+        ["ID Wniosku", "Pracownik", "Zespół", "Od", "Do", "Dni", "Status", "Zatwierdził/Odrzucił"],
         rows,
     )
 

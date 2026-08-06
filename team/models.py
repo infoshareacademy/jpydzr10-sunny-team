@@ -1,129 +1,190 @@
+from datetime import date
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Q
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
+
+
+class TeamQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(is_active=True)
+
+    def archived(self):
+        return self.filter(is_active=False)
+
+    def for_user(self, user):
+        """
+        Zwraca zespoły, w których dany użytkownik pełni rolę Managera lub HR.
+        Admin widzi wszystkie zespoły.
+        """
+        if not user or not user.is_authenticated:
+            return self.none()
+
+        role = getattr(user, "role", None)
+        if role == "Manager":
+            return self.filter(manager=user)
+        elif role == "HR":
+            return self.filter(hr=user)
+        elif role == "Admin":
+            return self.all()
+
+        return self.filter(models.Q(manager=user) | models.Q(hr=user)).distinct()
+
+    def manageable_by(self, user, active_role=None):
+        """
+        Zespoły, których wnioski urlopowe użytkownik może przeglądać i akceptować:
+        - Admin: wszystkie zespoły
+        - Manager: swoje zespoły (zawsze)
+        - HR: zespoły, w których jest przypisany jako HR, gdy:
+            a) zespół nie ma przypisanego managera, LUB
+            b) manager tego zespołu jest AKTUALNIE na zaakceptowanym urlopie
+        """
+        from leaves.models import LeaveRequest
+
+        if not user or not user.is_authenticated:
+            return self.none()
+
+        role = active_role or getattr(user, "role", None)
+        today = date.today()
+
+        if role == "Admin":
+            return self.all()
+
+        if role == "Manager":
+            return self.filter(manager=user)
+
+        if role == "HR":
+            manager_on_approved_leave = LeaveRequest.objects.filter(
+                employee_id=models.OuterRef("manager_id"),
+                status=LeaveRequest.Status.APPROVED,
+                start_date__lte=today,
+                end_date__gte=today,
+            )
+            return self.filter(hr=user).filter(
+                models.Q(manager__isnull=True) | models.Exists(manager_on_approved_leave)
+            )
+
+        return self.none()
+
+
+class TeamManager(models.Manager):
+    def get_queryset(self):
+        return TeamQuerySet(self.model, using=self._db)
+
+    def active(self):
+        return self.get_queryset().active()
+
+    def archived(self):
+        return self.get_queryset().archived()
+
+    def for_user(self, user):
+        return self.get_queryset().for_user(user)
+
+    def manageable_by(self, user, active_role=None):
+        return self.get_queryset().manageable_by(user, active_role=active_role)
+
+    def get_team_ids_for_user(self, user) -> list[int]:
+        """Zwraca płaską listę ID zespołów przypisanych do użytkownika."""
+        return list(self.for_user(user).values_list("id", flat=True))
+
 
 class Team(models.Model):
     name = models.CharField(
-        max_length=100, unique=True, verbose_name="Nazwa zespołu"
+        max_length=100,
+        unique=True,
+        verbose_name="Nazwa zespołu"
     )
     description = models.TextField(
         blank=True,
         null=True,
-        verbose_name="Opis zespołu",
-        help_text="Opcjonalny opis zakresu działań zespołu",
+        verbose_name="Opis zespołu"
     )
-    head_manager = models.ForeignKey(
+    manager = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
-        related_name="head_managed_teams",
-        verbose_name="Główny manager",
+        related_name="managed_team",
+        verbose_name="Manager zespołu",
     )
-    co_managers = models.ManyToManyField(
+    hr = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        related_name="co_managed_teams",
-        verbose_name="Współzarządzający",
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="Data utworzenia"
+        related_name="hr_team",
+        verbose_name="Opiekun HR",
     )
     is_active = models.BooleanField(
         default=True,
-        verbose_name="Aktywny",
-        help_text="Czy zespół jest aktywny. Odznaczenie oznacza miękkie usunięcie."
+        verbose_name="Czy aktywny"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Data utworzenia"
     )
 
+    objects = TeamManager()
+
     class Meta:
+        ordering = ["name"]
         verbose_name = "Zespół"
         verbose_name_plural = "Zespoły"
-        ordering = ["name"]
 
-    def __str__(self):
-        return self.name
-
-    def add_co_manager(self, user):
-        with transaction.atomic():
-            self.co_managers.add(user)
-
-    def remove_co_manager(self, user):
-        with transaction.atomic():
-            self.co_managers.remove(user)
-
-    def set_co_managers(self, users):
-        with transaction.atomic():
-            self.co_managers.set(users)
+    def __str__(self) -> str:
+        status = "" if self.is_active else " (Archiwum)"
+        return f"{self.name}{status}"
 
     @property
     def members_count(self) -> int:
+        """Zwraca liczbę aktywnych pracowników obecnie przypisanych do zespołu."""
         return self.members.filter(user__is_active=True).count()
-
-    @property
-    def managers_count(self) -> int:
-        count = self.co_managers.count()
-        if self.head_manager_id:
-            count += 1
-        return count
-
-    def get_members(self):
-        return self.members.all()
-
-    def get_all_managers(self):
-        managers = list(self.co_managers.all())
-        if self.head_manager:
-            managers.insert(0, self.head_manager)
-        return managers
-
-    def soft_delete(self):
-        """Miękkie usunięcie zespołu - dezaktywacja i odpięcie członków."""
-        from leaves.models import WorkerProfile
-        with transaction.atomic():
-            self.is_active = False
-            self.head_manager = None
-            self.save()
-            self.co_managers.clear()
-            WorkerProfile.objects.filter(team=self).update(team=None)
 
     def clean(self):
         super().clean()
-        if self.pk:
-            if not self.head_manager_id and self.co_managers.exists():
-                raise ValidationError({
-                    "head_manager": "Nie można usunąć Głównego Managera, dopóki zespół "
-                                    "posiada Współzarządzających (Co-Managers)!"
-                })
-            if self.head_manager_id and self.co_managers.filter(pk=self.head_manager_id).exists():
-                raise ValidationError({
-                    "co_managers": "Główny Manager nie może znajdować się na liście Współzarządzających."
-                })
+        errors = {}
 
+        #  Sprawdzanie obecności Managera i HR dla aktywnego zespołu z członkami
+        if self.pk and self.is_active and self.members_count > 0:
+            if not self.manager_id:
+                errors["manager"] = "Zespół posiada pracowników – przypisanie Managera jest wymagane."
+            if not self.hr_id:
+                errors["hr"] = "Zespół posiada pracowników – przypisanie HR jest wymagane."
 
-    def save(self, *args, **kwargs):
-        self.full_clean(exclude=["co_managers"] if self.pk is None else None)
-        super().save(*args, **kwargs)
+        #  Walidacja: Manager nie może należeć do tego zespołu jako pracownik
+        if self.manager_id and hasattr(self.manager, "worker_profile") and self.manager.worker_profile.team_id:
+            if self.pk and self.manager.worker_profile.team_id == self.pk:
+                errors["manager"] = (
+                    f"Wskazany Manager ({self.manager.get_full_name() or self.manager.username}) "
+                    f"jest członkiem tego zespołu. Manager musi należeć do innego zespołu."
+                )
 
-    @staticmethod
-    def get_teams_managed_by(user):
-        """Wszystkie zespoły, w których user jest head_managerem lub co-managerem."""
-        return Team.objects.filter(
-            Q(head_manager=user) | Q(co_managers=user)
+        #  Walidacja: HR nie może należeć do tego zespołu jako pracownik
+        if self.hr_id and hasattr(self.hr, "worker_profile") and self.hr.worker_profile.team_id:
+            if self.pk and self.hr.worker_profile.team_id == self.pk:
+                errors["hr"] = (
+                    f"Wskazana osoba z HR ({self.hr.get_full_name() or self.hr.username}) "
+                    f"jest członkiem tego zespołu. HR musi należeć do innego zespołu."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def soft_delete(self):
+        """Dezaktywuje zespół i odpina aktualnych członków oraz kierownictwo."""
+        from leaves.models import WorkerProfile
+
+        with transaction.atomic():
+            WorkerProfile.objects.filter(team=self).update(team=None)
+            self.manager = None
+            self.hr = None
+            self.is_active = False
+            self.save()
+
+    @classmethod
+    def get_teams_managed_by(cls, user):
+        if not user or not user.is_authenticated:
+            return cls.objects.none()
+        return cls.objects.filter(
+            models.Q(manager=user) | models.Q(hr=user)
         ).distinct()
-
-
-@receiver(m2m_changed, sender=Team.co_managers.through)
-def validate_co_managers(sender, instance, action, pk_set, **kwargs):
-    if action == "pre_add" and instance.head_manager_id and pk_set:
-        if instance.head_manager_id in pk_set:
-            raise ValidationError(
-                "Głównego Managera nie można dodać jako Co-Managera tego samego zespołu."
-            )
-
-    if action in ("post_add", "post_remove", "post_clear"):
-        if not instance.head_manager_id and instance.co_managers.exists():
-            raise ValidationError(
-                "Zespół nie może posiadać Co-Managerów bez przypisanego Głównego Managera."
-            )

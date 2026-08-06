@@ -11,18 +11,6 @@
     </header>
 
     <div class="reports-grid">
-        {% if active_role != 'Manager' %}
-        <!-- RAPORT 1: UŻYTKOWNICY WG ROLI -->
-        <a href="{% url 'users_per_role_report' %}" class="report-card">
-            <div class="report-bg-icon"><i class="bi bi-pie-chart-fill"></i></div>
-            <div class="report-base-content">
-                <span class="report-pretitle">Statystyki ról</span>
-                <h3 class="report-title">Role systemowe</h3>
-                <p class="report-subtitle">Liczba użytkowników przypisanych do ról oraz procent aktywnych kont.</p>
-            </div>
-        </a>
-        {% endif %}
-
         <!-- RAPORT 2: WYKORZYSTANIE URLOPÓW PER UŻYTKOWNIK -->
         <a href="{% url 'leave_usage_report' %}" class="report-card">
             <div class="report-bg-icon"><i class="bi bi-person-lines-fill"></i></div>
@@ -65,6 +53,14 @@
                 <span class="report-pretitle">Logi</span>
                 <h3 class="report-title">Autoryzacja</h3>
                 <p class="report-subtitle">Historia zdarzeń związanych z logowaniem, dostępem i bezpieczeństwem kont.</p>
+            </div>
+        </a>
+            <a href="{% url 'users_per_role_report' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-pie-chart-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">Statystyki ról</span>
+                <h3 class="report-title">Role systemowe</h3>
+                <p class="report-subtitle">Liczba użytkowników przypisanych do ról oraz procent aktywnych kont.</p>
             </div>
         </a>
         {% endif %}

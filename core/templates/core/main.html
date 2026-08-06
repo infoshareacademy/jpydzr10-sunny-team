@@ -71,7 +71,7 @@
 {% endif %}
 
 <!-- KARTA 2: WNIOSKI URLOPOWE -->
-        {% if active_role in 'Worker,Manager,HR,COO, Admin' %}
+        {% if active_role in 'Worker,Manager,HR, Admin' %}
         <div class="strip-card">
             <div class="strip-bg-icon"><i class="bi bi-postcard-fill"></i></div>
             <div class="strip-base-content">
@@ -89,7 +89,8 @@
                         <a href="{% url 'new_request' %}" class="btn btn-warning btn-dashboard-action" title="Złóż nowy wniosek urlopowy"><i class="bi bi-file-earmark-plus-fill"></i><span class="btn-text">Nowy</span></a>
                         <a href="{% url 'my_vacations' %}" class="btn btn-warning btn-dashboard-action" title="Przejrzyj aktualne wnioski"><i class="bi bi-folder-fill"></i><span class="btn-text">Lista</span></a>
                     {% else %}
-                        <a href="{% url 'all_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="Lista wniosków urlopowych"><i class="bi bi-file-text-fill"></i><span class="btn-text">Lista</span></a>
+                        <a href="{% url 'pending_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="Wnioski do rozważenia"><i class="bi bi-stopwatch-fill"></i><span class="btn-text">Oczekujące</span></a>
+                        <a href="{% url 'history_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="Zapis wniosków"><i class="bi bi-archive-fill"></i><span class="btn-text">Historia</span></a>
                     {% endif %}
                 </div>
             </div>
@@ -97,7 +98,7 @@
         {% endif %}
 
 <!-- KARTA 3: ZARZĄDZANIE -->
-        {% if active_role in 'Manager,HR,COO,Admin' %}
+        {% if active_role in 'Manager,HR,Admin' %}
         <div class="strip-card">
             <div class="strip-bg-icon"><i class="bi bi-kanban-fill"></i></div>
             <div class="strip-base-content">
@@ -112,9 +113,6 @@
                     <a href="{% url 'reports_index' %}" class="btn btn-warning btn-dashboard-action" title="Lista Raportów"><i class="bi bi-clipboard-data-fill"></i><span class="btn-text">Raporty</span></a>
                     <a href="{% url 'user_list' %}" class="btn btn-warning btn-dashboard-action" title="Zarządzaj pracownikami"><i class="bi bi-person-fill"></i><span class="btn-text">Pracownicy</span></a>
                     <a href="{% url 'team-list' %}" class="btn btn-warning btn-dashboard-action" title="Zarządzaj zespołami"><i class="bi bi-people-fill"></i></i><span class="btn-text">Zespoły</span></a>
-                    {% if active_role in 'HR,COO,Admin' %}
-                        <a href="{% url 'users_per_role_report' %}" class="btn btn-warning btn-dashboard-action" title="Przegląd ról w systemie"><i class="bi bi-person-lines-fill"></i> <span class="btn-text">Role</span></a>
-                    {% endif %}
                 </div>
             </div>
         </div>

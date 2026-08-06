@@ -1,23 +1,33 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Potwierdzenie usunięcia: {{ object.name }}{% endblock %}
 
 {% block content %}
-<div class="container my-5" style="max-width: 500px;">
-    <div class="card border-danger shadow-sm">
-        <div class="card-header bg-danger text-white">
-            <h3 class="card-title h5 mb-0">Potwierdzenie usunięcia</h3>
-        </div>
-        <div class="card-body text-center">
-            <p class="fs-5">Czy na pewno chcesz usunąć zespół <strong>"{{ object.name }}"</strong>?</p>
-            <p class="text-muted small">Ta operacja jest nieodwracalna.</p>
+<link rel="stylesheet" href="{% static 'css/team.css' %}">
 
-            <form method="post" class="mt-4">
-                {% csrf_token %}
-                <div class="d-flex justify-content-center gap-2">
-                    <a href="{% url 'team-list' %}" class="btn btn-secondary">Anuluj</a>
-                    <button type="submit" class="btn btn-danger">Tak, usuń</button>
-                </div>
-            </form>
+<div class="form-wrapper" style="max-width: 550px;">
+    <div class="form-card text-center" style="border-top: 4px solid #e53e3e;">
+        <div class="form-header" style="border-bottom: 1px solid #edf2f7; padding-bottom: 15px;">
+            <h1 class="form-title" style="color: #e53e3e;">Potwierdzenie usunięcia</h1>
         </div>
+
+        <div style="padding: 10px 0 20px 0;">
+            <p style="font-size: 1.15rem; color: #2d3748; margin-bottom: 8px;">
+                Czy na pewno chcesz usunąć zespół <strong style="color: #1a202c;">"{{ object.name }}"</strong>?
+            </p>
+            <p style="color: #718096; font-size: 0.9rem; margin: 0;">
+                Zespół zostanie dezaktywowany w systemie.
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions" style="justify-content: center; border-top: none; padding-top: 0;">
+                <a href="{% url 'team-list' %}" class="btn-custom btn-cancel" style="min-width: 120px; text-align: center;">Anuluj</a>
+                <button type="submit" class="btn-custom btn-danger-custom" style="min-width: 120px;">Tak, usuń</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

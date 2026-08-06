@@ -1,154 +1,37 @@
 {% extends 'base.html' %}
 {% load i18n %}
-
+{% load static %}
+<link rel="stylesheet" href="{% static 'team/team.css' %}">
 {% block title %}Szczegóły Zespołu - {{ team.name }}{% endblock %}
 
 {% block content %}
 <div class="team-wrapper mt-4" data-team-id="{{ team.id }}">
 
-    <!-- RZĄD #1: NAZWA ZESPOŁU + PRZYCISKI -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 team-row team-row-1">
+    <!-- NAGŁÓWEK ZESPOŁU -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
             <h1 class="fw-extrabold text-dark mb-1 fs-2">{{ team.name }}</h1>
-            <p class="text-muted mb-0 fs-7">Data utworzenia: {{ team.created_at|date:"d.m.Y H:i" }}</p>
-            <p class="text-dark mb-0 fs-7 text-break">{{ team.description|default:"Brak opisu dla tego zespołu." }}</p>
+            <p class="text-dark mb-2 fs-6 text-break">{{ team.description|default:"Brak opisu dla tego zespołu." }}</p>
+            <p class="text-muted mb-0 fs-7">
+                <strong>Manager:</strong> {{ manager_name }} | <strong>HR:</strong> {{ hr_name }}
+            </p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center mt-2 mt-md-0">
+        {% if active_role != 'Manager'%}
             <a href="{% url 'team-list' %}" class="btn btn-light">Powrót do listy</a>
-
+        {% endif %}
             {% if can_edit_team %}
                 <a href="{% url 'team-members-update' pk=team.pk %}" class="btn btn-success">Edytuj członków</a>
                 <a href="{% url 'team-update' pk=team.pk %}" class="btn btn-primary">Edytuj zespół</a>
             {% endif %}
-
             {% if can_deactivate %}
                 <a href="{% url 'team-delete' pk=team.pk %}" class="btn btn-danger">Dezaktywuj</a>
             {% endif %}
         </div>
     </div>
 
-    <!-- RZĄD #2: MANAGEROWIE (LEWO) + PRACOWNICY (PRAWO) -->
-<div class="team-main-grid">
-
-    <!-- LEWA KOLUMNA -->
-    <div class="team-left-col">
-
-        <!-- KARTA MANAGERÓW -->
-        <div class="team-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="team-card-title mb-0">Managerowie</h2>
-            </div>
-            <div class="table-compact-wrapper">
-        <table class="table-compact">
-            <colgroup>
-                {% if active_role == 'Manager' %}
-                    <col style="width: 100%;">
-                {% else %}
-                    <col style="width: 40%;">
-                    <col style="width: 20%;">
-                    <col style="width: 20%;">
-                    <col style="width: 20%;">
-                {% endif %}
-            </colgroup>
-            <thead>
-                        <tr>
-                            <th>Imię i nazwisko</th>
-                            <th>Rola</th>
-                            {% if active_role != 'Manager' %}
-                            <th class="text-end">Urlop</th>
-                            <th class="text-center">Nieprzetworzone</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-{% if head_manager_info %}
-    <tr>
-        <td>
-            <div class="{% if active_role != 'Manager' %}hl-item person-item {% endif %}d-flex align-items-center gap-2 text-truncate"
-                 {% if active_role != 'Manager' %}data-user-id="{{ head_manager_info.user.id }}" data-is-manager="true"{% endif %}>
-                <span class="star-marker" style="color: {{ head_manager_info.color }};">★</span>
-
-                {% if active_role == 'Manager' %}
-                    <span class="text-dark fw-bold text-truncate" title="{{ head_manager_info.user.get_full_name|default:head_manager_info.user.username }}">
-                        {{ head_manager_info.user.get_full_name|default:head_manager_info.user.username }}
-                    </span>
-                {% else %}
-                    <a href="{% url 'profile' user_id=head_manager_info.user.id %}" class="text-dark text-decoration-none hover-underline fw-bold text-truncate" title="{{ head_manager_info.user.get_full_name|default:head_manager_info.user.username }}">
-                        {{ head_manager_info.user.get_full_name|default:head_manager_info.user.username }}
-                    </a>
-                    <i class="bi bi-check-lg pin-check"></i>
-                {% endif %}
-            </div>
-        </td>
-            <td class="align-middle">
-                <span class="badge badge-role">Kierownik zespołu</span>
-            </td>
-                {% if active_role != 'Manager' %}
-            <td class="text-end text-nowrap align-middle fs-7">
-                {% if head_manager_info.leave_total is not None %}
-                    <span class="fw-bold">{{ head_manager_info.leave_available }}</span> / {{ head_manager_info.leave_total }}
-                {% else %}
-                    <span class="text-muted">&mdash;</span>
-                {% endif %}
-            </td>
-            <td class="text-center align-middle">
-                <span class="fw-bold">{{ head_manager_info.pending_count }}</span>
-            </td>
-        {% endif %}
-    </tr>
-{% endif %}
-
-<!-- 2. WSPÓŁZARZĄDZAJĄCY (CO-MANAGERS) -->
-{% for co in co_managers_info %}
-    <tr>
-        <td>
-            <div class="{% if active_role != 'Manager' %}hl-item person-item {% endif %}d-flex align-items-center gap-2 text-truncate"
-                 {% if active_role != 'Manager' %}data-user-id="{{ co.user.id }}" data-is-manager="true"{% endif %}>
-                <span class="star-marker" style="color: {{ co.color }};">★</span>
-
-                {% if active_role == 'Manager' %}
-                    <span class="text-dark fw-bold text-truncate" title="{{ co.user.get_full_name|default:co.user.username }}">
-                        {{ co.user.get_full_name|default:co.user.username }}
-                    </span>
-                {% else %}
-                    <a href="{% url 'profile' user_id=co.user.id %}" class="text-dark text-decoration-none hover-underline fw-bold text-truncate" title="{{ co.user.get_full_name|default:co.user.username }}">
-                        {{ co.user.get_full_name|default:co.user.username }}
-                    </a>
-                    <i class="bi bi-check-lg pin-check"></i>
-                {% endif %}
-            </div>
-        </td>
-            <td class="align-middle">
-                <span class="badge badge-role">Współzarządzający</span>
-            </td>
-                {% if active_role != 'Manager' %}
-            <td class="text-end text-nowrap align-middle fs-7">
-                {% if co.leave_total is not None %}
-                    <span class="fw-bold">{{ co.leave_available }}</span> / {{ co.leave_total }}
-                {% else %}
-                    <span class="text-muted">&mdash;</span>
-                {% endif %}
-            </td>
-            <td class="text-center align-middle">
-                <span class="fw-bold">{{ co.pending_count }}</span>
-            </td>
-        {% endif %}
-    </tr>
-{% endfor %}
-
-{% if not head_manager_info and not co_managers_info %}
-    <tr>
-        <td colspan="{% if active_role == 'Manager' %}1{% else %}4{% endif %}" class="text-center text-muted py-3 fs-7">
-            Brak managerów przypisanych do zespołu.
-        </td>
-    </tr>
-{% endif %}
-    </tbody>
-</table>
-</div>
-</div>
-
-        <!-- KARTA PRACOWNIKÓW -->
+    <div class="team-main-grid">
+        <!-- LEWA KOLUMNA: TABELA PRACOWNIKÓW -->
         <div class="team-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2 class="team-card-title mb-0">Pracownicy</h2>
@@ -157,47 +40,47 @@
             <div class="table-compact-wrapper">
                 <table class="table-compact">
                     <colgroup>
-    <col style="width: 50%;">
-    <col style="width: 20%;">
-    <col style="width: 30%;">
-</colgroup>
+                        <col style="width: 35%;">
+                        <col style="width: 15%;">
+                        <col style="width: 30%;">
+                        <col style="width: 20%;">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>Imię i nazwisko</th>
-                            <th class="text-end">Urlop</th>
+                            <th class="text-center">Wyróżnij</th>
+                            <th class="text-end">Dostepne dni</th>
                             <th class="text-center">Nieprzetworzone</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for entry in members_info %}
+                        {% for item in members_info %}
                             <tr>
                                 <td>
-                                    <div class="hl-item person-item d-flex align-items-center gap-2 text-truncate"
-                                         data-user-id="{{ entry.profile.user.id }}"
-                                         data-is-manager="false">
-                                        <span class="legend-dot" style="background-color: {{ entry.color }};"></span>
-                                        <a href="{% url 'profile' user_id=entry.profile.user.id %}" class="text-dark text-decoration-none hover-underline fw-bold text-truncate" title="{{ entry.profile.user.get_full_name|default:entry.profile.user.username }}">
-                                            {{ entry.profile.user.get_full_name|default:entry.profile.user.username }}
+                                    <div class="d-flex align-items-center gap-2 text-truncate">
+                                        <span class="legend-dot" style="background-color: {{ item.color }};"></span>
+                                        <a href="{% url 'profile' user_id=item.user.id %}" class="text-dark fw-bold text-decoration-none text-truncate">
+                                            {{ item.user.get_full_name|default:item.user.username }}
                                         </a>
-                                        <i class="bi bi-check-lg pin-check"></i>
                                     </div>
                                 </td>
+                                <td class="text-center align-middle">
+                                    <input type="checkbox" class="person-checkbox form-check-input mt-0" data-user-id="{{ item.user.id }}">
+                                </td>
                                 <td class="text-end text-nowrap align-middle fs-7">
-                                    {% if entry.leave_total is not None %}
-                                        <span class="fw-bold">{{ entry.leave_available }}</span> / {{ entry.leave_total }}
+                                    {% if item.leave_available is not None %}
+                                        <span class="fw-bold">{{ item.leave_available }}</span>
                                     {% else %}
                                         <span class="text-muted">&mdash;</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center align-middle">
-                                        <span class="fw-bold">{{ entry.pending_count }}</span>
+                                    <span class="fw-bold">{{ item.pending_count }}</span>
                                 </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-3 fs-7">
-                                    Brak członków zespołu.
-                                </td>
+                                <td colspan="4" class="text-center text-muted py-3 fs-7">Brak przypisanych członków.</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -205,564 +88,254 @@
             </div>
         </div>
 
-    </div>
+        <!-- PRAWA KOLUMNA: KALENDARZ -->
+        <div class="team-right-col">
+            <div class="team-card">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h2 class="team-card-title mb-0 fs-4">
+                        {{ calendar_month_name }} {{ calendar_year }}
+                    </h2>
+                    <div class="d-inline-flex gap-2 align-items-center flex-wrap">
+                        {% if calendar_prev_month %}
+                            <a href="?month={{ calendar_prev_month }}" class="btn btn-light btn-sm">Poprzedni</a>
+                        {% else %}
+                            <button class="btn btn-light btn-sm" disabled>Poprzedni</button>
+                        {% endif %}
 
-    <!-- RZĄD #3: KALENDARZ -->
-    <div class="team-right-col">
-        <div class="team-card">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <h2 class="team-card-title mb-0 fs-4">
-                    {{ calendar_month_name }} {{ calendar_year }}
-                </h2>
-                <div class="d-inline-flex gap-2 align-items-center flex-wrap">
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="toggle-weekends" checked>
-                        <label class="form-check-label fs-8" for="toggle-weekends">Pokaż weekendy</label>
+                        {% if calendar_next_month %}
+                            <a href="?month={{ calendar_next_month }}" class="btn btn-light btn-sm">Następny</a>
+                        {% else %}
+                            <button class="btn btn-light btn-sm" disabled>Następny</button>
+                        {% endif %}
+
+                        <button type="button" id="reset-selection-btn" class="btn btn-outline-secondary btn-sm">Reset zaznaczenia</button>
                     </div>
-                    <a href="?year={{ calendar_prev_year }}&month={{ calendar_prev_month }}" class="btn btn-light btn-sm">Poprzedni</a>
-                    <a href="?year={{ calendar_next_year }}&month={{ calendar_next_month }}" class="btn btn-light btn-sm">Następny</a>
-                    <button type="button" id="reset-selection-btn" class="btn btn-outline-secondary btn-sm" disabled>
-                        Reset
-                    </button>
                 </div>
-            </div>
 
-            <div class="calendar-hint mb-3 d-flex flex-wrap align-items-center gap-3">
-                <button type="button" class="hint-toggle hl-item" data-category="approved">
-                    <span class="hint-swatch hint-swatch-solid"></span>
-                    <span>Zatwierdzony</span>
-                    <i class="bi bi-check-lg pin-check"></i>
-                </button>
-                <button type="button" class="hint-toggle hl-item" data-category="pending">
-                    <span class="hint-swatch hint-swatch-outline"></span>
-                    <span>Oczekujący</span>
-                    <i class="bi bi-check-lg pin-check"></i>
-                </button>
-                {% if show_managers_on_calendar %}
-                    <button type="button" class="hint-toggle hl-item" data-category="manager">
-                        <span class="manager-marker">★</span>
-                        <span>Kierownik</span>
-                        <i class="bi bi-check-lg pin-check"></i>
-                    </button>
-                {% endif %}
-                <span class="hint-static">
-                    <i class="bi bi-fast-forward-fill"></i> Kontynuacja wniosku
-                </span>
-                <span class="hint-static">
-                    <i class="bi bi-slash-square" style="transform: rotate(90deg);" ></i> Dzień wolny
-                </span>
-            </div>
-
-            <div class="calendar-scroll">
-                <div class="timeline-calendar" id="timeline-calendar">
-
-                    <div class="timeline-days-header">
-                        <div class="day-col-name">Pn</div>
-                        <div class="day-col-name">Wt</div>
-                        <div class="day-col-name">Śr</div>
-                        <div class="day-col-name">Czw</div>
-                        <div class="day-col-name">Pt</div>
-                        <div class="day-col-name weekend-col-name">Sb</div>
-                        <div class="day-col-name weekend-col-name">Nd</div>
-                    </div>
-
-                    {% for week in calendar_weeks %}
-                        <div class="timeline-week-block">
-                            <div class="timeline-grid-bg">
-                                {% for day in week.days_headers %}
-                                    <div class="timeline-day-cell
-                                        {% if not day.is_current_month %}other-month{% endif %}
-                                        {% if day.is_today %}today-highlight{% endif %}
-                                        {% if day.is_non_working %}non-working-cell weekend-col{% endif %}">
-                                        <span class="day-number">{{ day.day }}</span>
-                                    </div>
-                                {% endfor %}
-                            </div>
-
-                            <div class="timeline-lanes-layer">
-                                {% for lane in week.lanes %}
-                                    <a href="{% url 'leave_detail' pk=lane.leave_id %}"
-                                       class="hl-item timeline-bar {% if lane.is_pending %}pending{% endif %} {% if lane.sharp_left %}sharp-left{% endif %} {% if lane.sharp_right %}sharp-right{% endif %}"
-                                       data-leave-id="{{ lane.leave_id }}"
-                                       data-user-id="{{ lane.owner_id }}"
-                                       data-status="{% if lane.is_pending %}pending{% else %}approved{% endif %}"
-                                       data-is-manager="{% if lane.is_manager %}true{% else %}false{% endif %}"
-                                       title="Szczegóły wniosku #{{ lane.leave_id }}"
-                                       style="--lane-color: {{ lane.color }}; grid-column: {{ lane.grid_column_start }} / span {{ lane.grid_column_span }}; grid-row: {{ lane.track }};
-                                              {% if lane.is_pending %}border-color: {{ lane.color }}; color: {{ lane.color }};{% else %}background-color: {{ lane.color }}; color: #ffffff;{% endif %}">
-
-                                        <div class="bar-days-bg" style="--grid-normal: {{ lane.grid_normal }}; --grid-hidden: {{ lane.grid_hidden }};">
-                                            {% for d in lane.day_states %}
-                                                <span class="bar-day {% if d.is_non_working %}bar-day-off{% endif %} {% if d.is_weekend %}bar-day-weekend{% endif %}"></span>
-                                            {% endfor %}
-                                        </div>
-
-                                        <span class="bar-content">
-                                            {% if lane.has_prev %}
-                                                <i class="bi bi-fast-forward-fill icon-prev"></i>
-                                            {% endif %}
-
-                                            <span class="bar-text">
-                                            {% if lane.show_label %}
-                                                <i class="bi bi-check-lg pin-check"></i>
-                                                    {% if lane.is_manager %}★ {% endif %}{{ lane.name }} {{ lane.working_days }} dni
-                                                {% endif %}
-                                            </span>
-
-                                            {% if lane.has_next %}
-                                                <i class="bi bi-fast-forward-fill icon-next"></i>
-                                            {% endif %}
-                                        </span>
-                                    </a>
-                                {% endfor %}
-                            </div>
+                <!-- INTERAKTYWNA LEGENDA STATUSÓW -->
+                <div class="calendar-hint mb-3 d-flex flex-wrap align-items-center gap-4">
+                    <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                        <input type="checkbox" class="status-checkbox form-check-input mt-0" value="approved">
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="hint-swatch hint-swatch-solid"></span> Zatwierdzony
                         </div>
-                    {% endfor %}
-
+                    </label>
+                    <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
+                        <input type="checkbox" class="status-checkbox form-check-input mt-0" value="pending">
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="hint-swatch hint-swatch-outline"></span> Oczekujący
+                        </div>
+                    </label>
                 </div>
-            </div>
 
+                <div class="calendar-scroll">
+                    <div class="timeline-calendar">
+                        <div class="timeline-days-header">
+                            <div class="day-col-name">Pn</div><div class="day-col-name">Wt</div>
+                            <div class="day-col-name">Śr</div><div class="day-col-name">Czw</div>
+                            <div class="day-col-name">Pt</div>
+                            <div class="day-col-name weekend-col-name">Sb</div>
+                            <div class="day-col-name weekend-col-name">Nd</div>
+                        </div>
+
+                        {% for week in calendar_weeks %}
+                            <div class="timeline-week-block">
+                                <div class="timeline-grid-bg">
+                                    {% for day in week.days_headers %}
+                                        <div class="timeline-day-cell {% if day.is_other_month %}other-month{% endif %} {% if day.is_today %}today-highlight{% endif %} {% if not day.is_working_day %}non-working-cell{% endif %}">
+                                            <span class="day-number">{{ day.day }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="timeline-lanes-layer">
+                                    {% for leave in week.leaves %}
+                                        <a href="{% url 'leave_detail' pk=leave.id %}"
+                                           class="timeline-bar"
+                                           data-user-id="{{ leave.user_id }}"
+                                           data-status="{% if leave.is_pending %}pending{% else %}approved{% endif %}"
+                                           title="{{ leave.user_name }} ({{ leave.start_date|date:'d.m' }} - {{ leave.end_date|date:'d.m' }})"
+                                           style="grid-column: {{ leave.start_col }} / span {{ leave.span }};
+                                                  {% if leave.is_pending %}
+                                                      background-color: color-mix(in srgb, {{ leave.color }} 14%, white);
+                                                      border: 2px solid {{ leave.color }}; color: {{ leave.color }};
+                                                  {% else %}
+                                                      background-color: {{ leave.color }}; color: #fff; border: 2px solid transparent;
+                                                  {% endif %}">
+
+                                            {% for is_nonworking in leave.non_working_days %}
+                                                <div class="bar-day-cell{% if is_nonworking %} is-nonworking{% endif %}"></div>
+                                            {% endfor %}
+
+                                            <span class="bar-content d-flex align-items-center justify-content-between">
+                                                {% if leave.show_prev_arrow %}<i class="bi bi-caret-left-fill me-1"></i>{% else %}<span></span>{% endif %}
+                                                <span class="bar-text text-truncate">
+                                                    {% if leave.is_first_visible_segment %}
+                                                        {{ leave.user_name }} ({{ leave.amount_days }} {% if leave.amount_days == 1 %}dzień{% else %}dni{% endif %})
+                                                    {% endif %}
+                                                </span>
+                                                {% if leave.show_next_arrow %}<i class="bi bi-caret-right-fill ms-1"></i>{% else %}<span></span>{% endif %}
+                                            </span>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
-
 </div>
 
 <style>
     .team-wrapper { max-width: 100%; margin: 0 auto 50px auto; padding: 0 3%; }
-
-    .team-row { margin-bottom: 20px; }
-
-.team-main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.6fr;
-    gap: 20px;
-    align-items: start;
-}
-
-.team-left-col {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-
-}
-
-.team-right-col {
-    min-width: 0;
-}
-
-/* RESPONSYWNOŚĆ: poniżej 1100px kalendarz i tabele w jednej kolumnie */
-@media (max-width: 1150px) {
-    .team-main-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* poniżej 768px tabele managerów/pracowników też w pionie (już są, ale dopilnowanie odstępów) */
-@media (max-width: 768px) {
-    .team-left-col {
-        gap: 16px;
-    }
-}
-
+    .team-main-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px; align-items: start; }
+    .team-right-col { min-width: 0; }
     .team-card {
         background: #ffffff; padding: 22px 24px; border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #cbd5e0;
-        width: 100%;
-        box-sizing: border-box;
-        overflow: hidden;
+        width: 100%; box-sizing: border-box; overflow: hidden;
     }
-    .team-card-title { font-weight: 800; color: #1a202c; font-size: 1.15rem; margin: 0 0 12px 0; }
+    .team-card-title { font-weight: 800; color: #1a202c; }
 
-    .star-marker { font-size: 1rem; margin-right: 3px; vertical-align: middle; }
-
-    .badge {
-        display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 9999px;
-        font-size: 0.8rem; font-weight: 700; white-space: nowrap;
-    }
-    .badge-count { background-color: #edf2f7; color: #4a5568; }
-    .badge-role { background-color: #f3f4f6; color: #4b5563; font-size: 0.75rem; padding: 2px 6px; }
-
+    .badge-count { background-color: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 99px; font-size: 0.85rem; }
     .table-compact-wrapper { width: 100%; overflow-x: auto; }
     .table-compact { width: 100%; border-collapse: collapse; }
-    .table-compact th {
-        background-color: #f1f5f9 !important; color: #334155; font-weight: 700; text-transform: uppercase;
-        font-size: 0.75rem; letter-spacing: 0.5px; padding: 10px 8px; border-bottom: 2px solid #cbd5e0;
-        text-align: left; white-space: nowrap;
-    }
-    .table-compact td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; color: #1a202c; font-size: 0.9rem; }
-
-    .hover-underline:hover { text-decoration: underline !important; }
-    .fs-7 { font-size: 0.9rem; }
-    .fs-8 { font-size: 0.78rem; }
-    .fw-extrabold { font-weight: 800; }
+    .table-compact th { background-color: #f1f5f9; padding: 10px 8px; font-size: 0.75rem; text-transform: uppercase; color: #334155; }
+    .table-compact td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
 
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-
-    .calendar-hint { font-size: 0.85rem; color: #64748b; font-weight: 500; }
-    .hint-static { display: inline-flex; align-items: center; gap: 6px; color: #64748b; }
-    .manager-marker { color: #d97706; font-weight: 700; }
-
+    .calendar-hint { font-size: 0.85rem; color: #64748b; }
     .hint-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
     .hint-swatch-solid { background-color: #94a3b8; }
     .hint-swatch-outline { background: #ffffff; border: 2px solid #94a3b8; }
+    .cursor-pointer { cursor: pointer; user-select: none; } /* Dodano pointer dla legendy */
 
-    #reset-selection-btn:not(:disabled) { cursor: pointer; }
-
-    /* LEGENDA JAKO PRZYCISKI-FILTRY */
-    .hint-toggle {
-        display: inline-flex; align-items: center; gap: 6px;
-        background: none; border: 1px solid transparent; border-radius: 8px;
-        padding: 4px 10px; cursor: pointer; font-size: 0.85rem; color: #64748b; font-weight: 500;
-        transition: background 0.2s, border-color 0.2s;
-    }
-    .hint-toggle:hover { background: #f1f5f9; }
-    .hint-toggle .pin-check { display: none; color: #2563eb; }
-    .hint-toggle.is-pinned { border-color: #2563eb; background: #eff6ff; color: #1e293b; }
-    .hint-toggle.is-pinned .pin-check { display: inline-block; }
-
-    /* NAZWISKA W SIDEBARZE */
-    .person-item {
-        position: relative; cursor: pointer; border-radius: 6px; padding: 2px 4px;
-        user-select: none;
-    }
-    .person-item .pin-check { display: none; color: #2563eb; margin-left: 4px; }
-    .person-item.is-pinned { background: #eff6ff; }
-    .person-item.is-pinned .pin-check { display: inline-block; }
-
-    /* WSPÓLNY SYSTEM PODŚWIETLANIA */
-    .hl-item { transition: all 0.25s ease-in-out; }
-    .hl-item.hl-active { transform: translateY(-1px); filter: brightness(1.08); z-index: 10; }
-
-    .hl-item.hl-dim { opacity: 0.15; filter: grayscale(80%); pointer-events: auto; }
-    .hint-toggle.hl-dim { opacity: 0.4; filter: none; pointer-events: auto; }
-    .person-item.hl-dim { opacity: 0.35; filter: none; pointer-events: auto; }
-
-    .timeline-bar.hl-active { box-shadow: 0 4px 12px rgba(0,0,0,0.3); transform: translateY(-1px) scale(1.01); }
-    .timeline-bar .pin-check { display: none; margin-right: 4px; }
-    .timeline-bar.is-pinned .pin-check { display: inline-block; }
-
-    /* KALENDARZ */
     .calendar-scroll { width: 100%; overflow-x: auto; padding-bottom: 8px; }
-    .timeline-calendar { width: 100%; display: flex; flex-direction: column; gap: 10px; min-width: 480px; }
+    .timeline-calendar { display: flex; flex-direction: column; gap: 10px; min-width: 480px; }
 
     .timeline-days-header {
         display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px;
-        text-align: center; font-weight: 700; font-size: 0.75rem; color: #64748b; text-transform: uppercase;
+        text-align: center; font-weight: 700; font-size: 0.75rem; color: #64748b;
     }
-    /* Zdecydowane wyróznienie nagłówka dla weekendów */
-    .weekend-col-name { color: #dc2626 !important; font-weight: 800; }
+    .weekend-col-name { color: #dc2626 !important; }
 
-    .timeline-week-block {
-        position: relative; border: 1px solid #cbd5e0; border-radius: 8px;
-        background: #ffffff; overflow: hidden; display: flex; flex-direction: column;
-        width: 100%;
-    }
+    .timeline-week-block { position: relative; border: 1px solid #cbd5e0; border-radius: 8px; background: #fff; display: flex; flex-direction: column; }
+    .timeline-grid-bg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; background: #cbd5e0; z-index: 1; }
 
-    .timeline-grid-bg {
-        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px;
-        background: #cbd5e0; z-index: 1;
-    }
-    .timeline-day-cell { background: #ffffff; padding: 4px 6px; position: relative; min-height: 90px; }
-
+    .timeline-day-cell { background: #fff; padding: 4px 6px; min-height: 90px; }
     .timeline-day-cell.other-month { background: #f1f5f9; }
-    .timeline-day-cell.other-month .day-number { color: #94a3b8; font-weight: 600; }
-
     .timeline-day-cell.today-highlight { background: #eff6ff; }
-
-    /* Bardzo wyraźne odcięcie weekendów i dni wolnych (ciemniejsze pasy, czerwona cyfra) */
-    .timeline-day-cell.non-working-cell {
-        background-color: #f1f5f9;
-        background-image: repeating-linear-gradient(45deg, #e2e8f0 0 8px, #cbd5e0 8px 16px);
-    }
-    .timeline-day-cell.non-working-cell .day-number {
-        color: #ef4444;
-    }
-    .timeline-day-cell.other-month.non-working-cell {
-        background-image: repeating-linear-gradient(45deg, #e2e8f0 0 8px, #d1d5db 8px 16px);
-        opacity: 0.8;
-    }
-
+    .timeline-day-cell.non-working-cell { background-color: #f8fafc; background-image: repeating-linear-gradient(135deg, rgba(203,213,225,0.4) 0px, rgba(203,213,225,0.4) 7px, transparent 7px, transparent 14px); }
     .day-number { font-size: 0.85rem; font-weight: 800; color: #475569; }
 
     .timeline-lanes-layer {
-        position: relative; z-index: 2;
-        display: grid;
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        grid-auto-rows: 28px;
-        row-gap: 5px; column-gap: 2px;
-        padding: 28px 2px 6px 2px; min-height: 90px;
-        align-content: start;
+        position: relative; z-index: 2; display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: 28px;
+        gap: 5px 2px; padding: 28px 2px 6px 2px; min-height: 90px; align-content: start;
     }
 
     .timeline-bar {
-        position: relative;
-        display: flex; align-items: center;
-        padding: 3px 6px; border-radius: 5px; font-size: 0.75rem;
-        font-weight: 700; text-decoration: none !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        cursor: pointer; overflow: hidden;
-        height: 100%; user-select: none;
+        position: relative; display: grid; grid-template-columns: subgrid; align-items: center;
+        border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-decoration: none !important;
+        box-sizing: border-box; overflow: hidden;
+        transition: opacity 0.2s ease;
     }
-    .timeline-bar.pending { background-color: #ffffff !important; border: 2px solid; }
-    .timeline-bar.sharp-left { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-    .timeline-bar.sharp-right { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-
-    .bar-days-bg {
-        position: absolute; inset: 0; z-index: 0;
-        display: grid; grid-template-columns: var(--grid-normal);
-    }
-    .hide-weekends .bar-days-bg {
-        grid-template-columns: var(--grid-hidden);
-    }
-    .bar-day { background: transparent; overflow: hidden; }
-    .bar-day-off {
-        background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.6) 0 4px, transparent 4px 8px);
-    }
-
-    /* Wyraźniejsze i jaśniejsze paski dla oczekujących urlopów na dniach wolnych */
-    .timeline-bar.pending .bar-day-off {
-        background-image: repeating-linear-gradient(45deg, var(--lane-color) 0 4px, transparent 4px 8px);
-        opacity: 0.15; /* Zwiększa czytelność tekstu leżącego na tych paskach */
-    }
-
-    .bar-content {
-    position: sticky; left: 0; z-index: 1; display: flex; align-items: center;
-    width: 100%; min-width: 0;
-    max-width: 100%;
-}
+    .bar-day-cell { grid-row: 1; }
+    .bar-day-cell.is-nonworking { background-image: repeating-linear-gradient(135deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 6px, transparent 6px, transparent 12px); }
+    .bar-content { grid-column: 1 / -1; grid-row: 1; display: flex; align-items: center; padding: 0 6px; pointer-events: none; }
     .bar-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
-    .icon-prev { transform: rotate(180deg); display: inline-block; margin-right: 4px; font-size: 0.7rem; flex-shrink: 0; }
-    .icon-next { margin-left: 4px; font-size: 0.7rem; flex-shrink: 0; }
 
-    .timeline-days-header,
-    .timeline-grid-bg {
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-    }
-
-    /* UKRYWANIE WEEKENDÓW - BEZ LUK */
-    .hide-weekends .timeline-days-header,
-    .hide-weekends .timeline-grid-bg,
-    .hide-weekends .timeline-lanes-layer {
-        grid-template-columns: repeat(5, minmax(0, 1fr)) 0px 0px;
-        column-gap: 2px;
-        width: calc(100% + 4px); /* Wypycha ucięte luki poza krawędź okna */
-    }
-    .hide-weekends .weekend-col-name,
-    .hide-weekends .timeline-day-cell.weekend-col {
-        padding: 0 !important; margin: 0 !important; border: none !important;
-        min-height: 0 !important; height: 0 !important; overflow: hidden;
-    }
-    .hide-weekends .bar-day-weekend {
-        display: none;
-    }
-
-    .day-col-name,
-    .timeline-day-cell {
-        overflow: hidden;
-        min-width: 0;
-    }
+    @media (max-width: 1150px) { .team-main-grid { grid-template-columns: 1fr; } }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const HOLD_MS = 450;
-    const MOVE_CANCEL_PX = 8;
+    const teamWrapper = document.querySelector('.team-wrapper');
+    // Pobranie unikalnego ID zespołu do pamięci przeglądarki
+    const teamId = teamWrapper ? teamWrapper.dataset.teamId : 'default';
 
-    const teamId = document.querySelector('.team-wrapper').dataset.teamId;
-    const STORAGE_KEY = 'team-calendar-pins-' + teamId;
+    // Unikalne klucze sessionStorage dla danego zespołu
+    const STORAGE_KEY_USERS = `calendar_users_${teamId}`;
+    const STORAGE_KEY_STATUS = `calendar_statuses_${teamId}`;
 
-    const allItems = Array.from(document.querySelectorAll('.hl-item'));
+    const userCheckboxes = document.querySelectorAll('.person-checkbox');
+    const statusCheckboxes = document.querySelectorAll('.status-checkbox');
     const resetBtn = document.getElementById('reset-selection-btn');
-    const weekendToggle = document.getElementById('toggle-weekends');
-    const timelineCalendar = document.getElementById('timeline-calendar');
+    const bars = document.querySelectorAll('.timeline-bar');
 
-    const pinnedFilters = loadPinnedFilters();
-    let hoverFilter = null;
+    // 1. Ładowanie stanu z pamięci przeglądarki
+    function loadState() {
+        const savedUsers = sessionStorage.getItem(STORAGE_KEY_USERS);
+        const savedStatuses = sessionStorage.getItem(STORAGE_KEY_STATUS);
 
-    const WEEKENDS_KEY = 'team-calendar-weekends-' + teamId;
+        if (savedUsers) {
+            const parsedUsers = JSON.parse(savedUsers);
+            userCheckboxes.forEach(cb => {
+                cb.checked = parsedUsers.includes(cb.dataset.userId);
+            });
+        }
 
-    function loadShowWeekends() {
-        const raw = localStorage.getItem(WEEKENDS_KEY);
-        return raw === null ? true : raw === 'true';
-    }
-
-    function saveShowWeekends(value) {
-        try {
-            localStorage.setItem(WEEKENDS_KEY, String(value));
-        } catch (e) { /* ignoruj */ }
-    }
-
-    if (weekendToggle) {
-        const showWeekends = loadShowWeekends();
-        weekendToggle.checked = showWeekends;
-        timelineCalendar.classList.toggle('hide-weekends', !showWeekends);
-    }
-
-    function loadPinnedFilters() {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return new Set();
-            const arr = JSON.parse(raw);
-            return new Set(Array.isArray(arr) ? arr : []);
-        } catch (e) {
-            return new Set();
+        if (savedStatuses) {
+            const parsedStatuses = JSON.parse(savedStatuses);
+            statusCheckboxes.forEach(cb => {
+                cb.checked = parsedStatuses.includes(cb.value);
+            });
         }
     }
 
-    function savePinnedFilters() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(pinnedFilters)));
-        } catch (e) { /* ignoruj */ }
+    // 2. Zapisywanie obecnego stanu do pamięci
+    function saveState(checkedUserIds, checkedStatuses) {
+        sessionStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(checkedUserIds));
+        sessionStorage.setItem(STORAGE_KEY_STATUS, JSON.stringify(checkedStatuses));
     }
 
-    function matchKeysForElement(el) {
-        const keys = [];
-        if (el.dataset.leaveId) keys.push('leave:' + el.dataset.leaveId);
-        if (el.dataset.userId) keys.push('user:' + el.dataset.userId);
-        if (el.dataset.category) keys.push('cat:' + el.dataset.category);
-        if (el.dataset.status) keys.push('cat:' + el.dataset.status);
-        if (el.dataset.isManager === 'true') keys.push('cat:manager');
-        return keys;
-    }
+    // 3. Główna funkcja aktualizująca widok i wywołująca zapis
+    function updateHighlights() {
+        const checkedUserIds = Array.from(userCheckboxes)
+                                    .filter(cb => cb.checked)
+                                    .map(cb => cb.dataset.userId);
 
-    function pinKeyForElement(el) {
-        if (el.dataset.leaveId) return 'leave:' + el.dataset.leaveId;
-        if (el.dataset.userId) return 'user:' + el.dataset.userId;
-        if (el.dataset.category) return 'cat:' + el.dataset.category;
-        return null;
-    }
+        const checkedStatuses = Array.from(statusCheckboxes)
+                                     .filter(cb => cb.checked)
+                                     .map(cb => cb.value);
 
-    function elementMatches(el, activeFilters) {
-        const cats = Array.from(activeFilters).filter(f => f.startsWith('cat:'));
-        const entities = Array.from(activeFilters).filter(f => !f.startsWith('cat:'));
+        bars.forEach(bar => {
+            const barUserId = bar.dataset.userId;
+            const barStatus = bar.dataset.status;
+            const matchesUser = checkedUserIds.length === 0 || checkedUserIds.includes(barUserId);
+            const matchesStatus = checkedStatuses.length === 0 || checkedStatuses.includes(barStatus);
 
-        const keys = matchKeysForElement(el);
-
-        if (el.classList.contains('hint-toggle')) {
-            return cats.length === 0 || cats.some(c => keys.includes(c));
-        }
-
-        let passCat = cats.length === 0 || cats.some(c => keys.includes(c));
-        let passEnt = entities.length === 0 || entities.some(e => keys.includes(e));
-
-        if (el.classList.contains('person-item')) {
-            if (cats.some(c => c === 'cat:approved' || c === 'cat:pending')) {
-                passCat = true;
-            }
-        }
-
-        return passCat && passEnt;
-    }
-
-    function render() {
-        const activeFilters = new Set(pinnedFilters);
-        if (hoverFilter) activeFilters.add(hoverFilter);
-        const hasActive = activeFilters.size > 0;
-
-        allItems.forEach(el => {
-            el.classList.remove('hl-active', 'hl-dim');
-            if (hasActive) {
-                el.classList.add(elementMatches(el, activeFilters) ? 'hl-active' : 'hl-dim');
-            }
-            el.classList.toggle('is-pinned', pinnedFilters.has(pinKeyForElement(el)));
-        });
-
-        resetBtn.disabled = pinnedFilters.size === 0;
-        resetBtn.classList.toggle('btn-outline-secondary', pinnedFilters.size === 0);
-        resetBtn.classList.toggle('btn-danger', pinnedFilters.size > 0);
-    }
-
-    function togglePinForElement(el) {
-        const key = pinKeyForElement(el);
-        if (!key) return;
-
-        if (pinnedFilters.has(key)) {
-            pinnedFilters.delete(key);
-        } else {
-            pinnedFilters.add(key);
-        }
-
-        savePinnedFilters();
-        render();
-    }
-
-    allItems.forEach(el => {
-        el.addEventListener('mouseenter', function () {
-            const key = pinKeyForElement(el);
-            if (!key) return;
-            hoverFilter = key;
-            render();
-        });
-        el.addEventListener('mouseleave', function () {
-            hoverFilter = null;
-            render();
-        });
-    });
-
-    allItems.forEach(el => {
-        let holdTimer = null;
-        let holdTriggered = false;
-        let startX = 0, startY = 0;
-        const isLegendButton = el.classList.contains('hint-toggle');
-
-        function clearHoldTimer() {
-            if (holdTimer) {
-                clearTimeout(holdTimer);
-                holdTimer = null;
-            }
-        }
-
-        el.addEventListener('pointerdown', function (e) {
-            holdTriggered = false;
-            startX = e.clientX;
-            startY = e.clientY;
-            clearHoldTimer();
-            holdTimer = setTimeout(function () {
-                holdTriggered = true;
-                togglePinForElement(el);
-            }, HOLD_MS);
-        });
-
-        el.addEventListener('pointermove', function (e) {
-            if (!holdTimer) return;
-            if (Math.abs(e.clientX - startX) > MOVE_CANCEL_PX || Math.abs(e.clientY - startY) > MOVE_CANCEL_PX) {
-                clearHoldTimer();
+            if (matchesUser && matchesStatus) {
+                bar.style.opacity = '1';
+                bar.style.pointerEvents = 'auto';
+            } else {
+                bar.style.opacity = '0.15';
+                bar.style.pointerEvents = 'none';
             }
         });
 
-        el.addEventListener('pointerup', clearHoldTimer);
-        el.addEventListener('pointercancel', clearHoldTimer);
-
-        el.addEventListener('click', function (e) {
-            if (holdTriggered) {
-                e.preventDefault();
-                e.stopPropagation();
-                holdTriggered = false;
-                return;
-            }
-            if (isLegendButton) {
-                togglePinForElement(el);
-            }
-        });
-    });
-
-    resetBtn.addEventListener('click', function () {
-        if (pinnedFilters.size === 0) return;
-        pinnedFilters.clear();
-        savePinnedFilters();
-        hoverFilter = null;
-        render();
-    });
-
-    if (weekendToggle) {
-        weekendToggle.addEventListener('change', function () {
-            timelineCalendar.classList.toggle('hide-weekends', !weekendToggle.checked);
-            saveShowWeekends(weekendToggle.checked);
-        });
+        // Zapisujemy nowy stan po każdym przeliczeniu
+        saveState(checkedUserIds, checkedStatuses);
     }
 
-    render();
+    // 4. Kolejność wywołań na starcie
+    loadState();
+    updateHighlights();
+
+    // 5. Event listenery na kliknięcia
+    userCheckboxes.forEach(cb => cb.addEventListener('change', updateHighlights));
+    statusCheckboxes.forEach(cb => cb.addEventListener('change', updateHighlights));
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            userCheckboxes.forEach(cb => cb.checked = false);
+            statusCheckboxes.forEach(cb => cb.checked = false);
+            updateHighlights();
+        });
+    }
 });
 </script>
 {% endblock %}

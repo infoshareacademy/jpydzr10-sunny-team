@@ -3,7 +3,8 @@ from . import views
 
 urlpatterns = [
     path('my-vacations/', views.my_vacations, name='my_vacations'),
-    path('all-requests/', views.all_requests_list, name='all_requests_list'),
+    path('requests/', views.pending_requests_list, name='pending_requests_list'),
+    path('requests/history', views.history_requests_list, name='history_requests_list'),
     path('new-request/', views.LeaveRequestView.as_view(), name='new_request'),
     path('approve/<int:request_id>/', views.approve_request, name='approve_request'),
     path('reject/<int:request_id>/', views.reject_request, name='reject_request'),

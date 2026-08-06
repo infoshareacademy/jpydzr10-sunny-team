@@ -116,15 +116,7 @@
     <div class="filter-box">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-4">
-           {% if active_role != 'Manager' %}
-                <label for="role" class="form-label font-weight-bold text-dark">Filtruj po roli:</label>
-                <select name="role" id="role" class="form-select">
-                    <option value="ALL">Wszystkie role</option>
-                    {% for r in all_roles %}
-                        <option value="{{ r }}" {% if selected_role == r %}selected{% endif %}>{{ r }}</option>
-                    {% endfor %}
-                </select>
-            {% endif %}
+
             </div>
             <div class="col-md-4">
                 <label for="team" class="form-label font-weight-bold text-dark">Filtruj po zespole:</label>
@@ -153,7 +145,6 @@
                 <thead>
                     <tr>
                         <th>Pracownik</th>
-                        <th>Rola</th>
                         <th>Zespół</th>
                         <th style="text-align: center;">Przydzielone</th>
                         <th style="text-align: center;">Wykorzystane</th>
@@ -168,9 +159,6 @@
                             <a href="{% url 'profile' row.user_id %}" class="table-link">
                                 {{ row.first_name }} {{ row.last_name }}
                             </a>
-                        </td>
-                        <td style="color: #4a5568;">
-                            {{ row.role }}
                         </td>
                         <td>
                             {% if row.teams %}

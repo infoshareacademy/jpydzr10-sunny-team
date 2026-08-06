@@ -288,7 +288,8 @@
                                 <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'new_request' %}"><i class="bi bi-file-earmark-plus-fill text-muted"></i> Nowy </a></li>
                                 <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'my_vacations' %}"><i class="bi bi-folder-fill text-muted"></i> Lista </a></li>
                             {% else %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'all_requests_list' %}"><i class="bi bi-file-text-fill text-muted"></i> Lista</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'pending_requests_list' %}"><i class="bi bi-stopwatch-fill text-muted"></i> Oczekujące</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'history_requests_list' %}"><i class="bi bi-archive-fill text-muted"></i> Historia</a></li>
                             {% endif %}
                         </ul>
                         {% endif %}
@@ -304,10 +305,6 @@
                         <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'reports_index' %}"><i class="bi bi-clipboard-data-fill text-muted"></i> Raporty</a></li>
                         <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'user_list' %}"><i class="bi bi-person-fill text-muted"></i> Pracownicy</a></li>
                         <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'team-list' %}"><i class="bi bi-people-fill text-muted"></i> Zespoły</a></li>
-
-                        {% if active_role in 'HR,COO,Admin' %}
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'users_per_role_report' %}"><i class="bi bi-person-lines-fill text-muted"></i> Role</a></li>
-                        {% endif %}
                     {% endif %}
                         </ul>
                     </li>

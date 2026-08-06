@@ -1,61 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}{% if object %}Edycja: {{ object.name }}{% else %}Dodaj nowy zespół{% endif %}{% endblock %}
 
 {% block content %}
-<style>
-    .form-wrapper { max-width: 800px; margin: 30px auto; padding: 0 20px; }
-    .form-card { background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #cbd5e0; }
-    .form-header { margin-bottom: 25px; border-bottom: 2px solid #edf2f7; padding-bottom: 15px; }
-    .form-title { font-size: 1.8rem; font-weight: 800; color: #1a202c; margin: 0; }
-    .form-subtitle { color: #718096; font-size: 0.95rem; margin-top: 5px; }
-
-    .form-group { margin-bottom: 22px; }
-    .form-group label { display: block; font-weight: 700; color: #2d3748; margin-bottom: 8px; font-size: 0.95rem; }
-    .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 1rem; color: #1a202c; background-color: #fff; box-sizing: border-border-box; }
-    .form-control:focus { border-color: #007bff; outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
-
-    /* Styl dla dynamicznych tagów/pigułek */
-    .selected-tags-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 12px;
-        min-height: 38px;
-        padding: 6px;
-        background: #f7fafc;
-        border: 1px dashed #cbd5e0;
-        border-radius: 8px;
-    }
-    .user-tag {
-        display: inline-flex;
-        align-items: center;
-        background-color: #e2e8f0;
-        color: #2d3748;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        transition: background 0.2s;
-    }
-    .user-tag .remove-btn {
-        margin-left: 8px;
-        cursor: pointer;
-        color: #e53e3e;
-        font-weight: bold;
-        font-size: 1.05rem;
-        border: none;
-        background: none;
-        padding: 0;
-        line-height: 1;
-    }
-    .user-tag .remove-btn:hover { color: #9b2c2c; }
-
-    .error-list { color: #e53e3e; font-size: 0.875rem; margin-top: 6px; list-style: none; padding-left: 0; }
-    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #edf2f7; }
-    .btn-submit { padding: 10px 24px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .btn-submit:hover { background: #0056b3; }
-    .btn-cancel { padding: 10px 20px; background: #e2e8f0; color: #4a5568; border-radius: 8px; font-weight: 600; text-decoration: none; }
-</style>
+<link rel="stylesheet" href="{% static 'css/team.css' %}">
 
 <div class="form-wrapper">
     <div class="form-card">
@@ -70,9 +19,9 @@
             {% csrf_token %}
 
             {% if form.non_field_errors %}
-                <div style="background: #fff5f5; border: 1px solid #feb2b2; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+                <div class="form-errors-banner">
                     {% for error in form.non_field_errors %}
-                        <p style="color: #c53030; margin: 0; font-size: 0.9rem; font-weight: 600;">{{ error }}</p>
+                        <p>{{ error }}</p>
                     {% endfor %}
                 </div>
             {% endif %}
@@ -93,34 +42,40 @@
 
             <!-- Główny Manager -->
             <div class="form-group">
-                <label for="{{ form.head_manager.id_for_label }}">{{ form.head_manager.label }}</label>
-                {{ form.head_manager }}
-                {% if form.head_manager.errors %}<ul class="error-list">{% for error in form.head_manager.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                <label for="{{ form.manager.id_for_label }}">{{ form.manager.label }}</label>
+                {{ form.manager }}
+                {% if form.manager.errors %}<ul class="error-list">{% for error in form.manager.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
             </div>
 
-            <!-- Współzarządzający (Co-Managers) - NOWY SELECT Z TAGAMI -->
+            <!-- Opiekun HR -->
+            <div class="form-group">
+                <label for="{{ form.hr.id_for_label }}">{{ form.hr.label }}</label>
+                {{ form.hr }}
+                {% if form.hr.errors %}<ul class="error-list">{% for error in form.hr.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <!-- Współzarządzający (Co-Managers) -->
+            {% if form.co_managers %}
             <div class="form-group">
                 <label>{{ form.co_managers.label }}</label>
 
-                <!-- Ukryty oryginalny select Django -->
                 <div style="display: none;">
                     {{ form.co_managers }}
                 </div>
 
-                <!-- Nasza widoczna, jednokrotna lista rozwijana -->
                 <select id="co_managers_dropdown" class="form-control">
                     <option value="">-- Wybierz współzarządzającego z listy --</option>
                 </select>
 
-                <!-- Kontener na wybrane osoby (pigułki z przyciskiem X) -->
                 <div id="co_managers_tags" class="selected-tags-container"></div>
 
                 {% if form.co_managers.errors %}<ul class="error-list">{% for error in form.co_managers.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
             </div>
+            {% endif %}
 
             <div class="form-actions">
-                <a href="{% url 'team-list' %}" class="btn-cancel">Anuluj</a>
-                <button type="submit" class="btn-submit">Zapisz zespół</button>
+                <a href="{% url 'team-list' %}" class="btn-custom btn-cancel">Anuluj</a>
+                <button type="submit" class="btn-custom btn-submit">Zapisz zespół</button>
             </div>
         </form>
     </div>
@@ -135,7 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!originalSelect || !dropdown || !tagsContainer) return;
 
-        // 1. Przepisz opcje z ukrytego selecta Django do widocznej listy
         function renderDropdown() {
             dropdown.innerHTML = '<option value="">-- Wybierz osobę z listy --</option>';
             Array.from(originalSelect.options).forEach(opt => {
@@ -148,7 +102,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // 2. Wyrenderuj wybrane tagi pod spodem
         function renderTags() {
             tagsContainer.innerHTML = '';
             let hasSelection = false;
@@ -171,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // 3. Reakcja na wybór z dropdownu
         dropdown.addEventListener('change', function() {
             const val = this.value;
             if (!val) return;
@@ -184,7 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderTags();
         });
 
-        // 4. Reakcja na kliknięcie X (usunięcie z listy)
         tagsContainer.addEventListener('click', function(e) {
             if (e.target.classList.contains('remove-btn')) {
                 const val = e.target.getAttribute('data-value');
@@ -197,12 +148,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Inicjalne uruchomienie
         renderDropdown();
         renderTags();
     }
 
-    // Inicjalizacja dla co_managers
     setupTagSelector('id_co_managers', 'co_managers_dropdown', 'co_managers_tags');
 });
 </script>

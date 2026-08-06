@@ -4,7 +4,6 @@ from django.db import models
 class User(AbstractUser):
     ROLES = [
         ('Admin', 'Admin'),
-        ('COO', 'COO'),
         ('HR', 'HR'),
         ('Manager', 'Manager'),
         ('Worker', 'Worker'),

@@ -149,14 +149,14 @@
 
         <!-- Grupa przycisków o idealnie równej wysokości -->
         <div class="d-flex gap-2 align-items-stretch">
-            {% if active_role in 'Manager, COO,HR,Admin'%}
+            {% if active_role in 'Manager,HR,Admin'%}
                 <a href="{% url 'team_report' %}" class="btn btn-success btn-custom">
                     <i class="bi bi-clipboard-data-fill"></i>
                     <span>Raport Zespołów</span>
                 </a>
             {% endif %}
 
-            {% if active_role in 'COO,HR,Admin' %}
+            {% if active_role in 'Admin' %}
                 <a href="{% url 'team-create' %}" class="btn-custom btn-create">
                     <i class="bi bi-plus-lg"></i>
                     <span>Dodaj zespół</span>
@@ -170,10 +170,11 @@
 
         <div class="table-responsive">
             <table>
-                <thead>
+               <thead>
                     <tr>
-                        <th style="width: 40%;">Nazwa zespołu</th>
-                        <th style="width: 40%;">Kierownik (Manager)</th>
+                        <th style="width: 30%;">Nazwa zespołu</th>
+                        <th style="width: 25%;">Kierownik (Manager)</th>
+                        <th style="width: 25%;">Opiekun HR</th>
                         <th style="width: 20%;">Liczba pracowników</th>
                     </tr>
                 </thead>
@@ -185,28 +186,44 @@
                                 {{ team.name }}
                             </a>
                         </td>
+
+                        <!-- MANAGER -->
                         <td>
-                            {% if team.head_manager %}
-                                {% if active_role in 'COO,HR,Admin' %}
-                                    <a href="{% url 'profile' user_id=team.head_manager.id %}" class="user-link">
-                                        {{ team.head_manager.get_full_name|default:team.head_manager.username }}
+                            {% if team.manager %}
+                                {% if active_role == 'HR' or active_role == 'Admin' %}
+                                    <a href="{% url 'profile' user_id=team.manager.id %}" class="user-link">
+                                        {{ team.manager.get_full_name|default:team.manager.username }}
                                     </a>
                                 {% else %}
                                     <span style="font-weight: 600; color: #2d3748;">
-                                        {{ team.head_manager.get_full_name|default:team.head_manager.username }}
+                                        {{ team.manager.get_full_name|default:team.manager.username }}
                                     </span>
                                 {% endif %}
                             {% else %}
                                 <span style="color: #718096;">&mdash; Brak &mdash;</span>
                             {% endif %}
                         </td>
+
+                        <!-- HR -->
+                        <td>
+                            {% if team.hr %}
+                                {% if active_role == 'Admin' %}
+                                    <a href="{% url 'profile' user_id=team.hr.id %}" class="user-link">
+                                        {{ team.hr.get_full_name|default:team.hr.username }}
+                                    </a>
+                                {% else %}
+                                    <span style="font-weight: 600; color: #2d3748;">
+                                        {{ team.hr.get_full_name|default:team.hr.username }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span style="color: #718096;">&mdash; Brak &mdash;</span>
+                            {% endif %}
+                        </td>
+
                         <td>
                             {{ team.members_count }}
                         </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" style="text-align:center; padding: 40px; color: #718096;">Brak aktywnych zespołów.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
