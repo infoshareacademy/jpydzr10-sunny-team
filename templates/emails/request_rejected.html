@@ -1,23 +1,24 @@
 {% extends 'emails/base_email.html' %}
+{% load i18n %}
 
-{% block title %}Twój wniosek urlopowy został odrzucony{% endblock %}
+{% block title %}{% trans "Twój wniosek urlopowy został odrzucony" %}{% endblock %}
 
 {% block content %}
-    <h2 style="color: #dc3545;">✕ Wniosek odrzucony</h2>
+    <h2 style="color: #dc3545;">✕ {% trans "Wniosek odrzucony" %}</h2>
 
-    <p>Cześć {{ first_name }},</p>
+    {% blocktrans with name=first_name %}<p>Cześć {{ name }},</p>{% endblocktrans %}
 
-    <p>Niestety Twój wniosek urlopowy został odrzucony:</p>
+    <p>{% trans "Niestety Twój wniosek urlopowy został odrzucony:" %}</p>
 
     <ul>
-        <li><strong>Od:</strong> {{ start_date }}</li>
-        <li><strong>Do:</strong> {{ end_date }}</li>
-        <li><strong>Liczba dni:</strong> {{ days }}</li>
+        <li>{% blocktrans with d=start_date %}<strong>Od:</strong> {{ d }}{% endblocktrans %}</li>
+        <li>{% blocktrans with d=end_date %}<strong>Do:</strong> {{ d }}{% endblocktrans %}</li>
+        <li>{% blocktrans with d=days %}<strong>Liczba dni:</strong> {{ d }}{% endblocktrans %}</li>
     </ul>
 
-    <p>Odrzucił: <strong>{{ rejected_by }}</strong></p>
+    {% blocktrans with who=rejected_by %}<p>Odrzucił: <strong>{{ who }}</strong></p>{% endblocktrans %}
 
-    <p>Jeśli masz pytania, skontaktuj się z działem HR lub przełożonym.</p>
+    <p>{% trans "Jeśli masz pytania, skontaktuj się z działem HR lub przełożonym." %}</p>
 
-    <a href="127.0.0.1/leaves/my-vacations/" class="button">Sprawdź swoje wnioski</a>
+    <a href="127.0.0.1/leaves/my-vacations/" class="button">{% trans "Sprawdź swoje wnioski" %}</a>
 {% endblock %}
