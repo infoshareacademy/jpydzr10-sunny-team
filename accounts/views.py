@@ -82,3 +82,12 @@ def switch_role(request):
         )
         return redirect('dashboard')
 
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        email_notifications = request.POST.get('email_notifications') == 'on'
+        request.user.email_notifications = email_notifications
+        request.user.save()
+        messages.success(request, 'Preferencje zapisane.')
+        return redirect('profile')
+    return render(request, 'accounts/profile.html', {'user': request.user})
