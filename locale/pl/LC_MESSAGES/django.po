@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-06 18:18+0200\n"
+"POT-Creation-Date: 2026-08-08 13:37+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -179,7 +179,6 @@ msgid "Zespół:"
 msgstr "Zespół:"
 
 #: leaves/templates/leaves/add_user.html:109
-
 msgid "Data zatrudnienia:"
 msgstr "Data zatrudnienia:"
 
@@ -610,7 +609,6 @@ msgid "Wybierz użytkownika:"
 msgstr "Wybierz użytkownika:"
 
 #: leaves/templates/leaves/reset_password.html:23
-
 msgid "--- Wybierz użytkownika ---"
 msgstr "--- Wybierz użytkownika ---"
 
@@ -976,6 +974,7 @@ msgstr "Pozostałe"
 
 #: reports/templates/reports/leave_usage.html:24
 #: reports/templates/reports/team_report.html:24
+#, python-format
 msgid "%% wykorzystania"
 msgstr "%% wykorzystania"
 
@@ -1090,6 +1089,198 @@ msgstr "Przełącz"
 #: templates/base.html:57
 msgid "Wyloguj się"
 msgstr "Wyloguj się"
+
+#: templates/emails/account_deactivated.html:5
+msgid "Konto dezaktywowane"
+msgstr "Konto dezaktywowane"
+
+#: templates/emails/account_deactivated.html:6
+#, python-format
+msgid ""
+"\n"
+"    <p><strong>Witaj %(name)s,</strong></p>\n"
+"    "
+msgstr ""
+"\n"
+"    <p><strong>Witaj %(name)s,</strong></p>\n"
+"    "
+
+#: templates/emails/account_deactivated.html:9
+msgid ""
+"Twoje konto w systemie <strong>SunnyTeam</strong> zostało <strong "
+"style=\"color:#dc3545;\">dezaktywowane</strong>."
+msgstr ""
+"Twoje konto w systemie <strong>SunnyTeam</strong> zostało <strong "
+"style=\"color:#dc3545;\">dezaktywowane</strong>."
+
+#: templates/emails/account_deactivated.html:10
+msgid ""
+"Oznacza to, że nie masz już dostępu do panelu i nie możesz składać wniosków "
+"urlopowych."
+msgstr ""
+"Oznacza to, że nie masz już dostępu do panelu i nie możesz składać wniosków "
+"urlopowych."
+
+#: templates/emails/account_deactivated.html:11
+msgid "Jeśli uważasz, że to pomyłka, skontaktuj się z administratorem systemu."
+msgstr "Jeśli uważasz, że to pomyłka, skontaktuj się z administratorem systemu."
+
+#: templates/emails/account_deactivated.html:12
+msgid "Z poważaniem,"
+msgstr "Z poważaniem"
+
+#: templates/emails/account_deactivated.html:12
+#: templates/emails/welcome_email.html:15
+msgid "Zespół SunnyTeam"
+msgstr "Zespół SunnyTeam"
+
+#: templates/emails/base_email.html:7
+msgid "SunnyTeam - Urlopy"
+msgstr "SunnyTeam - Urlopy"
+
+#: templates/emails/base_email.html:64
+msgid "SunnyTeam - System Urlopowy"
+msgstr "SunnyTeam - System Urlopowy"
+
+#: templates/emails/base_email.html:74
+msgid "© 2026 SunnyTeam. Wszelkie prawa zastrzeżone."
+msgstr "© 2026 SunnyTeam. Wszelkie prawa zastrzeżone."
+
+#: templates/emails/base_email.html:75
+msgid "Ta wiadomość została wygenerowana automatycznie. Nie odpowiadaj na nią."
+msgstr "Ta wiadomość została wygenerowana automatycznie. Nie odpowiadaj na nią."
+
+#: templates/emails/new_request_notification.html:5
+msgid "Nowy wniosek urlopowy"
+msgstr "Nowy wniosek urlopowy"
+
+#: templates/emails/new_request_notification.html:6
+#, python-format
+msgid "<p><strong>%(name)s</strong> złożył nowy wniosek.</p>"
+msgstr "<p><strong>%(name)s</strong> złożył nowy wniosek.</p>"
+
+#: templates/emails/new_request_notification.html:7
+#, python-format
+msgid "<p><strong>Okres:</strong> %(details)s</p>"
+msgstr "<p><strong>Okres:</strong> %(details)s</p>"
+
+#: templates/emails/new_request_notification.html:8
+#, python-format
+msgid "<p><strong>Data złożenia:</strong> %(date)s</p>"
+msgstr "<p><strong>Data złożenia:</strong> %(date)s</p>"
+
+#: templates/emails/new_request_notification.html:10
+msgid "Zobacz w panelu"
+msgstr "Zobacz w panelu"
+
+#: templates/emails/request_approved.html:4
+msgid "Twój wniosek urlopowy został zatwierdzony"
+msgstr "Twój wniosek urlopowy został zatwierdzony"
+
+#: templates/emails/request_approved.html:7
+msgid "Wniosek zatwierdzony"
+msgstr "Wniosek zatwierdzony"
+
+#: templates/emails/request_approved.html:9
+#: templates/emails/request_rejected.html:9
+#, python-format
+msgid "<p>Cześć %(name)s,</p>"
+msgstr "<p>Cześć %(name)s,</p>"
+
+#: templates/emails/request_approved.html:11
+msgid "Twój wniosek urlopowy został zatwierdzony:"
+msgstr "Twój wniosek urlopowy został zatwierdzony:"
+
+#: templates/emails/request_approved.html:14
+#: templates/emails/request_rejected.html:14
+#, python-format
+msgid "<strong>Od:</strong> %(d)s"
+msgstr "<strong>Od:</strong> %(d)s"
+
+#: templates/emails/request_approved.html:15
+#: templates/emails/request_rejected.html:15
+#, python-format
+msgid "<strong>Do:</strong> %(d)s"
+msgstr "<strong>Do:</strong> %(d)s"
+
+#: templates/emails/request_approved.html:16
+#: templates/emails/request_rejected.html:16
+#, python-format
+msgid "<strong>Liczba dni:</strong> %(d)s"
+msgstr "<strong>Liczba dni:</strong> %(d)s"
+
+#: templates/emails/request_approved.html:19
+#, python-format
+msgid "<p>Zatwierdził: <strong>%(who)s</strong></p>"
+msgstr "<p>Zatwierdził: <strong>%(who)s</strong></p>"
+
+#: templates/emails/request_approved.html:22
+msgid "Sprawdź swoje urlopy"
+msgstr "Sprawdź swoje urlopy"
+
+#: templates/emails/request_rejected.html:4
+msgid "Twój wniosek urlopowy został odrzucony"
+msgstr "Twój wniosek urlopowy został odrzucony"
+
+#: templates/emails/request_rejected.html:7
+msgid "Wniosek odrzucony"
+msgstr "Wniosek odrzucony"
+
+#: templates/emails/request_rejected.html:11
+msgid "Niestety Twój wniosek urlopowy został odrzucony:"
+msgstr "Niestety Twój wniosek urlopowy został odrzucony:"
+
+#: templates/emails/request_rejected.html:19
+#, python-format
+msgid "<p>Odrzucił: <strong>%(who)s</strong></p>"
+msgstr "<p>Odrzucił: <strong>%(who)s</strong></p>"
+
+#: templates/emails/request_rejected.html:21
+msgid "Jeśli masz pytania, skontaktuj się z działem HR lub przełożonym."
+msgstr "Jeśli masz pytania, skontaktuj się z działem HR lub przełożonym."
+
+#: templates/emails/request_rejected.html:23
+msgid "Sprawdź swoje wnioski"
+msgstr "Sprawdź swoje wnioski"
+
+#: templates/emails/welcome_email.html:4
+#, python-format
+msgid "<h2 style=\"color:#f9a825;\">👋 Witaj, %(name)s!</h2>"
+msgstr "<h2 style=\"color:#f9a825;\">👋 Witaj, %(name)s!</h2>"
+
+#: templates/emails/welcome_email.html:5
+msgid "Twoje konto w systemie SunnyTeam zostało pomyślnie utworzone."
+msgstr "Twoje konto w systemie SunnyTeam zostało pomyślnie utworzone."
+
+#: templates/emails/welcome_email.html:6
+msgid "Poniżej znajdziesz swoje dane logowania:"
+msgstr "Poniżej znajdziesz swoje dane logowania:"
+
+#: templates/emails/welcome_email.html:8
+#, python-format
+msgid "<li><strong>Login:</strong> %(u)s</li>"
+msgstr "<li><strong>Login:</strong> %(u)s</li>"
+
+#: templates/emails/welcome_email.html:9
+#, python-format
+msgid "<li><strong>Hasło tymczasowe:</strong> %(p)s</li>"
+msgstr "<li><strong>Hasło tymczasowe:</strong> %(p)s</li>"
+
+#: templates/emails/welcome_email.html:11
+msgid "Uwaga:"
+msgstr "Uwaga:"
+
+#: templates/emails/welcome_email.html:11
+msgid "Po pierwszym logowaniu zalecamy zmianę hasła w panelu użytkownika."
+msgstr "Po pierwszym logowaniu zalecamy zmianę hasła w panelu użytkownika."
+
+#: templates/emails/welcome_email.html:13
+msgid "Zaloguj się do systemu"
+msgstr "Zaloguj się do systemu"
+
+#: templates/emails/welcome_email.html:15
+msgid "Pozdrawiamy,"
+msgstr "Pozdrawiamy,"
 
 #: templates/request_base.html:109
 msgid "Button"
