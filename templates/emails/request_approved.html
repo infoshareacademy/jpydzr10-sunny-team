@@ -1,23 +1,24 @@
 {% extends 'emails/base_email.html' %}
+{% load i18n %}
 
-{% block title %}Twój wniosek urlopowy został zatwierdzony{% endblock %}
+{% block title %}{% trans "Twój wniosek urlopowy został zatwierdzony" %}{% endblock %}
 
 {% block content %}
-    <h2 style="color: #28a745;">✓ Wniosek zatwierdzony</h2>
+    <h2 style="color: #28a745;">✓ {% trans "Wniosek zatwierdzony" %}</h2>
 
-    <p>Cześć {{ first_name }},</p>
+    {% blocktrans with name=first_name %}<p>Cześć {{ name }},</p>{% endblocktrans %}
 
-    <p>Twój wniosek urlopowy został zatwierdzony:</p>
+    <p>{% trans "Twój wniosek urlopowy został zatwierdzony:" %}</p>
 
     <ul>
-        <li><strong>Od:</strong> {{ start_date }}</li>
-        <li><strong>Do:</strong> {{ end_date }}</li>
-        <li><strong>Liczba dni:</strong> {{ days }}</li>
+        <li>{% blocktrans with d=start_date %}<strong>Od:</strong> {{ d }}{% endblocktrans %}</li>
+        <li>{% blocktrans with d=end_date %}<strong>Do:</strong> {{ d }}{% endblocktrans %}</li>
+        <li>{% blocktrans with d=days %}<strong>Liczba dni:</strong> {{ d }}{% endblocktrans %}</li>
     </ul>
 
-    <p>Zatwierdził: <strong>{{ approved_by }}</strong></p>
+    {% blocktrans with who=approved_by %}<p>Zatwierdził: <strong>{{ who }}</strong></p>{% endblocktrans %}
 
     <a href="127.0.0.1/leaves/my-vacations/" class="button">
-        Sprawdź swoje urlopy
+        {% trans "Sprawdź swoje urlopy" %}
     </a>
 {% endblock %}
