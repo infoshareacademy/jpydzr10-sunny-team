@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SunnyTeam - Urlopy{% endblock %}</title>
+    <title>{% block title %}{% trans "SunnyTeam - Urlopy" %}{% endblock %}</title>
     <style>
         body {
             margin: 0;
@@ -60,7 +61,7 @@
 <body>
     <div class="email-wrapper">
         <div class="header">
-            <h1>SunnyTeam - System Urlopowy</h1>
+            <h1>{% trans "SunnyTeam - System Urlopowy" %}</h1>
         </div>
 
         <div class="content">
@@ -70,8 +71,8 @@
         </div>
 
         <div class="footer">
-            <p>© 2026 SunnyTeam. Wszelkie prawa zastrzeżone.</p>
-            <p>Ta wiadomość została wygenerowana automatycznie. Nie odpowiadaj na nią.</p>
+            <p>{% trans "© 2026 SunnyTeam. Wszelkie prawa zastrzeżone." %}</p>
+            <p>{% trans "Ta wiadomość została wygenerowana automatycznie. Nie odpowiadaj na nią." %}</p>
         </div>
     </div>
 </body>
