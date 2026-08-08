@@ -254,3 +254,37 @@ def chart_team_workload(request):
         'labels': json.dumps(labels),
         'values': json.dumps(values),
 })
+from django.http import JsonResponse
+
+@login_required
+def api_leave_usage(request):
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Admin', 'HR', 'Manager']:
+        return JsonResponse({'error': 'Brak uprawnień'}, status=403)
+    profiles = _leave_usage_profiles(request, active_role)
+    rows = _leave_usage_rows(profiles)
+    return JsonResponse({'data': rows})
+
+
+@login_required
+def api_team(request):
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Admin', 'HR', 'Manager']:
+        return JsonResponse({'error': 'Brak uprawnień'}, status=403)
+    rows = _team_rows(request, active_role)
+    return JsonResponse({'data': rows})
+
+
+@login_required
+def api_users_per_role(request):
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Admin']:
+        return JsonResponse({'error': 'Brak uprawnień'}, status=403)
+    role_stats = (
+        User.objects
+        .values('role')
+        .annotate(total=Count('id'), active=Count('id', filter=Q(is_active=True)))
+        .order_by('role')
+    )
+    data = list(role_stats)
+    return JsonResponse({'data': data})

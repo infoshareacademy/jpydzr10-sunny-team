@@ -9,5 +9,8 @@ urlpatterns = [
     path('team/', views.team_report, name='team_report'),
     path('team/export/', views.export_team_report_csv, name='export_team_report_csv'),
     path('charts/leave-over-time/', views.chart_leave_over_time, name='chart_leave_over_time'),
-    path('charts/team-workload/', views.chart_team_workload, name='chart_team_workload'),  
+    path('charts/team-workload/', views.chart_team_workload, name='chart_team_workload'),
+    path('api/leave-usage/', views.api_leave_usage, name='api_leave_usage'),
+    path('api/team/', views.api_team, name='api_team'),
+    path('api/users-per-role/', views.api_users_per_role, name='api_users_per_role'),
 ]
