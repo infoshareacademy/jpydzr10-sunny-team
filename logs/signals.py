@@ -1,99 +1,69 @@
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils.translation import gettext as _
+
 from leaves.models import LeaveRequest
-from logs.models import ChangeLog
-from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
-from logs.utils import get_client_ip
+from logs.models import ActivityLog
+
 # Słownik
 STATUS_TO_ACTION = {
-    LeaveRequest.Status.APPROVED: 'zatwierdz',
-    LeaveRequest.Status.REJECTED: 'odrzuc',
-    LeaveRequest.Status.CANCELED: 'anuluj',
+    LeaveRequest.Status.APPROVED: 'approve',
+    LeaveRequest.Status.REJECTED: 'reject',
+    LeaveRequest.Status.CANCELED: 'cancel',
 }
 
 # Sygnał PRE-SAVE: Wywołuje się przed zapisaniem obiektu w bazie danych
 @receiver(pre_save, sender=LeaveRequest)
 def remember_old_status(sender, instance, **kwargs):
-    # Sprawdzamy, czy obiekt ma już klucz główny (PK) – czyli czy istnieje w bazie
     if instance.pk:
         try:
-            # Pobieramy aktualny stan obiektu prosto z bazy danych, zanim nadpiszemy go nowymi danymi
             old = LeaveRequest.objects.get(pk=instance.pk)
-            # Zapisujemy stary status w tymczasowym polu dynamicznym `_old_status` w pamięci obiektu
             instance._old_status = old.status
-        # Zabezpieczenie na wypadek, gdyby obiekt miał PK, ale fizycznie nie było go w bazie
         except LeaveRequest.DoesNotExist:
             instance._old_status = None
     else:
-        # Jeśli obiekt nie ma PK, oznacza to, że jest to zupełnie nowy wniosek
         instance._old_status = None
 
-# Sygnał POST-SAVE: Wywołuje się natychmiast po udanym zapisaniu obiektu w bazie danych
+
 @receiver(post_save, sender=LeaveRequest)
 def log_leave_request_change(sender, instance, created, **kwargs):
-    # Obiekt został właśnie utworzony
     if created:
-        ChangeLog.objects.create(
+        ActivityLog.objects.create(
             who=instance.employee,
-            action='dodaj',
+            action='create',
             object_type='leave_request',
+            object_id=instance.id,
+            details=_("Złożono wniosek: %(start)s – %(end)s")
+            % {'start': instance.start_date, 'end': instance.end_date},
         )
-
         return
 
-    # Pobieramy stary status zapamiętany w pre_save (jeśli nie istnieje, domyślnie None) i pobieramy nowy w new_status
     old_status = getattr(instance, '_old_status', None)
     new_status = instance.status
 
-    # Wniosek był oczekujący i nadal pozostał oczekujący (np. zmiana daty)
     if old_status == new_status == LeaveRequest.Status.PENDING:
-        ChangeLog.objects.create(
+        ActivityLog.objects.create(
             who=instance.employee,
-            action='edytuj',
+            action='update',
             object_type='leave_request',
+            object_id=instance.id,
+            details=_("Zmieniono wniosek: %(start)s – %(end)s")
+            % {'start': instance.start_date, 'end': instance.end_date},
         )
         return
 
-    # Nastąpiła zmiana statusu wniosku (np. z oczekującego na zatwierdzony)
     if old_status != new_status:
-        # Pobieramy odpowiednią nazwę akcji ze słownika na podstawie nowego statusu
         action = STATUS_TO_ACTION.get(new_status)
-        # Jeśli nowy status nie jest uwzględniony w słowniku, ignorujemy logowanie
         if action is None:
             return
 
-        # Jeśli pole `who_confirmed` jest uzupełnione, to on jest autorem logu.
-        # W przeciwnym razie przyjmujemy, że zmiany dokonał sam pracownik.
         who = instance.who_confirmed if instance.who_confirmed else instance.employee
 
-        # Tworzymy końcowy log o zmianie statusu
-        ChangeLog.objects.create(
+        ActivityLog.objects.create(
             who=who,
             action=action,
             object_type='leave_request',
+            object_id=instance.id,
+            details=_("Zmieniono status wniosku na %(status)s")
+            % {'status': instance.get_status_display()},
         )
-
-@receiver(user_logged_in)
-def log_user_login(sender, request, user, **kwargs):
-    ChangeLog.objects.create(
-        who=user,
-        action='login',
-        object_type='user',
-        ip_address=get_client_ip(request)
-    )
-@receiver(user_logged_out)
-def log_user_logout(sender, request, user, **kwargs):
-    ChangeLog.objects.create(
-        who=user,
-        action='logout',
-        object_type='user',
-        ip_address=get_client_ip(request)
-    )
-@receiver(user_login_failed)
-def log_user_login_failed(sender, credentials, request, **kwargs):
-    ChangeLog.objects.create(
-        who=None,
-        action='login_failed',
-        object_type='user',
-        ip_address=get_client_ip(request)
-    )

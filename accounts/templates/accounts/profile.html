@@ -1,30 +1,299 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Profil użytkownika{% endblock %}
+{% block title %}{% trans "Profil Użytkownika" %} - SunnyTeamProject{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <h2 class="text-center mb-4">Profil użytkownika</h2>
-            <div class="card p-4">
-                <p><strong>Użytkownik:</strong> {{ user.username }}</p>
-                <p><strong>Imię i nazwisko:</strong> {{ user.first_name }} {{ user.last_name }}</p>
-                <p><strong>Email:</strong> {{ user.email }}</p>
-                <p><strong>Rola:</strong> {{ user.role }}</p>
-                <hr>
-                <form method="post">
-                    {% csrf_token %}
-                    <h5>Preferencje mailowe</h5>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="email_notifications" id="email_notifications"
-                            {% if user.email_notifications %}checked{% endif %}>
-                        <label class="form-check-label" for="email_notifications">
-                            Otrzymuj powiadomienia mailowe
-                        </label>
+<div class="profile-page-wrapper mt-4">
+    <!-- NAGŁÓWEK STRONY -->
+    <div class="mb-4">
+        <h1 class="fw-extrabold text-dark mb-1 fs-2">
+            {% if is_own_profile %}{% trans "Twój profil" %}{% else %}{% trans "Profil użytkownika" %}{% endif %}
+        </h1>
+        <p class="text-muted mb-0 fs-5">
+            {% trans "Zarządzanie kontem i podsumowanie aktywności" %}
+        </p>
+    </div>
+
+    <!-- UKŁAD ELEMENTÓW PROFILU -->
+    <div class="profile-layout">
+
+        <!-- LEWA KOLUMNA: PODSTAWOWE DANE (SIDEBAR) -->
+        <div class="sidebar-content">
+            <div class="profile-section">
+                <div class="profile-avatar-container">
+                    <div class="sunny-avatar-box">
+                        <i class="bi bi-sun-fill sunny-avatar-icon"></i>
+                        <div class="sunny-avatar-center-circle">
+                            <div class="sunny-avatar-text">
+                                {{ profile_owner.first_name|slice:":1" }}{{ profile_owner.last_name|slice:":1" }}
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Zapisz</button>
-                </form>
+                    <h3 class="m-0 fs-5 fw-extrabold text-dark">
+                        {{ profile_owner.get_full_name|default:profile_owner.username }}
+                    </h3>
+                    <span class="text-muted small fw-medium mt-1">
+                        {{ profile_owner.email }}
+                    </span>
+                </div>
+
+                <ul class="meta-list">
+                    {% if active_role == 'Admin' %}
+                        <li class="meta-item">
+                            <span class="meta-label">{% trans "Status konta" %}</span>
+                            <span class="meta-value">
+                                {% if profile_owner.is_active %}
+                                    <span class="badge badge-success">{% trans "Aktywny" %}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{% trans "Nieaktywny" %}</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% endif %}
+                    <!-- ZAWSZE: ZESPÓŁ, DO KTÓREGO NALEŻY UŻYTKOWNIK -->
+                    <li class="meta-item">
+                        <span class="meta-label">{% trans "Należy do zespołu" %}</span>
+                        <span class="meta-value">
+                            {% if team %}
+                                {% if team.pk in accessible_team_ids %}
+                                    <a href="{% url 'team-detail' pk=team.pk %}" class="text-dark text-decoration-none hover-underline">
+                                        {{ team.name }}
+                                    </a>
+                                {% else %}
+                                    {{ team.name }}
+                                {% endif %}
+                            {% else %}
+                                {% trans "Brak" %}
+                            {% endif %}
+                        </span>
+                    </li>
+
+                    <!-- DODATKOWO DLA ROLI MANAGER LUB HR -->
+                    {% if position == 'Manager' or position == 'HR' %}
+                        <li class="meta-item">
+                            <span class="meta-label">{% if position == 'Manager' %}{% trans "Manager dla" %}{% else %}{% trans "HR dla" %}{% endif %}</span>
+                            <span class="meta-value">
+                                {% if managed_teams %}
+                                    {% for t in managed_teams %}
+                                        {% if forloop.counter <= 2 %}
+                                            {% if t.pk in accessible_team_ids %}
+                                                <a href="{% url 'team-detail' pk=t.pk %}" class="text-dark text-decoration-none hover-underline">
+                                                    {{ t.name }}
+                                                </a>
+                                            {% else %}
+                                                {{ t.name }}
+                                            {% endif %}
+                                            {% if not forloop.last and forloop.counter < 2 %}, {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if managed_teams|length > 2 %}
+                                        <span class="more-teams-trigger" onclick="event.stopPropagation(); toggleTeamsDropdown(event, this)">
+                                            +{{ managed_teams|length|add:"-2" }}
+                                            <div class="floating-teams-dropdown">
+                                                <div class="dropdown-title">{% trans "Pozostałe zespoły" %}</div>
+                                                {% for t in managed_teams %}
+                                                    {% if forloop.counter > 2 %}
+                                                        {% if t.pk in accessible_team_ids %}
+                                                            <a href="{% url 'team-detail' pk=t.pk %}">{{ t.name }}</a>
+                                                        {% else %}
+                                                            <span class="d-block py-1 text-dark">{{ t.name }}</span>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    {% trans "Brak" %}
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <li class="meta-item">
+                        <span class="meta-label">{% trans "Data zatrudnienia" %}</span>
+                        <span class="meta-value">{{ profile.hire_date|date:"d.m.Y"|default:"—" }}</span>
+                    </li>
+
+                    <li class="meta-item">
+                        <span class="meta-label">{% trans "Staż zewnętrzny" %}</span>
+                        <span class="meta-value">
+                           {% if profile.other_experience_years or profile.other_experience_days %}
+                                {{ profile.other_experience_years|default:0 }}l, {{ profile.other_experience_days|default:0 }}d
+                            {% else %}
+                                0l, 0d
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+
+                <!-- SEKCJA AKCJI ZARZĄDZANIA PROFILEM -->
+                {% if profile_owner.is_active %}
+                    <div class="d-grid gap-2 mt-3 pt-3 border-top">
+                        {% if is_own_profile %}
+                            <a href="{% url 'change_own_password' %}" class="btn btn-warning fw-bold position-relative text-center py-2">
+                                <i class="bi bi-unlock-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                                <span>{% trans "Zmień hasło" %}</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'edit_worker_profile' user_id=profile_owner.id %}" class="btn btn-primary fw-bold position-relative text-center py-2">
+                                <i class="bi bi-sliders position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                                <span>{% trans "Edytuj profil" %}</span>
+                            </a>
+                            <a href="{% url 'deactivate_user' pk=profile_owner.id %}" class="btn btn-danger fw-bold position-relative text-center py-2">
+                                <i class="bi bi-exclamation-triangle-fill position-absolute start-0 top-50 translate-middle-y ms-3 fs-5"></i>
+                                <span>{% trans "Dezaktywuj" %}</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- PRAWA KOLUMNA: PODSUMOWANIE STATYSTYK I LISTY (MAIN CONTENT) -->
+        <div class="main-content">
+            <!-- KARTY STATYSTYCZNE -->
+            <div class="cards-grid">
+                <div class="info-card">
+                    <h3>{% trans "Dostępny urlop" %}</h3>
+                    {% if remaining_days is not None %}
+                        <div class="number {% if progress_percent > 80 %}text-danger{% elif progress_percent > 50 %}text-warning{% else %}text-success{% endif %}">
+                            {{ remaining_days }}
+                        </div>
+                        <p>{% blocktrans with total=total_days year=current_year %}z {{ total }} dni w {{ year }} roku{% endblocktrans %}</p>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill {% if progress_percent > 80 %}bg-red{% elif progress_percent > 50 %}bg-yellow{% else %}bg-green{% endif %}" style="width: {{ progress_percent }}%;"></div>
+                        </div>
+                        <p class="fs-7 mt-2 text-muted">{% blocktrans with percent=progress_percent %}Wykorzystano: {{ percent }}%{% endblocktrans %}</p>
+                    {% else %}
+                        <div class="number text-muted-gray">—</div>
+                        <p>{% trans "Brak profilu" %}</p>
+                    {% endif %}
+                </div>
+
+                <div class="info-card">
+                    <h3>{% trans "Aktywne wnioski" %}</h3>
+                    <div class="number text-primary">{{ active_count|default:0 }}</div>
+                    <p class="mt-2"><strong>{{ pending_count|default:0 }}</strong> {% trans "oczekuje na decyzję" %}</p>
+                </div>
+
+                <div class="info-card">
+                    <h3>{% trans "Wykorzystane" %}</h3>
+                    <div class="number text-secondary">
+                        {% if used_days is not None %}{{ used_days }}{% else %}—{% endif %}
+                    </div>
+                    <p>{% trans "dni urlopu w tym roku" %}</p>
+                </div>
+            </div>
+
+            <!-- WYKRES ZUŻYCIA URLOPU -->
+            <div class="profile-section">
+                <h2 class="border-bottom border-2 pb-2 mb-3 fs-5">{% blocktrans with year=current_year %}Wykorzystanie urlopu w {{ year }} roku{% endblocktrans %}</h2>
+                <div class="chart-container">
+                    <canvas id="leaveChart"></canvas>
+                </div>
+            </div>
+
+            <!-- PANEL DWUKOLUMNOWY DLA PLANÓW I AKTYWNOŚCI -->
+            <div class="dashboard-row">
+
+                <!-- KOLUMNA TABELI: PLANOWANE URLOPY -->
+                <div class="profile-section flex-fill-custom-1">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-1">
+
+                        <a class="m-0 fs-5 text-dark text-decoration-none fw-bold">
+                            {% trans "Planowane urlopy" %}
+                        </a>
+
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <tbody>
+                                {% for req in recent_requests %}
+                                    <tr>
+                                        <td class="py-2 px-2" style="width: 65%;">
+                                            <a href="{% url 'leave_detail' pk=req.pk %}" class="text-dark text-decoration-none hover-underline">
+                                                <div class="fw-bold text-secondary small">
+                                                    {{ req.start_date|date:"d.m.Y" }} - {{ req.end_date|date:"d.m.Y" }}
+                                                </div>
+                                                <div class="text-muted fs-7 mt-1">
+                                                    {% trans "Czas trwania:" %} <strong>{% blocktrans with amount=req.amount_days %}{{ amount }} dni{% endblocktrans %}</strong>
+                                                </div>
+                                            </a>
+                                        </td>
+                                        <td class="py-2 px-2 text-end align-middle">
+                                            <span class="badge badge-{{ req.status|lower }}">
+                                                {{ req.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted py-4 small">
+                                            {% trans "Brak przyszłych urlopów." %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- KOLUMNA TABELI: NAJNOWSZA AKTYWNOŚĆ -->
+                <div class="profile-section flex-fill-custom-2">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-3">
+                        {% if active_role == 'Admin' %}
+                            <a href="{% url 'activity_log' %}?user={{ profile_owner.id }}" class="m-0 fs-5 text-dark text-decoration-none hover-underline fw-bold">
+                                {% trans "Najnowsza aktywność" %}
+                            </a>
+                        {% else %}
+                            <h2 class="m-0 fs-5">{% trans "Najnowsza aktywność" %}</h2>
+                        {% endif %}
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <tbody>
+                                {% for log in activity_logs %}
+                                    <tr>
+                                        <td class="text-secondary fw-medium text-nowrap px-3 small">
+                                            {{ log.created_at|date:"Y-m-d H:i:s" }}
+                                        </td>
+                                        <td class="text-dark fw-semibold small">
+                                            {% if log.object_type == 'user' and log.object_id %}
+                                                <a href="{% url 'profile' user_id=log.object_id %}" class="text-dark text-decoration-none hover-underline">
+                                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                                </a>
+                                            {% elif log.object_type == 'leave_request' and log.object_id %}
+                                                <a href="{% url 'leave_detail' pk=log.object_id %}" class="text-dark text-decoration-none hover-underline">
+                                                    {{ log.get_object_type_display|default:log.object_type }} <span style="color: #718096; font-family: monospace; font-weight: 600;">#{{ log.object_id }}</span>
+                                                </a>
+                                            {% else %}
+                                                {{ log.get_object_type_display|default:log.object_type }}
+                                                {% if log.object_id %}
+                                                    <span class="text-muted font-monospace">#{{ log.object_id }}</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="pe-3 text-end">
+                                            <span class="badge badge-{{ log.action|default:'default'|lower }}">
+                                                {{ log.get_action_display|default:log.action }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-5 px-3">
+                                            {% trans "Brak zarejestrowanych akcji w systemie dla tego profilu." %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

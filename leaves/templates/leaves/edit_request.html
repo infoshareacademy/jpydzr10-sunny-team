@@ -8,8 +8,10 @@
 {% block button %}{% trans "Edytuj wniosek" %}{% endblock %}
 
 {% block description %}
-<p>{% trans "Aktualny zakres dat:" %}<br>
-    <b>{{ existing_start }} - {{ existing_end }}</b></p>
+<p>
+    {% trans "Aktualny zakres dat:" %}<br>
+    <b>{{ existing_start }} - {{ existing_end }}</b>
+</p>
 {% endblock %}
 
 {% block approve %}{% trans "edytować" %}{% endblock %}

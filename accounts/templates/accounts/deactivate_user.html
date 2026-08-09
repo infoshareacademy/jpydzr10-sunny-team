@@ -1,17 +1,57 @@
 {% extends "base.html" %}
- 
-{% block title %}Deaktywuj{{ target_user.username }}{% endblock %}
- 
+{% load i18n %}
+
+{% block title %}{% trans "Dezaktywacja użytkownika" %} — {{ target_user.username }}{% endblock %}
+
 {% block content %}
-  <h1>Dezaktywacja konta</h1>
- 
-  <p>Jestes pewny, czy chcesz dezaktywowac konto <strong>{{ target_user.username }}</strong> ({{ target_user.role }})?</p>
-  <p>Ten uzytkownik nie bedzie w stanie ponownie sie zalogowac.</p>
- 
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit">Tak, dezaktywuj</button>
-    <a href="{% url 'user_list' %}">Anuluj</a>
-  </form>
+<div class="container my-4" style="max-width: 650px;">
+
+    <!-- Podgląd podstawowych danych (tylko do odczytu) -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body bg-light rounded">
+            <h5 class="card-title mb-3">
+                <i class="bi bi-person-circle me-2 text-danger"></i>
+                {{ target_user.get_full_name|default:target_user.username }}
+            </h5>
+            <div class="row text-muted small">
+                <div class="col-sm-6"><strong>{% trans "Nazwa użytkownika" %}:</strong> {{ target_user.username }}</div>
+                <div class="col-sm-6"><strong>{% trans "Email" %}:</strong> {{ target_user.email|default:"—" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Karta potwierdzenia dezaktywacji -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-danger text-white py-3">
+            <h5 class="mb-0 fs-6">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>{% trans "Potwierdzenie dezaktywacji" %}
+            </h5>
+        </div>
+        <div class="card-body p-4">
+
+            <div class="text-center py-2">
+                <h5 class="fw-bold text-dark mb-3">
+                    {% trans "Czy na pewno chcesz dezaktywować to konto?" %}
+                </h5>
+                <p class="text-muted fs-7 mb-0">
+                    {% trans "Ten użytkownik straci możliwość ponownego zalogowania się do systemu." %}
+                </p>
+            </div>
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <a href="{% url 'profile' user_id=target_user.id %}" class="btn btn-outline-secondary px-4 py-2">
+                        <i class="bi bi-arrow-left me-1"></i> {% trans "Anuluj" %}
+                    </a>
+                    <button type="submit" class="btn btn-danger px-4 py-2 font-bold">
+                        <i class="bi bi-person-x me-1"></i> {% trans "Tak, dezaktywuj" %}
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
 {% endblock %}
- 

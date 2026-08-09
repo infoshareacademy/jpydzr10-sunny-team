@@ -1,53 +1,145 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raport: urlopy per zespół{% endblock %}
+{% block title %}{% trans "Raport: urlopy per zespół" %}{% endblock %}
 
 {% block content %}
-<div style="max-width: 1000px; margin: 30px auto; padding: 20px;">
-    <h1>Urlopy per zespół</h1>
+<style>
+    .logs-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
 
-    <p>
-        <a href="{% url 'export_team_report_csv' %}" class="btn btn-secondary">
-            Eksportuj do CSV
-        </a>
-    </p>
+    .logs-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
 
-    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-        <thead>
-            <tr style="background: #0d6efd; color: white;">
-                <th style="padding: 12px; text-align: left;">Zespół</th>
-                <th style="padding: 12px; text-align: center;">Liczba osób</th>
-                <th style="padding: 12px; text-align: center;">Przydzielone (suma)</th>
-                <th style="padding: 12px; text-align: center;">Wykorzystane (suma)</th>
-                <th style="padding: 12px; text-align: center;">Pozostałe (suma)</th>
-                <th style="padding: 12px; text-align: center;">% wykorzystania</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in report_rows %}
-            <tr style="border-bottom: 1px solid #dee2e6;">
-                <td style="padding: 12px; font-weight: bold;">{{ row.team }}</td>
-                <td style="padding: 12px; text-align: center;">{{ row.members }}</td>
-                <td style="padding: 12px; text-align: center;">{{ row.total }}</td>
-                <td style="padding: 12px; text-align: center;">{{ row.used }}</td>
-                <td style="padding: 12px; text-align: center; color: #28a745; font-weight: bold;">{{ row.remaining }}</td>
-                <td style="padding: 12px; text-align: center;">
-                    <div style="background: #e9ecef; border-radius: 8px; height: 10px;">
-                        <div style="background: #0d6efd; width: {{ row.percent_used }}%; height: 10px; border-radius: 8px;"></div>
-                    </div>
-                    {{ row.percent_used }}%
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" style="padding: 12px; text-align: center;">Brak danych.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
 
-    <p style="margin-top: 20px;">
-        <a href="{% url 'reports_index' %}">&laquo; Wróć do raportów</a>
-    </p>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover td {
+        background-color: #f7fafc;
+    }
+
+    .auth-link {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="logs-wrapper mt-4">
+    <div style="margin-bottom: 25px;">
+        <div style="margin-bottom: 10px;">
+            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; {% trans "Wszystkie raporty" %}</a>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">{% trans "Wykorzystanie urlopów: Zespoły" %}</h1>
+
+            <!-- Grupa przycisków obok siebie -->
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'export_team_report_csv' %}" class="btn btn-primary font-weight-bold">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> {% trans "Eksportuj do CSV" %}
+                </a>
+                <a href="{% url 'export_team_report_pdf' %}" class="btn btn-danger font-weight-bold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> {% trans "Pobierz PDF" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <section class="logs-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">{% trans "Zespół" %}</th>
+                        <th style="text-align: center;">{% trans "Pracownicy" %}</th>
+                        <th style="text-align: center;">{% trans "Przydzielone (suma)" %}</th>
+                        <th style="text-align: center;">{% trans "Wykorzystane (suma)" %}</th>
+                        <th style="text-align: center;">{% trans "Pozostałe (suma)" %}</th>
+                        <th style="width: 20%; text-align: center;">{% trans "% wykorzystania" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_rows %}
+                    <tr>
+                        <td style="font-weight: 700; color: #1a202c;">
+                            {% if row.team_id %}
+                                <a href="{% url 'team-detail' pk=row.team_id %}"
+                                   style="color: #1a202c; text-decoration: none;"
+                                   onmouseover="this.style.textDecoration='underline'"
+                                   onmouseout="this.style.textDecoration='none'">
+                                    {{ row.team }}
+                                </a>
+                            {% else %}
+                                {{ row.team }}
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">{{ row.members }}</td>
+                        <td style="text-align: center;">{{ row.total }}</td>
+                        <td style="text-align: center;">{{ row.used }}</td>
+                        <td style="text-align: center; color: #28a745; font-weight: bold;">{{ row.remaining }}</td>
+                        <td style="text-align: center;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 10px; width: 100%; overflow: hidden; margin-bottom: 5px;">
+                                <div style="background: #0d6efd; width: {{ row.percent_used|stringformat:'f' }}%; height: 10px; border-radius: 8px;"></div>
+                            </div>
+                            <span style="font-size: 0.9rem; font-weight: 600;">{{ row.percent_used }}%</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">{% trans "Brak danych." %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
 {% endblock %}

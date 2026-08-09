@@ -1,14 +1,198 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raporty{% endblock %}
+{% block title %}{% trans "Raporty - Sunny" %}{% endblock %}
 
 {% block content %}
-<div style="max-width: 900px; margin: 30px auto; padding: 20px;">
-    <h1>Raporty</h1>
-    <ul>
-        <li><a href="{% url 'users_per_role_report' %}">Liczba użytkowników wg roli, % aktywnych</a></li>
-        <li><a href="{% url 'leave_usage_report' %}">Wykorzystanie urlopów per użytkownik</a></li>
-        <li><a href="{% url 'team_report' %}">Urlopy per zespół</a></li>
-    </ul>
+<div class="reports-container">
+
+    <header class="reports-header">
+        <h1>{% trans "Raporty" %}</h1>
+        <p class="text-muted">{% trans "Przegląd dostępnych raportów systemowych." %}</p>
+    </header>
+
+    <div class="reports-grid">
+        <!-- RAPORT 2: WYKORZYSTANIE URLOPÓW PER UŻYTKOWNIK -->
+        <a href="{% url 'leave_usage_report' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-person-lines-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">{% trans "Analiza indywidualna" %}</span>
+                <h3 class="report-title">{% trans "Urlopy użytkowników" %}</h3>
+                <p class="report-subtitle">{% trans "Podsumowanie wykorzystania dni urlopowych z podziałem na pracowników." %}</p>
+            </div>
+        </a>
+
+        <!-- RAPORT 3: URLOPY PER ZESPÓŁ -->
+        <a href="{% url 'team_report' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">{% trans "Analiza zespołowa" %}</span>
+                <h3 class="report-title">{% trans "Urlopy zespołów" %}</h3>
+                <p class="report-subtitle">{% trans "Zbiorczy podgląd wykorzystania urlopów w poszczególnych zespołach." %}</p>
+            </div>
+        </a>
+        <a href="{% url 'leave_requests_report_list' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-sunglasses"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">{% trans "Raport" %}</span>
+                <h3 class="report-title">{% trans "Wnioski urlopowe" %}</h3>
+                <p class="report-subtitle">{% trans "Zestawienie wniosków o urlop, ich statusów oraz decyzji osób zatwierdzających." %}</p>
+            </div>
+        </a>
+        {% if active_role == 'Admin' %}
+        <a href="{% url 'activity_log' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-keyboard-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">{% trans "Logi" %}</span>
+                <h3 class="report-title">{% trans "Aktywność" %}</h3>
+                <p class="report-subtitle">{% trans "Historia akcji i modyfikacji obiektów dokonywanych w aplikacji." %}</p>
+            </div>
+        </a>
+        <a href="{% url 'auth_log' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-key-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">{% trans "Logi" %}</span>
+                <h3 class="report-title">{% trans "Autoryzacja" %}</h3>
+                <p class="report-subtitle">{% trans "Historia zdarzeń związanych z logowaniem, dostępem i bezpieczeństwem kont." %}</p>
+            </div>
+        </a>
+            <a href="{% url 'users_per_role_report' %}" class="report-card">
+            <div class="report-bg-icon"><i class="bi bi-pie-chart-fill"></i></div>
+            <div class="report-base-content">
+                <span class="report-pretitle">{% trans "Statystyki ról" %}</span>
+                <h3 class="report-title">{% trans "Role systemowe" %}</h3>
+                <p class="report-subtitle">{% trans "Liczba użytkowników przypisanych do ról oraz procent aktywnych kont." %}</p>
+            </div>
+        </a>
+        {% endif %}
+    </div>
 </div>
+
+<style>
+    .reports-container {
+        max-width: 1300px;
+        margin: auto;
+        padding: 0 2rem 3rem 2rem;
+    }
+
+    .reports-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
+
+    .report-card {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        min-height: 220px;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        text-decoration: none !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.4s ease;
+        cursor: pointer;
+    }
+
+    .report-base-content {
+        display: flex;
+        flex-direction: column;
+        padding: 2.2rem;
+        z-index: 2;
+        position: relative;
+        height: 100%;
+    }
+
+    .report-pretitle {
+        display: block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        color: #0f172a;
+        margin-bottom: 0.4rem;
+        transition: color 0.4s ease;
+        max-width: 75%;
+    }
+
+    .report-title {
+        font-size: 1.4rem;
+        font-weight: 1000;
+        margin: 0 0 0.6rem 0;
+        color: #0f172a;
+        transition: color 0.4s ease;
+        max-width: 75%;
+    }
+
+    .report-subtitle {
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.4;
+        margin: 0;
+        transition: color 0.4s ease;
+        max-width: 75%;
+    }
+
+    /* IKONA W TLE */
+    .report-bg-icon {
+        position: absolute;
+        right: 8%;
+        bottom: 5%;
+        transform: rotate(-5deg);
+        font-size: 5.5rem;
+        pointer-events: none;
+        z-index: 1;
+        color: #87cefa;
+        opacity: 0.35;
+        transition: all 0.6s ease;
+    }
+
+    /* EFEKT NAJECHANIA (HOVER) */
+    .report-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        background-color: #87cefa;
+        border-color: #87cefa;
+    }
+
+    .report-card:hover .report-pretitle,
+    .report-card:hover .report-title {
+        color: #ffffff;
+    }
+
+    .report-card:hover .report-subtitle {
+        color: #f8fafc;
+    }
+
+    /* LEKKIE ROZMYCIE SAMES IKONY NA HOVER */
+    .report-card:hover .report-bg-icon {
+        color: #ffffff !important;
+        opacity: 0.6;
+        transform: scale(1.1) rotate(4deg);
+        filter: blur(2px);
+    }
+
+    /* RESPONSYWNOŚĆ */
+    @media (max-width: 992px) {
+        .reports-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .reports-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .report-base-content {
+            padding: 1.8rem;
+        }
+    }
+</style>
 {% endblock %}
