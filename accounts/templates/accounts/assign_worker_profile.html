@@ -1,18 +1,18 @@
-{% extends 'base.html' %}  {# Zmień nazwę pliku bazowego, jeśli używasz innej #}
-
+{% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container mt-4" style="max-width: 600px;">
 
 
   <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-      <h2 class="h5 mb-0">Przypisz profil pracowniczy</h2>
+      <h2 class="h5 mb-0">{% trans "Przypisz profil pracowniczy" %}</h2>
     </div>
 
     <div class="card-body">
       <!-- Informacja o użytkowniku, dla którego tworzymy profil -->
       <div class="alert alert-light border mb-4">
-        <strong>Użytkownik:</strong> {{ target_user.get_full_name|default:target_user.username }} 
+        <strong>{% trans "Użytkownik:" %}</strong> {{ target_user.get_full_name|default:target_user.username }}
         <span class="text-muted">({{ target_user.email }})</span>
       </div>
 
@@ -35,7 +35,7 @@
               {{ field.label }}
               {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
             </label>
-            
+
             {{ field }}
 
             <!-- Błędy dla konkretnego pola -->
@@ -57,10 +57,10 @@
         <!-- Przyciski akcji -->
         <div class="d-flex justify-content-between align-items-center mt-4">
           <a href="javascript:history.back()" class="btn btn-outline-secondary">
-            Anuluj
+            {% trans "Anuluj" %}
           </a>
           <button type="submit" class="btn btn-primary">
-            Zapisz i utworzyć profil
+            {% trans "Zapisz i utworzyć profil" %}
           </button>
         </div>
       </form>

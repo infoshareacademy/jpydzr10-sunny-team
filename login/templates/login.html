@@ -4,6 +4,20 @@
 {% block title %}{% trans "Logowanie – Sunny" %}{% endblock %}
 
 {% block form_content %}
+<style>
+    .toggle-password {
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+        z-index: 5;
+        color: #6c757d;
+        cursor: pointer;
+    }
+    .toggle-password:hover {
+        color: #212529;
+    }
+</style>
+
 <div class="mb-4">
     <h1 class="h3 fw-bold text-dark mb-1">{% trans "Witaj z powrotem 👋" %}</h1>
     <p class="text-secondary small mb-0">{% trans "Zaloguj się do swojego konta" %}</p>
@@ -41,7 +55,7 @@
         <label class="form-label fw-semibold text-secondary small" for="id_password">{% trans "Hasło" %}</label>
         <div class="position-relative">
             <input
-                class="form-control bg-light {% if form.password.errors %}is-invalid{% endif %}"
+                class="form-control bg-light pe-5 {% if form.password.errors %}is-invalid{% endif %}"
                 type="password"
                 id="id_password"
                 name="password"

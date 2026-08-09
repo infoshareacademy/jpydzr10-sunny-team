@@ -3,6 +3,9 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
 from django.template.defaultfilters import truncatechars
+from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _
+
 from .models import Team
 
 User = get_user_model()
@@ -46,16 +49,16 @@ class TeamForm(forms.ModelForm):
         queryset=User.objects.none(),
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
-        label="Manager zespołu",
-        help_text="Manager może zarządzać tylko jednym aktywnym zespołem.",
+        label=_("Manager zespołu"),
+        help_text=_("Manager może zarządzać tylko jednym aktywnym zespołem."),
     )
 
     hr = UserChoiceField(
         queryset=User.objects.none(),
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
-        label="Opiekun HR",
-        help_text="Osoba z HR opiekująca się zespołem.",
+        label=_("Opiekun HR"),
+        help_text=_("Osoba z HR opiekująca się zespołem."),
     )
 
     class Meta:
@@ -94,8 +97,8 @@ class TeamForm(forms.ModelForm):
         if self.user and self.user.role == "HR":
             self.fields["manager"].disabled = True
             self.fields["hr"].disabled = True
-            self.fields["manager"].help_text = "Tylko Administrator może zmienić Managera zespołu."
-            self.fields["hr"].help_text = "Tylko Administrator może zmienić opiekuna HR zespołu."
+            self.fields["manager"].help_text = _("Tylko Administrator może zmienić Managera zespołu.")
+            self.fields["hr"].help_text = _("Tylko Administrator może zmienić opiekuna HR zespołu.")
 
     def clean(self):
         """
@@ -107,7 +110,7 @@ class TeamForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         if self.instance and self.instance.pk and not self.has_changed():
-            raise forms.ValidationError("Brak zmian do zapisania.")
+            raise forms.ValidationError(_("Brak zmian do zapisania."))
 
         manager = cleaned_data.get("manager")
         hr_usr = cleaned_data.get("hr")
@@ -116,26 +119,26 @@ class TeamForm(forms.ModelForm):
         # Weryfikacja obecności Managera i HR gdy zespół ma już pracowników
         if instance_pk and getattr(self.instance, "members_count", 0) > 0:
             if not manager:
-                self.add_error("manager", "Zespół posiada członków – przypisanie Managera jest wymagane.")
+                self.add_error("manager", _("Zespół posiada członków – przypisanie Managera jest wymagane."))
             if not hr_usr:
-                self.add_error("hr", "Zespół posiada członków – przypisanie HR jest wymagane.")
+                self.add_error("hr", _("Zespół posiada członków – przypisanie HR jest wymagane."))
 
         # Walidacja: Manager nie może być jednocześnie członkiem tego samego zespołu
         if manager and instance_pk and getattr(manager, "worker_profile", None):
             if manager.worker_profile.team_id == instance_pk:
+                manager_name = get_user_display_name(manager)
                 self.add_error(
                     "manager",
-                    f"Wskazany Manager ({get_user_display_name(manager)}) należy "
-                    f"do tego zespołu jako pracownik. Manager musi należeć do innego zespołu.",
+                    _("Wskazany Manager (%(manager_name)s) należy do tego zespołu jako pracownik. Manager musi należeć do innego zespołu.") % {"manager_name": manager_name},
                 )
 
         # Walidacja: HR nie może być jednocześnie członkiem tego samego zespołu
         if hr_usr and instance_pk and getattr(hr_usr, "worker_profile", None):
             if hr_usr.worker_profile.team_id == instance_pk:
+                hr_name = get_user_display_name(hr_usr)
                 self.add_error(
                     "hr",
-                    f"Wskazana osoba z HR ({get_user_display_name(hr_usr)}) należy "
-                    f"do tego zespołu jako pracownik. Opiekun HR musi należeć do innego zespołu.",
+                    _("Wskazana osoba z HR (%(hr_name)s) należy do tego zespołu jako pracownik. Opiekun HR musi należeć do innego zespołu.") % {"hr_name": hr_name},
                 )
 
         return cleaned_data
@@ -145,36 +148,47 @@ class TeamForm(forms.ModelForm):
         Generuje sformatowany opis zmian wprowadzonych w formularzu,
         przeznaczony do zapisu w historii aktywności (ActivityLog).
         """
+        no_value_str = str(_("Brak"))
+
         if is_create:
             details = []
             if self.cleaned_data.get("name"):
-                details.append(f"Nazwa: '{self.cleaned_data['name']}'")
+                name_val = self.cleaned_data["name"]
+                details.append(str(_("Nazwa: '%(name)s'") % {"name": name_val}))
 
             mgr = self.cleaned_data.get("manager")
-            details.append(f"Manager: {get_user_display_name(mgr) if mgr else 'Brak'}")
+            mgr_val = get_user_display_name(mgr) if mgr else no_value_str
+            details.append(str(_("Manager: %(manager)s") % {"manager": mgr_val}))
 
             hr_usr = self.cleaned_data.get("hr")
-            details.append(f"HR: {get_user_display_name(hr_usr) if hr_usr else 'Brak'}")
+            hr_val = get_user_display_name(hr_usr) if hr_usr else no_value_str
+            details.append(str(_("HR: %(hr)s") % {"hr": hr_val}))
 
             desc = self.cleaned_data.get("description")
             if desc:
-                details.append(f"Opis: '{truncatechars(desc, 60)}'")
+                desc_val = truncatechars(desc, 60)
+                details.append(str(_("Opis: '%(description)s'") % {"description": desc_val}))
 
-            return f"Utworzono zespół: " + "; ".join(details)[:255]
+            joined_details = "; ".join(details)[:255]
+            return str(_("Utworzono zespół: %(details)s") % {"details": joined_details})
 
         changes = []
         if "name" in self.changed_data:
-            changes.append(f"Nazwa: '{self.cleaned_data.get('name')}'")
+            name_val = self.cleaned_data.get("name")
+            changes.append(str(_("Nazwa: '%(name)s'") % {"name": name_val}))
         if "description" in self.changed_data:
-            changes.append("Opis zespołu")
+            changes.append(str(_("Opis zespołu")))
         if "manager" in self.changed_data:
             new_mgr = self.cleaned_data.get("manager")
-            changes.append(f"Manager: {get_user_display_name(new_mgr) if new_mgr else 'Brak'}")
+            mgr_val = get_user_display_name(new_mgr) if new_mgr else no_value_str
+            changes.append(str(_("Manager: %(manager)s") % {"manager": mgr_val}))
         if "hr" in self.changed_data:
             new_hr = self.cleaned_data.get("hr")
-            changes.append(f"HR: {get_user_display_name(new_hr) if new_hr else 'Brak'}")
+            hr_val = get_user_display_name(new_hr) if new_hr else no_value_str
+            changes.append(str(_("HR: %(hr)s") % {"hr": hr_val}))
 
-        return "Zaktualizowano zespół: " + "; ".join(changes)[:200]
+        joined_changes = "; ".join(changes)[:200]
+        return str(_("Zaktualizowano zespół: %(changes)s") % {"changes": joined_changes})
 
 
 class TeamMembersForm(forms.Form):
@@ -186,8 +200,8 @@ class TeamMembersForm(forms.Form):
         queryset=User.objects.none(),
         required=False,
         widget=forms.SelectMultiple(attrs={"class": "form-control"}),
-        label="Członkowie zespołu",
-        help_text="Pracownicy przypisani do tego zespołu (z wyłączeniem Managera i HR).",
+        label=_("Członkowie zespołu"),
+        help_text=_("Pracownicy przypisani do tego zespołu (z wyłączeniem Managera i HR)."),
     )
 
     def __init__(self, *args, team=None, **kwargs):
@@ -224,7 +238,7 @@ class TeamMembersForm(forms.Form):
     def clean(self):
         """
         Waliduje logikę biznesową członków zespołu:
-        - Weryfikuje zmiane w składzie.
+        - Weryfikuje zmianę w składzie.
         - Blokuje dodanie członków, jeśli zespół nie ma jeszcze obsadzonego Managera lub HR.
         - Uniemożliwia wybranie osoby pełniącej rolę Managera lub HR tego zespołu jako zwykłego członka.
         """
@@ -232,32 +246,36 @@ class TeamMembersForm(forms.Form):
         new_members = set(cleaned_data.get("members") or [])
 
         if new_members == self._original_members:
-            raise forms.ValidationError("Brak zmian w składzie zespołu.")
+            raise forms.ValidationError(_("Brak zmian w składzie zespołu."))
 
         if new_members and self.team:
             missing = []
             if not self.team.manager_id:
-                missing.append("Managera")
+                missing.append(str(_("Managera")))
             if not self.team.hr_id:
-                missing.append("HR")
+                missing.append(str(_("HR")))
 
             if missing:
-                missing_str = " oraz ".join(missing)
+                missing_str = str(_(" oraz ")).join(missing)
                 raise forms.ValidationError(
-                    f"Nie można dodać pracowników do zespołu, który nie posiada przypisanego {missing_str}."
+                    _("Nie można dodać pracowników do zespołu, który nie posiada przypisanego %(missing_roles)s.")
+                    % {"missing_roles": missing_str}
                 )
 
         if self.team:
             forbidden_users = []
             if self.team.manager_id and self.team.manager in new_members:
-                forbidden_users.append(f"Manager ({get_user_display_name(self.team.manager)})")
+                mgr_name = get_user_display_name(self.team.manager)
+                forbidden_users.append(str(_("Manager (%(name)s)") % {"name": mgr_name}))
             if self.team.hr_id and self.team.hr in new_members:
-                forbidden_users.append(f"HR ({get_user_display_name(self.team.hr)})")
+                hr_name = get_user_display_name(self.team.hr)
+                forbidden_users.append(str(_("HR (%(name)s)") % {"name": hr_name}))
 
             if forbidden_users:
+                users_str = ", ".join(forbidden_users)
                 raise forms.ValidationError(
-                    f"Wśród wybranych członków znajduje się: {', '.join(forbidden_users)}. "
-                    f"Manager oraz HR nie mogą być członkami zespołu, którym zarządzają/opiekują się."
+                    _("Wśród wybranych członków znajduje się: %(users)s. Manager oraz HR nie mogą być członkami zespołu, którym zarządzają/opiekują się.")
+                    % {"users": users_str}
                 )
 
         return cleaned_data
@@ -289,25 +307,36 @@ class TeamMembersForm(forms.Form):
 
         changes = []
 
-        # Pomocnicza funkcja formatująca listę osób
-        def format_people_list(people_list: list, action_label: str) -> str:
+        def format_people_list(people_list: list, action_type: str) -> str:
             count = len(people_list)
             if count == 0:
                 return ""
 
-            # Jeśli dodajemy/usuwamy dużo osób naraz (> 5)
             if count > 5:
                 first_few = ", ".join(get_user_display_name(u) for u in people_list[:3])
-                return f"{action_label} {count} osób: {first_few} oraz {count - 3} innych"
+                remaining_count = count - 3
+                if action_type == "add":
+                    return str(
+                        _("Dodano %(count)d osób: %(first_few)s oraz %(remaining)d innych")
+                        % {"count": count, "first_few": first_few, "remaining": remaining_count}
+                    )
+                else:
+                    return str(
+                        _("Usunięto %(count)d osób: %(first_few)s oraz %(remaining)d innych")
+                        % {"count": count, "first_few": first_few, "remaining": remaining_count}
+                    )
 
-            # Dla małej liczby osób wypisujemy wszystkich
             names = ", ".join(get_user_display_name(u) for u in people_list)
-            return f"{action_label}: {names}"
+            if action_type == "add":
+                return str(_("Dodano: %(names)s") % {"names": names})
+            else:
+                return str(_("Usunięto: %(names)s") % {"names": names})
 
         if added:
-            changes.append(format_people_list(added, "Dodano"))
+            changes.append(format_people_list(added, "add"))
         if removed:
-            changes.append(format_people_list(removed, "Usunięto"))
+            changes.append(format_people_list(removed, "remove"))
 
-        log_text = "Zaktualizowano zespół: " + "; ".join(changes)
+        joined_changes = "; ".join(changes)
+        log_text = str(_("Zaktualizowano zespół: %(changes)s") % {"changes": joined_changes})
         return truncatechars(log_text, 255)

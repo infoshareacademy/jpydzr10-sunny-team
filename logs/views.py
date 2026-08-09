@@ -8,6 +8,7 @@ from django.utils import timezone as dj_timezone
 from accounts.permission import role_required
 from logs.models import ActivityLog, AuthLog
 
+
 User = get_user_model()
 
 

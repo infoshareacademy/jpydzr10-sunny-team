@@ -1,8 +1,11 @@
-from dateutil.relativedelta import relativedelta
-from team.models import Team
-from django.db import models
-from django.conf import settings
 from datetime import date
+from dateutil.relativedelta import relativedelta
+
+from django.conf import settings
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from team.models import Team
 
 
 class WorkerProfile(models.Model):
@@ -10,7 +13,7 @@ class WorkerProfile(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="worker_profile",
-        verbose_name="Profil pracownika"
+        verbose_name=_("Profil pracownika"),
     )
 
     team = models.ForeignKey(
@@ -19,22 +22,28 @@ class WorkerProfile(models.Model):
         null=True,
         blank=True,
         related_name="members",
-        verbose_name="Aktualny zespół"
+        verbose_name=_("Aktualny zespół"),
     )
 
-    hire_date = models.DateField(verbose_name="Data zatrudnienia")
-    other_experience_years = models.IntegerField(default=0, verbose_name="Wcześniejsze doświadczenie (lata)")
-    other_experience_days = models.IntegerField(default=0, verbose_name="Wcześniejsze doświadczenie (dni)")
-    used_leave_days = models.IntegerField(default=0, verbose_name="Wykorzystane dni urlopu")
+    hire_date = models.DateField(verbose_name=_("Data zatrudnienia"))
+    other_experience_years = models.IntegerField(
+        default=0, verbose_name=_("Wcześniejsze doświadczenie (lata)")
+    )
+    other_experience_days = models.IntegerField(
+        default=0, verbose_name=_("Wcześniejsze doświadczenie (dni)")
+    )
+    used_leave_days = models.IntegerField(
+        default=0, verbose_name=_("Wykorzystane dni urlopu")
+    )
 
     class Meta:
-        verbose_name = "Profil pracownika"
-        verbose_name_plural = "Profile pracowników"
+        verbose_name = _("Profil pracownika")
+        verbose_name_plural = _("Profile pracowników")
 
     def __str__(self):
-        team_str = self.team.name if self.team else "Brak zespołu"
-        return f"Profil: {self.user.get_full_name() or self.user.username} ({team_str})"
-
+        team_str = self.team.name if self.team else str(_("Brak zespołu"))
+        user_name = self.user.get_full_name() or self.user.username
+        return f"{_('Profil')}: {user_name} ({team_str})"
 
     def _total_experience_years(self) -> int:
         adjusted_hire_date = self.hire_date - relativedelta(
@@ -57,30 +66,31 @@ class WorkerProfile(models.Model):
         remaining = self.get_leave_days()
         if amount <= 0 or amount > remaining:
             raise ValueError(
-                f"Nieprawidłowa liczba dni: {amount}. Dostępne dni urlopu: {remaining}"
+                _("Nieprawidłowa liczba dni: %(amount)d. Dostępne dni urlopu: %(remaining)d")
+                % {"amount": amount, "remaining": remaining}
             )
         self.used_leave_days += amount
         self.save()
 
     def add_leave_days(self, amount: int):
         if amount <= 0:
-            raise ValueError("Liczba dni musi być dodatnia.")
+            raise ValueError(_("Liczba dni musi być dodatnia."))
         self.used_leave_days = max(0, self.used_leave_days - amount)
         self.save()
 
 
 class LeaveRequest(models.Model):
     class Status(models.TextChoices):
-        PENDING = "pending", "Oczekujący"
-        APPROVED = "approved", "Zatwierdzony"
-        REJECTED = "rejected", "Odrzucony"
-        CANCELED = "canceled", "Anulowany"
+        PENDING = "pending", _("Oczekujący")
+        APPROVED = "approved", _("Zatwierdzony")
+        REJECTED = "rejected", _("Odrzucony")
+        CANCELED = "canceled", _("Anulowany")
 
     employee = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="leave_requests",
-        verbose_name="Pracownik",
+        verbose_name=_("Pracownik"),
     )
 
     team = models.ForeignKey(
@@ -89,30 +99,30 @@ class LeaveRequest(models.Model):
         null=True,
         blank=True,
         related_name="leave_requests",
-        verbose_name="Zespół w momencie wnioskowania",
+        verbose_name=_("Zespół w momencie wnioskowania"),
     )
 
-    start_date = models.DateField(verbose_name="Data od")
-    end_date = models.DateField(verbose_name="Data do")
-    amount_days = models.PositiveIntegerField(verbose_name="Liczba dni roboczych")
+    start_date = models.DateField(verbose_name=_("Data od"))
+    end_date = models.DateField(verbose_name=_("Data do"))
+    amount_days = models.PositiveIntegerField(verbose_name=_("Liczba dni roboczych"))
     status = models.CharField(
         max_length=10,
         choices=Status.choices,
         default=Status.PENDING,
-        verbose_name="Status",
+        verbose_name=_("Status"),
     )
 
     request_comment = models.TextField(
         max_length=250,
         blank=True,
         null=True,
-        verbose_name="Komentarz wniosku"
+        verbose_name=_("Komentarz wniosku"),
     )
     answer_comment = models.TextField(
         max_length=250,
         blank=True,
         null=True,
-        verbose_name="Komentarz odpowiedzi"
+        verbose_name=_("Komentarz odpowiedzi"),
     )
 
     who_confirmed = models.ForeignKey(
@@ -121,22 +131,22 @@ class LeaveRequest(models.Model):
         null=True,
         blank=True,
         related_name="confirmed_leave_requests",
-        verbose_name="Potwierdził(a)",
+        verbose_name=_("Potwierdził(a)"),
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data złożenia")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Ostatnia zmiana")
-
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Data złożenia"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Ostatnia zmiana"))
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Wniosek urlopowy"
-        verbose_name_plural = "Wnioski urlopowe"
+        verbose_name = _("Wniosek urlopowy")
+        verbose_name_plural = _("Wnioski urlopowe")
 
     def __str__(self):
+        days_str = _("dni")
         return (
             f"{self.employee.first_name} {self.employee.last_name}: "
             f"{self.start_date} – {self.end_date} "
-            f"({self.amount_days} dni) [{self.get_status_display()}]"
+            f"({self.amount_days} {days_str}) [{self.get_status_display()}]"
         )
 
     def save(self, *args, **kwargs):
@@ -149,11 +159,11 @@ class LeaveRequest(models.Model):
     @property
     def team_display_name(self) -> str:
         """Zwraca nazwę zespołu lub informację o jego braku."""
-        return self.team.name if self.team else "Brak zespołu"
+        return self.team.name if self.team else str(_("Brak zespołu"))
 
     def check_is_pending(self):
         if self.status != self.Status.PENDING:
-            raise ValueError("Wniosek musi być oczekujący.")
+            raise ValueError(_("Wniosek musi być oczekujący."))
 
     def approve(self, who):
         self.check_is_pending()

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Lista Użytkowników{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Lista Użytkowników" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -222,12 +223,12 @@
     <!-- Nagłówek z wyrównaniem przycisków do prawej strony -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Lista Użytkowników</h1>
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">{% trans "Lista Użytkowników" %}</h1>
             <p style="margin: 4px 0 0 0; color: #718096; font-size: 1rem;">
                 {% if active_role == 'Admin' %}
-                    Panel zarządzania kontami użytkowników w systemie
+                    {% trans "Panel zarządzania kontami użytkowników w systemie" %}
                 {% else %}
-                    Przegląd użytkowników
+                    {% trans "Przegląd użytkowników" %}
                 {% endif %}
             </p>
         </div>
@@ -237,14 +238,14 @@
             {% if active_role in 'Manager,HR,Admin' %}
                 <a href="{% url 'leave_usage_report' %}" class="btn btn-success btn-custom">
                     <i class="bi bi-clipboard-data-fill"></i>
-                    <span>Raport użytkowników</span>
+                    <span>{% trans "Raport użytkowników" %}</span>
                 </a>
             {% endif %}
 
             {% if active_role in 'Admin' %}
                 <a href="{% url 'add_user' %}" class="btn-custom btn-create">
                     <i class="bi bi-plus-lg"></i>
-                    <span>Dodaj użytkownika</span>
+                    <span>{% trans "Dodaj użytkownika" %}</span>
                 </a>
             {% endif %}
         </div>
@@ -254,15 +255,15 @@
     <section class="filters">
         <form method="get">
             <div class="filter-group">
-                <label for="id_search">Szukaj:</label>
-                <input type="text" name="search" id="id_search" placeholder="Imię, nazwisko, login..." value="{{ search_query }}">
+                <label for="id_search">{% trans "Szukaj:" %}</label>
+                <input type="text" name="search" id="id_search" placeholder="{% trans "Imię, nazwisko, login..." %}" value="{{ search_query }}">
             </div>
 
             {% if active_role == 'HR' %}
             <div class="filter-group">
-                <label for="id_team">Zespół:</label>
+                <label for="id_team">{% trans "Zespół:" %}</label>
                 <select name="team" id="id_team">
-                    <option value="">Wszystkie zespoły</option>
+                    <option value="">{% trans "Wszystkie zespoły" %}</option>
                     {% for team in managed_teams %}
                     <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
                     {% endfor %}
@@ -273,38 +274,38 @@
             {% if active_role == 'Admin' %}
             <!-- Filtr Roli dla Admina -->
             <div class="filter-group">
-                <label for="id_role">Rola:</label>
+                <label for="id_role">{% trans "Rola:" %}</label>
                 <select name="role" id="id_role">
-                    <option value="">Wszystkie role</option>
-                    <option value="Admin" {% if selected_role == 'Admin' %}selected{% endif %}>Admin</option>
-                    <option value="Manager" {% if selected_role == 'Manager' %}selected{% endif %}>Manager</option>
-                    <option value="HR" {% if selected_role == 'HR' %}selected{% endif %}>HR</option>
-                    <option value="Worker" {% if selected_role == 'Worker' %}selected{% endif %}>Pracownik</option>
+                    <option value="">{% trans "Wszystkie role" %}</option>
+                    <option value="Admin" {% if selected_role == 'Admin' %}selected{% endif %}>{% trans "Admin" %}</option>
+                    <option value="Manager" {% if selected_role == 'Manager' %}selected{% endif %}>{% trans "Manager" %}</option>
+                    <option value="HR" {% if selected_role == 'HR' %}selected{% endif %}>{% trans "HR" %}</option>
+                    <option value="Worker" {% if selected_role == 'Worker' %}selected{% endif %}>{% trans "Pracownik" %}</option>
                 </select>
             </div>
 
             <!-- Filtr Statusu (Aktywności) dla Admina -->
             <div class="filter-group">
-                <label for="id_status">Status:</label>
+                <label for="id_status">{% trans "Status:" %}</label>
                 <select name="status" id="id_status">
-                    <option value="">Wszyscy</option>
-                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Aktywni</option>
-                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Nieaktywni</option>
+                    <option value="">{% trans "Wszyscy" %}</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>{% trans "Aktywni" %}</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>{% trans "Nieaktywni" %}</option>
                 </select>
             </div>
 
             <label class="checkbox-group">
-                <input type="checkbox" name="no_team" value="1" {% if no_team_only %}checked{% endif %}> Bez zespołu
+                <input type="checkbox" name="no_team" value="1" {% if no_team_only %}checked{% endif %}> {% trans "Bez zespołu" %}
             </label>
 
             <label class="checkbox-group">
-                <input type="checkbox" name="no_profile" value="1" {% if no_profile_only %}checked{% endif %}> Bez profilu
+                <input type="checkbox" name="no_profile" value="1" {% if no_profile_only %}checked{% endif %}> {% trans "Bez profilu" %}
             </label>
             {% endif %}
 
             <div class="actions-group">
-                <button type="submit" class="btn-filter">Filtruj</button>
-                <a href="{% url 'user_list' %}" class="btn-reset">Reset</a>
+                <button type="submit" class="btn-filter">{% trans "Filtruj" %}</button>
+                <a href="{% url 'user_list' %}" class="btn-reset">{% trans "Reset" %}</a>
             </div>
         </form>
     </section>
@@ -316,22 +317,22 @@
                 <thead>
                     <tr>
                         <!-- 1. Imię i Nazwisko -->
-                        <th>Imię i Nazwisko</th>
+                        <th>{% trans "Imię i Nazwisko" %}</th>
 
                         <!-- 2. Należy do zespołu -->
-                        <th>Należy do zespołu</th>
+                        <th>{% trans "Należy do zespołu" %}</th>
 
                         <!-- 3. Rola (Ukryta dla Manager oraz HR) -->
                         {% if active_role not in 'Manager,HR' %}
-                        <th>Rola</th>
+                        <th>{% trans "Rola" %}</th>
                         {% endif %}
 
                         <!-- 4. Zarządza zespołami (TYLKO ADMIN) -->
                         {% if active_role == 'Admin' %}
-                        <th>Zarządza zespołami</th>
+                        <th>{% trans "Zarządza zespołami" %}</th>
 
                         <!-- 5. Akcje (TYLKO ADMIN) -->
-                        <th style="text-align: right;">Akcje</th>
+                        <th style="text-align: right;">{% trans "Akcje" %}</th>
                         {% endif %}
                     </tr>
                 </thead>
@@ -355,7 +356,7 @@
                                     {{ u.worker_profile.team.name }}
                                 </a>
                             {% else %}
-                                <span style="color: #a0aec0; font-style: italic;">&mdash; Brak &mdash;</span>
+                                <span style="color: #a0aec0; font-style: italic;">&mdash; {% trans "Brak" %} &mdash;</span>
                             {% endif %}
                         </td>
 
@@ -377,7 +378,7 @@
                                     <a href="{% url 'team-detail' pk=team.id %}" class="team-link">{{ team.name }}</a>{% if not forloop.last %}, {% endif %}
                                 {% endfor %}
                             {% else %}
-                                <span style="color: #a0aec0; font-style: italic;">&mdash; Brak &mdash;</span>
+                                <span style="color: #a0aec0; font-style: italic;">&mdash; {% trans "Brak" %} &mdash;</span>
                             {% endif %}
                         </td>
 
@@ -386,14 +387,14 @@
                             <div style="display: inline-flex; gap: 6px; align-items: center;">
                                 {% if u.is_active %}
                                     <!-- Edycja profilu widoczna tylko dla aktywnych użytkowników -->
-                                    <a href="{% url 'edit_worker_profile' user_id=u.id %}" class="btn-action-edit" title="Edytuj profil użytkownika">
-                                        Edytuj profil
+                                    <a href="{% url 'edit_worker_profile' user_id=u.id %}" class="btn-action-edit" title="{% trans "Edytuj profil użytkownika" %}">
+                                        {% trans "Edytuj profil" %}
                                     </a>
 
-                                    <form method="post" action="{% url 'deactivate_user' pk=u.id %}" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz dezaktywować tego użytkownika?');">
+                                    <form method="post" action="{% url 'deactivate_user' pk=u.id %}" style="display: inline;" onsubmit="return confirm('{% trans "Czy na pewno chcesz dezaktywować tego użytkownika?" %}');">
                                         {% csrf_token %}
                                         <button type="submit" class="btn-action-deactivate">
-                                            Dezaktywuj
+                                            {% trans "Dezaktywuj" %}
                                         </button>
                                     </form>
                                 {% endif %}
@@ -404,7 +405,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="{% if active_role == 'Admin' %}5{% elif active_role in 'Manager,HR' %}2{% else %}3{% endif %}" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">
-                            Brak użytkowników spełniających podane kryteria.
+                            {% trans "Brak użytkowników spełniających podane kryteria." %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}{% if object %}Edycja: {{ object.name }}{% else %}Dodaj nowy zespół{% endif %}{% endblock %}
+{% block title %}{% if object %}{% blocktranslate with name=object.name %}Edycja: {{ name }}{% endblocktranslate %}{% else %}{% trans "Dodaj nowy zespół" %}{% endif %}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/team.css' %}">
@@ -10,9 +11,9 @@
     <div class="form-card">
         <div class="form-header">
             <h1 class="form-title">
-                {% if object %}Edycja Zespołu: {{ object.name }}{% else %}Utwórz Nowy Zespół{% endif %}
+                {% if object %}{% blocktranslate with name=object.name %}Edycja Zespołu: {{ name }}{% endblocktranslate %}{% else %}{% trans "Utwórz Nowy Zespół" %}{% endif %}
             </h1>
-            <p class="form-subtitle">Zdefiniuj podstawowe dane oraz przydziel kierownictwo zespołu.</p>
+            <p class="form-subtitle">{% trans "Zdefiniuj podstawowe dane oraz przydziel kierownictwo zespołu." %}</p>
         </div>
 
         <form method="post" id="teamForm" novalidate>
@@ -64,7 +65,7 @@
                 </div>
 
                 <select id="co_managers_dropdown" class="form-control">
-                    <option value="">-- Wybierz współzarządzającego z listy --</option>
+                    <option value="">-- {% trans "Wybierz współzarządzającego z listy" %} --</option>
                 </select>
 
                 <div id="co_managers_tags" class="selected-tags-container"></div>
@@ -74,8 +75,8 @@
             {% endif %}
 
             <div class="form-actions">
-                <a href="{% url 'team-list' %}" class="btn-custom btn-cancel">Anuluj</a>
-                <button type="submit" class="btn-custom btn-submit">Zapisz zespół</button>
+                <a href="{% url 'team-list' %}" class="btn-custom btn-cancel">{% trans "Anuluj" %}</a>
+                <button type="submit" class="btn-custom btn-submit">{% trans "Zapisz zespół" %}</button>
             </div>
         </form>
     </div>
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!originalSelect || !dropdown || !tagsContainer) return;
 
         function renderDropdown() {
-            dropdown.innerHTML = '<option value="">-- Wybierz osobę z listy --</option>';
+            dropdown.innerHTML = '<option value="">-- {% trans "Wybierz osobę z listy" %} --</option>';
             Array.from(originalSelect.options).forEach(opt => {
                 if (!opt.selected) {
                     const newOpt = document.createElement('option');
@@ -120,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!hasSelection) {
-                tagsContainer.innerHTML = '<span style="color: #a0aec0; font-size: 0.875rem; padding: 4px;">Brak wybranych osób</span>';
+                tagsContainer.innerHTML = '<span style="color: #a0aec0; font-size: 0.875rem; padding: 4px;">{% trans "Brak wybranych osób" %}</span>';
             }
         }
 

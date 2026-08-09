@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raport: urlopy per zespół{% endblock %}
+{% block title %}{% trans "Raport: urlopy per zespół" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -75,18 +76,18 @@
 <div class="logs-wrapper mt-4">
     <div style="margin-bottom: 25px;">
         <div style="margin-bottom: 10px;">
-            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; Wszystkie raporty</a>
+            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; {% trans "Wszystkie raporty" %}</a>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Wykorzystanie urlopów: Zespoły</h1>
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">{% trans "Wykorzystanie urlopów: Zespoły" %}</h1>
 
             <!-- Grupa przycisków obok siebie -->
             <div class="d-flex align-items-center gap-2">
                 <a href="{% url 'export_team_report_csv' %}" class="btn btn-primary font-weight-bold">
-                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Eksportuj do CSV
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> {% trans "Eksportuj do CSV" %}
                 </a>
                 <a href="{% url 'export_team_report_pdf' %}" class="btn btn-danger font-weight-bold">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> Pobierz PDF
+                    <i class="bi bi-file-earmark-pdf me-1"></i> {% trans "Pobierz PDF" %}
                 </a>
             </div>
         </div>
@@ -97,12 +98,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Zespół</th>
-                        <th style="text-align: center;">Pracownicy</th>
-                        <th style="text-align: center;">Przydzielone (suma)</th>
-                        <th style="text-align: center;">Wykorzystane (suma)</th>
-                        <th style="text-align: center;">Pozostałe (suma)</th>
-                        <th style="width: 20%; text-align: center;">% wykorzystania</th>
+                        <th style="width: 20%;">{% trans "Zespół" %}</th>
+                        <th style="text-align: center;">{% trans "Pracownicy" %}</th>
+                        <th style="text-align: center;">{% trans "Przydzielone (suma)" %}</th>
+                        <th style="text-align: center;">{% trans "Wykorzystane (suma)" %}</th>
+                        <th style="text-align: center;">{% trans "Pozostałe (suma)" %}</th>
+                        <th style="width: 20%; text-align: center;">{% trans "% wykorzystania" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -133,7 +134,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">Brak danych.</td>
+                        <td colspan="6" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">{% trans "Brak danych." %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

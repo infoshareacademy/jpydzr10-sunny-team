@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import PasswordChangeView
+
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 
@@ -8,7 +9,9 @@ from logs.models import AuthLog
 from logs.utils import get_client_ip, get_lockout_until, reset_failed_attempts, log_failed_attempt
 import random
 from mail.models import EmailVerificationCode
-#from django.core.mail import send_mail
+from django.core.mail import send_mail
+from django.utils.translation import gettext_lazy as _
+from django.utils.text import format_lazy
 
 
 User = get_user_model()
@@ -17,8 +20,8 @@ User = get_user_model()
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
-        form.error_messages['invalid_login'] = 'Błędne dane.'
-        form.error_messages['inactive'] = 'Konto nieaktywne.'
+        form.error_messages['invalid_login'] = _('Błędne dane.')
+        form.error_messages['inactive'] = _('Konto nieaktywne.')
         ip_address = get_client_ip(request)
         raw_username = request.POST.get('username', '')
 
@@ -30,7 +33,10 @@ def login_view(request):
         if lockout_until is not None:
             form.add_error(
                 None,
-                f'Zbyt wiele prób logowania. Blokada do {lockout_until.strftime("%H:%M:%S")}'
+                format_lazy(
+                    _('Zbyt wiele prób logowania. Blokada do {time}.'),
+                    time=lockout_until.strftime("%H:%M:%S")
+                )
             )
             return render(request, 'login.html', {
                 'form': form,
@@ -56,20 +62,20 @@ def login_view(request):
                     ip_address=ip_address,
                     action='login_success',
                     severity='info',
-                    details='Poprawne uwierzytelnienie hasłem. Rozpoczęto procedurę 2FA.'
+                    details=_('Poprawne uwierzytelnienie hasłem. Rozpoczęto procedurę 2FA.')
                 )
                 # Udane logowanie - unieważniamy poprzednie nieudane proby
                 reset_failed_attempts(ip_address)
                 code = str(random.randint(100000, 999999))
                 EmailVerificationCode.objects.create(user=user, code=code)
                 request.session['2fa_user_id'] = user.id
-                print(f"KOD 2FA: {code}") # DO ZMIANY NA MAILA JAK JUZ BEDZIE GOTOWY DO WYYSLEK :)
-                # send_mail(
-                # subject='Kod weryfikacyjny 2FA',
-                # message=f'Twój kod weryfikacyjny: {code}',
-                # from_email='noreply@sunnyteam.pl',
-                # recipient_list=[user.email],
-                # )
+                print(f"KOD 2FA: {code}")
+                send_mail(
+                     subject=_('Kod weryfikacyjny 2FA'),
+                     message=_('Twój kod weryfikacyjny: %(code)s') % {'code': code},
+                     from_email='noreply@sunnyteam.pl',
+                     recipient_list=[user.email],
+                )
                 return redirect('verify_2fa')
         else:
             # Formularz nie przeszedł walidacji (np. puste hasło lub nieistniejący user)
@@ -90,7 +96,7 @@ def logout_view(request):
             ip_address=get_client_ip(request),
             action='logout',
             severity='info',
-            details='Poprawne wylogowanie.'
+            details=_('Poprawne wylogowanie.')
         )
     logout(request)
     return redirect('login')
@@ -125,7 +131,7 @@ def verify_2fa(request):
                     ip_address=ip_address,
                     action='2fa_success',
                     severity='info',
-                    details='Pomyślna weryfikacja dwuetapowa (2FA). Zalogowano użytkownika.'
+                    details=_('Pomyślna weryfikacja dwuetapowa (2FA). Zalogowano użytkownika.')
                 )
                 login(request, user)
                 if '2fa_user_id' in request.session:
@@ -141,9 +147,9 @@ def verify_2fa(request):
                     ip_address=ip_address,
                     action='2fa_failed',
                     severity='warning',
-                    details="Wprowadzono błędny kod 2FA."
+                    details=_("Wprowadzono błędny kod 2FA.")
                 )
-                return render(request, 'verify_2fa.html', {'error': 'Nieprawidłowy kod.'})
+                return render(request, 'verify_2fa.html', {'error': _('Nieprawidłowy kod.')})
         except User.DoesNotExist:
             return redirect('login')
     return render(request, 'verify_2fa.html')
@@ -162,7 +168,7 @@ class FirstPasswordChangeView(PasswordChangeView):
             ip_address=get_client_ip(self.request),
             action='password_changed',
             severity='info',
-            details='Użytkownik pomyślnie zmienił tymczasowe hasło.',
+            details=_('Użytkownik pomyślnie zmienił tymczasowe hasło.')
         )
 
         return super().form_valid(form)

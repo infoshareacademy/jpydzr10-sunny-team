@@ -1,12 +1,31 @@
 {% extends 'base.html' %}
-{% block title %}Historia Logowań{% endblock %}
+{% load i18n %}
+
+{% block title %}{% translate "Historia Logowań" %}{% endblock %}
 
 {% block content %}
 <style>
+    /* Kontenery główne */
     .logs-wrapper {
         max-width: 100%;
         margin: 0 auto;
         padding: 0 5%;
+    }
+
+    .logs-header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .logs-title {
+        font-weight: 800;
+        color: #1a202c;
+        margin-bottom: 8px;
+        font-size: 2.2rem;
     }
 
     .logs-section {
@@ -19,6 +38,7 @@
         overflow: hidden;
     }
 
+    /* Tabela i elastyczność */
     .table-responsive {
         width: 100%;
         overflow-x: auto;
@@ -60,6 +80,22 @@
         background-color: #f7fafc;
     }
 
+    .col-datetime { color: #4a5568; font-weight: 500; white-space: nowrap; }
+    .col-user { font-weight: 700; color: #1a202c; }
+    .col-ip { font-family: monospace; color: #2d3748; font-weight: 600; }
+    .col-details { color: #2d3748; line-height: 1.5; min-width: 250px; word-wrap: break-word; }
+
+    /* Linki użytkowników */
+    .table-link {
+        color: #1a202c;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .table-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Filtry */
     .filters {
         margin-bottom: 25px;
         padding: 20px;
@@ -67,12 +103,14 @@
         border-radius: 12px;
         border: 1px solid #cbd5e0;
     }
+
     .filters form {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 15px;
     }
+
     .filter-group {
         display: flex;
         align-items: center;
@@ -80,12 +118,14 @@
         flex-grow: 1;
         min-width: 220px;
     }
+
     .filter-group label {
         font-size: 0.95rem;
         font-weight: 700;
         color: #2d3748;
         white-space: nowrap;
     }
+
     .filters select, .filters input[type="date"] {
         width: 100%;
         padding: 10px 14px;
@@ -99,16 +139,19 @@
         cursor: pointer;
         transition: border-color 0.2s;
     }
+
     .filters select:focus, .filters input[type="date"]:focus {
         border-color: #007bff;
         box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
     }
 
+    /* Przyciski Akcji i Linki */
     .actions-group {
         display: flex;
         gap: 10px;
         margin-left: auto;
     }
+
     @media (max-width: 992px) {
         .actions-group {
             width: 100%;
@@ -130,6 +173,7 @@
     .btn-filter:hover {
         background: #0056b3;
     }
+
     .btn-reset {
         padding: 10px 24px;
         background: #fff;
@@ -146,6 +190,7 @@
         background: #edf2f7;
         color: #1a202c;
     }
+
     .auth-link {
         color: #007bff;
         text-decoration: none;
@@ -156,6 +201,7 @@
         text-decoration: underline;
     }
 
+    /* Badge (Statusy i Waga) */
     .badge {
         display: inline-flex;
         align-items: center;
@@ -208,31 +254,31 @@
 </style>
 
 <div class="logs-wrapper mt-4">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 30px;">
+    <!-- Nagłówek i eksport -->
+    <div class="logs-header-container">
         <div>
-            <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">Logi Uwierzytelniania</h1>
-            <p style="margin: 0;"><a href="{% url 'activity_log' %}" class="auth-link">Zobacz historię aktywności</a></p>
+            <h1 class="logs-title">{% translate "Logi Uwierzytelniania" %}</h1>
+            <p class="m-0"><a href="{% url 'activity_log' %}" class="auth-link">{% translate "Zobacz historię aktywności" %}</a></p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
             <!-- Przyciski eksportu przekazują wszystkie aktywne filtry URL -->
             <a href="{% url 'export_auth_log_csv' %}?{{ request.GET.urlencode }}" class="btn btn-primary font-weight-bold">
-                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Eksportuj do CSV
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> {% translate "Eksportuj do CSV" %}
             </a>
             <a href="{% url 'export_auth_log_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger font-weight-bold">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Pobierz PDF
+                <i class="bi bi-file-earmark-pdf me-1"></i> {% translate "Pobierz PDF" %}
             </a>
         </div>
     </div>
 
-
-
+    <!-- Sekcja Filtrów -->
     <section class="filters">
         <form method="get">
             <div class="filter-group">
-                <label for="id_user">Użytkownik:</label>
+                <label for="id_user">{% translate "Użytkownik" %}:</label>
                 <select name="user" id="id_user">
-                    <option value="">Wszyscy</option>
+                    <option value="">{% translate "Wszyscy" %}</option>
                     {% for u in users %}
                     <option value="{{ u.id }}" {% if user_filter == u.id|stringformat:"i" %}selected{% endif %}>{{ u.username }}</option>
                     {% endfor %}
@@ -240,9 +286,9 @@
             </div>
 
             <div class="filter-group">
-                <label for="id_action">Akcja:</label>
+                <label for="id_action">{% translate "Akcja" %}:</label>
                 <select name="action" id="id_action">
-                    <option value="">Wszystkie</option>
+                    <option value="">{% translate "Wszystkie" %}</option>
                     {% for value, label in action_choices %}
                     <option value="{{ value }}" {% if action_filter == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -250,9 +296,9 @@
             </div>
 
             <div class="filter-group">
-                <label for="id_severity">Waga:</label>
+                <label for="id_severity">{% translate "Waga" %}:</label>
                 <select name="severity" id="id_severity">
-                    <option value="">Wszystkie</option>
+                    <option value="">{% translate "Wszystkie" %}</option>
                     {% for value, label in severity_choices %}
                     <option value="{{ value }}" {% if severity_filter == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -260,45 +306,43 @@
             </div>
 
             <div class="filter-group">
-                <label for="id_date_from">Od:</label>
+                <label for="id_date_from">{% translate "Od" %}:</label>
                 <input type="date" name="date_from" id="id_date_from" value="{{ date_from }}">
             </div>
 
             <div class="filter-group">
-                <label for="id_date_to">Do:</label>
+                <label for="id_date_to">{% translate "Do" %}:</label>
                 <input type="date" name="date_to" id="id_date_to" value="{{ date_to }}">
             </div>
 
             <div class="actions-group">
-                <button type="submit" class="btn-filter">Filtruj</button>
-                <a href="{% url 'auth_log' %}" class="btn-reset">Reset</a>
+                <button type="submit" class="btn-filter">{% translate "Filtruj" %}</button>
+                <a href="{% url 'auth_log' %}" class="btn-reset">{% translate "Reset" %}</a>
             </div>
         </form>
     </section>
 
+    <!-- Tabela z historią -->
     <section class="logs-section">
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 18%;">Data i godzina</th>
-                        <th style="width: 12%;">Użytkownik</th>
-                        <th style="width: 16%;">Akcja</th>
-                        <th style="width: 11%;">Waga</th>
-                        <th style="width: 13%;">Adres IP</th>
-                        <th>Szczegóły</th>
+                        <th style="width: 18%;">{% translate "Data i godzina" %}</th>
+                        <th style="width: 12%;">{% translate "Użytkownik" %}</th>
+                        <th style="width: 16%;">{% translate "Akcja" %}</th>
+                        <th style="width: 11%;">{% translate "Waga" %}</th>
+                        <th style="width: 13%;">{% translate "Adres IP" %}</th>
+                        <th>{% translate "Szczegóły" %}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for log in logs %}
                     <tr>
-                        <td style="color: #4a5568; font-weight: 500; white-space: nowrap;">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
-                        <td style="font-weight: 700; color: #1a202c;">
+                        <td class="col-datetime">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                        <td class="col-user">
                             {% if log.user %}
-                                <a href="{% url 'profile' user_id=log.user.id %}"
-                                   style="color: #1a202c; text-decoration: none;"
-                                   onmouseover="this.style.textDecoration='underline'"
-                                   onmouseout="this.style.textDecoration='none'">
+                                <a href="{% url 'profile' user_id=log.user.id %}" class="table-link">
                                     {{ log.user }}
                                 </a>
                             {% else %}
@@ -315,23 +359,26 @@
                                 {{ log.get_severity_display|default:log.severity }}
                             </span>
                         </td>
-                        <td style="font-family: monospace; color: #2d3748; font-weight: 600;">{{ log.ip_address|default:"&mdash;" }}</td>
-                        <td style="color: #2d3748; line-height: 1.5; min-width: 250px; word-wrap: break-word;">{{ log.details|default:"&mdash;" }}</td>
+                        <td class="col-ip">{{ log.ip_address|default:"&mdash;" }}</td>
+                        <td class="col-details">{{ log.details|default:"&mdash;" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">Brak wpisów w historii dla wybranych filtrów.</td>
+                        <td colspan="6" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">
+                            {% translate "Brak wpisów w historii dla wybranych filtrów." %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
+        <!-- Paginacja -->
         {% if logs.has_other_pages %}
-        <nav class="pagination" aria-label="Nawigacja stronami">
+        <nav class="pagination" aria-label="{% translate "Nawigacja stronami" %}">
             {% if logs.has_previous %}
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; Pierwsza</a>
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.previous_page_number }}">&lsaquo; Poprzednia</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; {% translate "Pierwsza" %}</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.previous_page_number }}">&lsaquo; {% translate "Poprzednia" %}</a>
             {% endif %}
 
             {% for num in logs.paginator.page_range %}
@@ -343,8 +390,8 @@
             {% endfor %}
 
             {% if logs.has_next %}
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.next_page_number }}">Następna &rsaquo;</a>
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.paginator.num_pages }}">Ostatnia &raquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.next_page_number }}">{% translate "Następna" %} &rsaquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.paginator.num_pages }}">{% translate "Ostatnia" %} &raquo;</a>
             {% endif %}
         </nav>
         {% endif %}

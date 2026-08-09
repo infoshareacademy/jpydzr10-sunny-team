@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
-{% load i18n %}
-{% load static %}
-<link rel="stylesheet" href="{% static 'team/team.css' %}">
-{% block title %}Szczegóły Zespołu - {{ team.name }}{% endblock %}
+{% load i18n static %}
+
+{% block title %}{% trans "Szczegóły Zespołu" %} - {{ team.name }}{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'team/team.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="team-wrapper mt-4" data-team-id="{{ team.id }}">
@@ -11,21 +14,23 @@
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
             <h1 class="fw-extrabold text-dark mb-1 fs-2">{{ team.name }}</h1>
-            <p class="text-dark mb-2 fs-6 text-break">{{ team.description|default:"Brak opisu dla tego zespołu." }}</p>
+            <p class="text-dark mb-2 fs-6 text-break">
+                {{ team.description|default:_("Brak opisu dla tego zespołu.") }}
+            </p>
             <p class="text-muted mb-0 fs-7">
-                <strong>Manager:</strong> {{ manager_name }} | <strong>HR:</strong> {{ hr_name }}
+                <strong>{% trans "Manager" %}:</strong> {{ manager_name }} | <strong>{% trans "HR" %}:</strong> {{ hr_name }}
             </p>
         </div>
         <div class="d-flex gap-2 align-items-center mt-2 mt-md-0">
-        {% if active_role != 'Manager'%}
-            <a href="{% url 'team-list' %}" class="btn btn-light">Powrót do listy</a>
+        {% if active_role != 'Manager' %}
+            <a href="{% url 'team-list' %}" class="btn btn-light">{% trans "Powrót do listy" %}</a>
         {% endif %}
             {% if can_edit_team %}
-                <a href="{% url 'team-members-update' pk=team.pk %}" class="btn btn-success">Edytuj członków</a>
-                <a href="{% url 'team-update' pk=team.pk %}" class="btn btn-primary">Edytuj zespół</a>
+                <a href="{% url 'team-members-update' pk=team.pk %}" class="btn btn-success">{% trans "Edytuj członków" %}</a>
+                <a href="{% url 'team-update' pk=team.pk %}" class="btn btn-primary">{% trans "Edytuj zespół" %}</a>
             {% endif %}
             {% if can_deactivate %}
-                <a href="{% url 'team-delete' pk=team.pk %}" class="btn btn-danger">Dezaktywuj</a>
+                <a href="{% url 'team-delete' pk=team.pk %}" class="btn btn-danger">{% trans "Dezaktywuj" %}</a>
             {% endif %}
         </div>
     </div>
@@ -34,7 +39,7 @@
         <!-- LEWA KOLUMNA: TABELA PRACOWNIKÓW -->
         <div class="team-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="team-card-title mb-0">Pracownicy</h2>
+                <h2 class="team-card-title mb-0">{% trans "Pracownicy" %}</h2>
                 <span class="badge badge-count">{{ members_info|length }}</span>
             </div>
             <div class="table-compact-wrapper">
@@ -47,10 +52,10 @@
                     </colgroup>
                     <thead>
                         <tr>
-                            <th>Imię i nazwisko</th>
-                            <th class="text-center">Wyróżnij</th>
-                            <th class="text-end">Dostepne dni</th>
-                            <th class="text-center">Nieprzetworzone</th>
+                            <th>{% trans "Imię i nazwisko" %}</th>
+                            <th class="text-center">{% trans "Wyróżnij" %}</th>
+                            <th class="text-end">{% trans "Dostępne dni" %}</th>
+                            <th class="text-center">{% trans "Nieprzetworzone" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,7 +85,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-3 fs-7">Brak przypisanych członków.</td>
+                                <td colspan="4" class="text-center text-muted py-3 fs-7">{% trans "Brak przypisanych członków." %}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -97,18 +102,18 @@
                     </h2>
                     <div class="d-inline-flex gap-2 align-items-center flex-wrap">
                         {% if calendar_prev_month %}
-                            <a href="?month={{ calendar_prev_month }}" class="btn btn-light btn-sm">Poprzedni</a>
+                            <a href="?month={{ calendar_prev_month }}" class="btn btn-light btn-sm">{% trans "Poprzedni" %}</a>
                         {% else %}
-                            <button class="btn btn-light btn-sm" disabled>Poprzedni</button>
+                            <button class="btn btn-light btn-sm" disabled>{% trans "Poprzedni" %}</button>
                         {% endif %}
 
                         {% if calendar_next_month %}
-                            <a href="?month={{ calendar_next_month }}" class="btn btn-light btn-sm">Następny</a>
+                            <a href="?month={{ calendar_next_month }}" class="btn btn-light btn-sm">{% trans "Następny" %}</a>
                         {% else %}
-                            <button class="btn btn-light btn-sm" disabled>Następny</button>
+                            <button class="btn btn-light btn-sm" disabled>{% trans "Następny" %}</button>
                         {% endif %}
 
-                        <button type="button" id="reset-selection-btn" class="btn btn-outline-secondary btn-sm">Reset zaznaczenia</button>
+                        <button type="button" id="reset-selection-btn" class="btn btn-outline-secondary btn-sm">{% trans "Reset zaznaczenia" %}</button>
                     </div>
                 </div>
 
@@ -117,13 +122,13 @@
                     <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
                         <input type="checkbox" class="status-checkbox form-check-input mt-0" value="approved">
                         <div class="d-flex align-items-center gap-1">
-                            <span class="hint-swatch hint-swatch-solid"></span> Zatwierdzony
+                            <span class="hint-swatch hint-swatch-solid"></span> {% trans "Zatwierdzony" %}
                         </div>
                     </label>
                     <label class="d-flex align-items-center gap-2 cursor-pointer mb-0">
                         <input type="checkbox" class="status-checkbox form-check-input mt-0" value="pending">
                         <div class="d-flex align-items-center gap-1">
-                            <span class="hint-swatch hint-swatch-outline"></span> Oczekujący
+                            <span class="hint-swatch hint-swatch-outline"></span> {% trans "Oczekujący" %}
                         </div>
                     </label>
                 </div>
@@ -131,11 +136,13 @@
                 <div class="calendar-scroll">
                     <div class="timeline-calendar">
                         <div class="timeline-days-header">
-                            <div class="day-col-name">Pn</div><div class="day-col-name">Wt</div>
-                            <div class="day-col-name">Śr</div><div class="day-col-name">Czw</div>
-                            <div class="day-col-name">Pt</div>
-                            <div class="day-col-name weekend-col-name">Sb</div>
-                            <div class="day-col-name weekend-col-name">Nd</div>
+                            <div class="day-col-name">{% trans "Pn" %}</div>
+                            <div class="day-col-name">{% trans "Wt" %}</div>
+                            <div class="day-col-name">{% trans "Śr" %}</div>
+                            <div class="day-col-name">{% trans "Czw" %}</div>
+                            <div class="day-col-name">{% trans "Pt" %}</div>
+                            <div class="day-col-name weekend-col-name">{% trans "Sb" %}</div>
+                            <div class="day-col-name weekend-col-name">{% trans "Nd" %}</div>
                         </div>
 
                         {% for week in calendar_weeks %}
@@ -160,7 +167,7 @@
                                                       background-color: color-mix(in srgb, {{ leave.color }} 14%, white);
                                                       border: 2px solid {{ leave.color }}; color: {{ leave.color }};
                                                   {% else %}
-                                                      background-color: {{ leave.color }}; color: #fff; border: 2px solid transparent;
+                                                      background-color: {{ leave.color }; color: #fff; border: 2px solid transparent;
                                                   {% endif %}">
 
                                             {% for is_nonworking in leave.non_working_days %}
@@ -171,7 +178,8 @@
                                                 {% if leave.show_prev_arrow %}<i class="bi bi-caret-left-fill me-1"></i>{% else %}<span></span>{% endif %}
                                                 <span class="bar-text text-truncate">
                                                     {% if leave.is_first_visible_segment %}
-                                                        {{ leave.user_name }} ({{ leave.amount_days }} {% if leave.amount_days == 1 %}dzień{% else %}dni{% endif %})
+                                                        {{ leave.user_name }}
+                                                        ({% blocktrans count amount=leave.amount_days %}{{ amount }} dzień{% plural %}{{ amount }} dni{% endblocktrans %})
                                                     {% endif %}
                                                 </span>
                                                 {% if leave.show_next_arrow %}<i class="bi bi-caret-right-fill ms-1"></i>{% else %}<span></span>{% endif %}
@@ -188,6 +196,7 @@
         </div>
     </div>
 </div>
+
 
 <style>
     .team-wrapper { max-width: 100%; margin: 0 auto 50px auto; padding: 0 3%; }

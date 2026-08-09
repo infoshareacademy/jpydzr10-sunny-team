@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raporty - Sunny{% endblock %}
+{% block title %}{% trans "Raporty - Sunny" %}{% endblock %}
 
 {% block content %}
 <div class="reports-container">
 
     <header class="reports-header">
-        <h1>Raporty </h1>
-        <p class="text-muted">Przegląd dostępnych raportów systemowych.</p>
+        <h1>{% trans "Raporty" %}</h1>
+        <p class="text-muted">{% trans "Przegląd dostępnych raportów systemowych." %}</p>
     </header>
 
     <div class="reports-grid">
@@ -15,9 +16,9 @@
         <a href="{% url 'leave_usage_report' %}" class="report-card">
             <div class="report-bg-icon"><i class="bi bi-person-lines-fill"></i></div>
             <div class="report-base-content">
-                <span class="report-pretitle">Analiza indywidualna</span>
-                <h3 class="report-title">Urlopy użytkowników</h3>
-                <p class="report-subtitle">Podsumowanie wykorzystania dni urlopowych z podziałem na pracowników.</p>
+                <span class="report-pretitle">{% trans "Analiza indywidualna" %}</span>
+                <h3 class="report-title">{% trans "Urlopy użytkowników" %}</h3>
+                <p class="report-subtitle">{% trans "Podsumowanie wykorzystania dni urlopowych z podziałem na pracowników." %}</p>
             </div>
         </a>
 
@@ -25,42 +26,42 @@
         <a href="{% url 'team_report' %}" class="report-card">
             <div class="report-bg-icon"><i class="bi bi-people-fill"></i></div>
             <div class="report-base-content">
-                <span class="report-pretitle">Analiza zespołowa</span>
-                <h3 class="report-title">Urlopy zespołów</h3>
-                <p class="report-subtitle">Zbiorczy podgląd wykorzystania urlopów w poszczególnych zespołach.</p>
+                <span class="report-pretitle">{% trans "Analiza zespołowa" %}</span>
+                <h3 class="report-title">{% trans "Urlopy zespołów" %}</h3>
+                <p class="report-subtitle">{% trans "Zbiorczy podgląd wykorzystania urlopów w poszczególnych zespołach." %}</p>
             </div>
         </a>
         <a href="{% url 'leave_requests_report_list' %}" class="report-card">
             <div class="report-bg-icon"><i class="bi bi-sunglasses"></i></div>
             <div class="report-base-content">
-                <span class="report-pretitle">Raport</span>
-                <h3 class="report-title">Wnioski urlopowe</h3>
-                <p class="report-subtitle">Zestawienie wniosków o urlop, ich statusów oraz decyzji osób zatwierdzających.</p>
+                <span class="report-pretitle">{% trans "Raport" %}</span>
+                <h3 class="report-title">{% trans "Wnioski urlopowe" %}</h3>
+                <p class="report-subtitle">{% trans "Zestawienie wniosków o urlop, ich statusów oraz decyzji osób zatwierdzających." %}</p>
             </div>
         </a>
         {% if active_role == 'Admin' %}
         <a href="{% url 'activity_log' %}" class="report-card">
             <div class="report-bg-icon"><i class="bi bi-keyboard-fill"></i></div>
             <div class="report-base-content">
-                <span class="report-pretitle">Logi</span>
-                <h3 class="report-title">Aktywność</h3>
-                <p class="report-subtitle">Historia akcji i modyfikacji obiektów dokonywanych w aplikacji.</p>
+                <span class="report-pretitle">{% trans "Logi" %}</span>
+                <h3 class="report-title">{% trans "Aktywność" %}</h3>
+                <p class="report-subtitle">{% trans "Historia akcji i modyfikacji obiektów dokonywanych w aplikacji." %}</p>
             </div>
         </a>
         <a href="{% url 'auth_log' %}" class="report-card">
             <div class="report-bg-icon"><i class="bi bi-key-fill"></i></div>
             <div class="report-base-content">
-                <span class="report-pretitle">Logi</span>
-                <h3 class="report-title">Autoryzacja</h3>
-                <p class="report-subtitle">Historia zdarzeń związanych z logowaniem, dostępem i bezpieczeństwem kont.</p>
+                <span class="report-pretitle">{% trans "Logi" %}</span>
+                <h3 class="report-title">{% trans "Autoryzacja" %}</h3>
+                <p class="report-subtitle">{% trans "Historia zdarzeń związanych z logowaniem, dostępem i bezpieczeństwem kont." %}</p>
             </div>
         </a>
             <a href="{% url 'users_per_role_report' %}" class="report-card">
             <div class="report-bg-icon"><i class="bi bi-pie-chart-fill"></i></div>
             <div class="report-base-content">
-                <span class="report-pretitle">Statystyki ról</span>
-                <h3 class="report-title">Role systemowe</h3>
-                <p class="report-subtitle">Liczba użytkowników przypisanych do ról oraz procent aktywnych kont.</p>
+                <span class="report-pretitle">{% trans "Statystyki ról" %}</span>
+                <h3 class="report-title">{% trans "Role systemowe" %}</h3>
+                <p class="report-subtitle">{% trans "Liczba użytkowników przypisanych do ról oraz procent aktywnych kont." %}</p>
             </div>
         </a>
         {% endif %}

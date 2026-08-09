@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raport: Wykorzystanie urlopów{% endblock %}
+{% block title %}{% trans "Raport: Wykorzystanie urlopów" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -95,18 +96,18 @@
 <div class="logs-wrapper mt-4">
     <div style="margin-bottom: 25px;">
         <h2 style="margin-bottom: 10px; font-size: 1.1rem;">
-            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; Wszystkie raporty</a>
+            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; {% trans "Wszystkie raporty" %}</a>
         </h2>
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Wykorzystanie urlopów: Pracownicy</h1>
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">{% trans "Wykorzystanie urlopów: Pracownicy" %}</h1>
 
             <div class="d-flex align-items-center gap-2">
                 <!-- Przyciski eksportu przekazują aktualnie wybrane filtry URL -->
                 <a href="{% url 'export_leave_usage_csv' %}?role={{ selected_role }}&team={{ selected_team }}" class="btn btn-primary font-weight-bold">
-                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Eksportuj do CSV
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> {% trans "Eksportuj do CSV" %}
                 </a>
                 <a href="{% url 'export_leave_usage_pdf' %}?role={{ selected_role }}&team={{ selected_team }}" class="btn btn-danger font-weight-bold">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> Pobierz PDF
+                    <i class="bi bi-file-earmark-pdf me-1"></i> {% trans "Pobierz PDF" %}
                 </a>
             </div>
         </div>
@@ -119,11 +120,11 @@
 
             </div>
             <div class="col-md-4">
-                <label for="team" class="form-label font-weight-bold text-dark">Filtruj po zespole:</label>
+                <label for="team" class="form-label font-weight-bold text-dark">{% trans "Filtruj po zespole:" %}</label>
                 <select name="team" class="form-select">
-                    <option value="ALL" {% if selected_team == 'ALL' %}selected{% endif %}>Wszystkie zespoły</option>
+                    <option value="ALL" {% if selected_team == 'ALL' %}selected{% endif %}>{% trans "Wszystkie zespoły" %}</option>
                     {% if show_no_team_option %}
-                        <option value="NONE" {% if selected_team == 'NONE' %}selected{% endif %}>Brak zespołu</option>
+                        <option value="NONE" {% if selected_team == 'NONE' %}selected{% endif %}>{% trans "Brak zespołu" %}</option>
                     {% endif %}
                     {% for team in all_teams %}
                         <option value="{{ team.id }}" {% if selected_team == team.id|stringformat:"s" %}selected{% endif %}>
@@ -133,8 +134,8 @@
                 </select>
             </div>
             <div class="col-md-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100 font-weight-bold">Filtruj</button>
-                <a href="{% url 'leave_usage_report' %}" class="btn btn-outline-secondary w-100">Reset</a>
+                <button type="submit" class="btn btn-primary w-100 font-weight-bold">{% trans "Filtruj" %}</button>
+                <a href="{% url 'leave_usage_report' %}" class="btn btn-outline-secondary w-100">{% trans "Reset" %}</a>
             </div>
         </form>
     </div>
@@ -144,12 +145,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Pracownik</th>
-                        <th>Zespół</th>
-                        <th style="text-align: center;">Przydzielone</th>
-                        <th style="text-align: center;">Wykorzystane</th>
-                        <th style="text-align: center;">Pozostałe</th>
-                        <th style="text-align: center; width: 20%;">% wykorzystania</th>
+                        <th>{% trans "Pracownik" %}</th>
+                        <th>{% trans "Zespół" %}</th>
+                        <th style="text-align: center;">{% trans "Przydzielone" %}</th>
+                        <th style="text-align: center;">{% trans "Wykorzystane" %}</th>
+                        <th style="text-align: center;">{% trans "Pozostałe" %}</th>
+                        <th style="text-align: center; width: 20%;">{% trans "% wykorzystania" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -185,7 +186,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">Brak danych spełniających kryteria filtracji.</td>
+                        <td colspan="7" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">{% trans "Brak danych spełniających kryteria filtracji." %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

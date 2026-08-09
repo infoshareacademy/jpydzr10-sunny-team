@@ -3,6 +3,7 @@ from datetime import date
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.utils.translation import gettext_lazy as _
 
 
 class TeamQuerySet(models.QuerySet):
@@ -92,12 +93,12 @@ class Team(models.Model):
     name = models.CharField(
         max_length=100,
         unique=True,
-        verbose_name="Nazwa zespołu"
+        verbose_name=_("Nazwa zespołu"),
     )
     description = models.TextField(
         blank=True,
         null=True,
-        verbose_name="Opis zespołu"
+        verbose_name=_("Opis zespołu"),
     )
     manager = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -105,7 +106,7 @@ class Team(models.Model):
         null=True,
         blank=True,
         related_name="managed_team",
-        verbose_name="Manager zespołu",
+        verbose_name=_("Manager zespołu"),
     )
     hr = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -113,26 +114,26 @@ class Team(models.Model):
         null=True,
         blank=True,
         related_name="hr_team",
-        verbose_name="Opiekun HR",
+        verbose_name=_("Opiekun HR"),
     )
     is_active = models.BooleanField(
         default=True,
-        verbose_name="Czy aktywny"
+        verbose_name=_("Czy aktywny"),
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name="Data utworzenia"
+        verbose_name=_("Data utworzenia"),
     )
 
     objects = TeamManager()
 
     class Meta:
         ordering = ["name"]
-        verbose_name = "Zespół"
-        verbose_name_plural = "Zespoły"
+        verbose_name = _("Zespół")
+        verbose_name_plural = _("Zespoły")
 
     def __str__(self) -> str:
-        status = "" if self.is_active else " (Archiwum)"
+        status = "" if self.is_active else f" ({_('Archiwum')})"
         return f"{self.name}{status}"
 
     @property
@@ -144,28 +145,28 @@ class Team(models.Model):
         super().clean()
         errors = {}
 
-        #  Sprawdzanie obecności Managera i HR dla aktywnego zespołu z członkami
+        # Sprawdzanie obecności Managera i HR dla aktywnego zespołu z członkami
         if self.pk and self.is_active and self.members_count > 0:
             if not self.manager_id:
-                errors["manager"] = "Zespół posiada pracowników – przypisanie Managera jest wymagane."
+                errors["manager"] = _("Zespół posiada pracowników – przypisanie Managera jest wymagane.")
             if not self.hr_id:
-                errors["hr"] = "Zespół posiada pracowników – przypisanie HR jest wymagane."
+                errors["hr"] = _("Zespół posiada pracowników – przypisanie HR jest wymagane.")
 
-        #  Walidacja: Manager nie może należeć do tego zespołu jako pracownik
+        # Walidacja: Manager nie może należeć do tego zespołu jako pracownik
         if self.manager_id and hasattr(self.manager, "worker_profile") and self.manager.worker_profile.team_id:
             if self.pk and self.manager.worker_profile.team_id == self.pk:
-                errors["manager"] = (
-                    f"Wskazany Manager ({self.manager.get_full_name() or self.manager.username}) "
-                    f"jest członkiem tego zespołu. Manager musi należeć do innego zespołu."
-                )
+                manager_name = self.manager.get_full_name() or self.manager.username
+                errors["manager"] = _(
+                    "Wskazany Manager (%(manager_name)s) jest członkiem tego zespołu. Manager musi należeć do innego zespołu."
+                ) % {"manager_name": manager_name}
 
-        #  Walidacja: HR nie może należeć do tego zespołu jako pracownik
+        # Walidacja: HR nie może należeć do tego zespołu jako pracownik
         if self.hr_id and hasattr(self.hr, "worker_profile") and self.hr.worker_profile.team_id:
             if self.pk and self.hr.worker_profile.team_id == self.pk:
-                errors["hr"] = (
-                    f"Wskazana osoba z HR ({self.hr.get_full_name() or self.hr.username}) "
-                    f"jest członkiem tego zespołu. HR musi należeć do innego zespołu."
-                )
+                hr_name = self.hr.get_full_name() or self.hr.username
+                errors["hr"] = _(
+                    "Wskazana osoba z HR (%(hr_name)s) jest członkiem tego zespołu. HR musi należeć do innego zespołu."
+                ) % {"hr_name": hr_name}
 
         if errors:
             raise ValidationError(errors)

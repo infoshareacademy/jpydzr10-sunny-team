@@ -1,12 +1,13 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Sunny - aplikacja urlopowa{% endblock %}
+{% block title %}{% trans "Sunny - aplikacja urlopowa" %}{% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
 
     <header class="dashboard-header">
-        <h1>Witaj {{ user.first_name }}! 👋</h1>
+        <h1>{% blocktrans %}Witaj {{ user.first_name }}! 👋{% endblocktrans %}</h1>
         <p class="text-muted">{{ random_role_phrase }}</p>
     </header>
 
@@ -19,9 +20,9 @@
     <div class="strip-bg-icon"><i class="bi bi-person-badge-fill"></i></div>
     <div class="strip-base-content">
         <div class="strip-summary">
-            <span class="strip-pretitle">Profil użytkownika</span>
+            <span class="strip-pretitle">{% trans "Profil użytkownika" %}</span>
             <h3 class="strip-title">{{ user.first_name }} {{ user.last_name }}</h3>
-            <p class="strip-subtitle">Aktualna rola: {{ active_role }}</p>
+            <p class="strip-subtitle">{% blocktrans %}Aktualna rola: {{ active_role }}{% endblocktrans %}</p>
         </div>
     </div>
     <div class="strip-hover-overlay">
@@ -31,19 +32,20 @@
                 <form action="{% url 'switch_role' %}" method="post" style="display: inline-flex;">
                     {% csrf_token %}
                     <input type="hidden" name="role" value="{{ available_roles.0 }}">
-                    <button type="submit" class="btn btn-dashboard-action" title="Zmień rolę: {{ available_roles.0 }}" style="display: flex; align-items: center; border: 0 !important;">
+                    {% blocktrans with role_name=available_roles.0 asvar role_title %}Zmień rolę: {{ role_name }}{% endblocktrans %}
+                    <button type="submit" class="btn btn-dashboard-action" title="{{ role_title }}" style="display: flex; align-items: center; border: 0 !important;">
                         <i class="bi bi-compass-fill"></i>
-                        <span class="btn-text">Zmień rolę: {{ available_roles.0 }}</span>
+                        <span class="btn-text">{% blocktrans with role_name=available_roles.0 %}Zmień rolę: {{ role_name }}{% endblocktrans %}</span>
                     </button>
                 </form>
             {% elif available_roles|length > 1 %}
                 <form id="roleForm" action="{% url 'switch_role' %}" method="post" style="position: relative; display: inline-flex;">
                     {% csrf_token %}
-                    <div class="btn btn-dashboard-action" title="Zmień rolę" style="position: relative; overflow: hidden; display: flex; align-items: center; border: 0 !important;">
+                    <div class="btn btn-dashboard-action" title="{% trans 'Zmień rolę' %}" style="position: relative; overflow: hidden; display: flex; align-items: center; border: 0 !important;">
                         <i class="bi bi-compass-fill"></i>
-                        <span class="btn-text">Zmień rolę</span>
+                            <span class="btn-text">{% trans "Zmień rolę" %}</span>
                         <select name="role" onchange="this.form.submit()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10;">
-                            <option value="" disabled selected>Zmień rolę</option>
+                            <option value="" disabled selected>{% trans "Zmień rolę" %}</option>
                             {% for role in available_roles %}
                                 <option value="{{ role }}">{{ role }}</option>
                             {% endfor %}
@@ -51,17 +53,16 @@
                     </div>
                 </form>
             {% endif %}
-
             <!-- PRZYCISK SZCZEGÓŁY - WYCIĄGNIĘTY POZA BLOK IF/ELIF -->
-            <a href="{% url 'profile' user.id %}" class="btn btn-dashboard-action" title="Szczegóły profilu">
-                <i class="bi bi-info-square-fill"></i><span class="btn-text">Szczegóły</span>
+            <a href="{% url 'profile' user.id %}" class="btn btn-dashboard-action" title="{% trans "Szczegóły profilu" %}">
+                <i class="bi bi-info-square-fill"></i><span class="btn-text">{% trans "Szczegóły" %}</span>
             </a>
 
             <!-- PRZYCISK WYLOGUJ -->
             <form action="{% url 'logout' %}" method="post" style="display: inline-flex;">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-dashboard-action text-danger" title="Wyloguj się" style="display: flex; align-items: center; border: 0 !important;">
-                    <i class="bi bi-door-open-fill"></i><span class="btn-text">Wyloguj</span>
+                <button type="submit" class="btn btn-dashboard-action text-danger" title="{% trans "Wyloguj się" %}" style="display: flex; align-items: center; border: 0 !important;">
+                    <i class="bi bi-door-open-fill"></i><span class="btn-text">{% trans "Wyloguj" %}</span>
                 </button>
             </form>
 
@@ -76,21 +77,21 @@
             <div class="strip-bg-icon"><i class="bi bi-postcard-fill"></i></div>
             <div class="strip-base-content">
                 <div class="strip-summary">
-                    <span class="strip-pretitle">Planowanie</span>
-                    <h3 class="strip-title">Wnioski Urlopowe</h3>
+                    <span class="strip-pretitle">{% trans "Planowanie" %}</span>
+                    <h3 class="strip-title">{% trans "Wnioski Urlopowe" %}</h3>
                     <p class="strip-subtitle">
-                        {% if active_role == 'Worker' %}Obsługa Twoich wniosków urlopowych.{% else %}Przeglądanie listy wniosków w systemie.{% endif %}
+                        {% if active_role == 'Worker' %}{% trans "Obsługa Twoich wniosków urlopowych." %}{% else %}{% trans "Przeglądanie listy wniosków w systemie." %}{% endif %}
                     </p>
                 </div>
             </div>
             <div class="strip-hover-overlay">
                 <div class="overlay-buttons">
                     {% if active_role == 'Worker' %}
-                        <a href="{% url 'new_request' %}" class="btn btn-warning btn-dashboard-action" title="Złóż nowy wniosek urlopowy"><i class="bi bi-file-earmark-plus-fill"></i><span class="btn-text">Nowy</span></a>
-                        <a href="{% url 'my_vacations' %}" class="btn btn-warning btn-dashboard-action" title="Przejrzyj aktualne wnioski"><i class="bi bi-folder-fill"></i><span class="btn-text">Lista</span></a>
+                        <a href="{% url 'new_request' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Złóż nowy wniosek urlopowy" %}"><i class="bi bi-file-earmark-plus-fill"></i><span class="btn-text">{% trans "Nowy" %}</span></a>
+                        <a href="{% url 'my_vacations' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Przejrzyj aktualne wnioski" %}"><i class="bi bi-folder-fill"></i><span class="btn-text">{% trans "Lista" %}</span></a>
                     {% else %}
-                        <a href="{% url 'pending_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="Wnioski do rozważenia"><i class="bi bi-stopwatch-fill"></i><span class="btn-text">Oczekujące</span></a>
-                        <a href="{% url 'history_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="Zapis wniosków"><i class="bi bi-archive-fill"></i><span class="btn-text">Historia</span></a>
+                        <a href="{% url 'pending_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Wnioski do rozważenia" %}"><i class="bi bi-stopwatch-fill"></i><span class="btn-text">{% trans "Oczekujące" %}</span></a>
+                        <a href="{% url 'history_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Zapis wniosków" %}"><i class="bi bi-archive-fill"></i><span class="btn-text">{% trans "Historia" %}</span></a>
                     {% endif %}
                 </div>
             </div>
@@ -103,16 +104,16 @@
             <div class="strip-bg-icon"><i class="bi bi-kanban-fill"></i></div>
             <div class="strip-base-content">
                 <div class="strip-summary">
-                    <span class="strip-pretitle">Organizacja</span>
-                    <h3 class="strip-title">Zarządzanie</h3>
-                    <p class="strip-subtitle">Struktura organizacyjna, zasoby ludzkie i podział ról.</p>
+                    <span class="strip-pretitle">{% trans "Organizacja" %}</span>
+                    <h3 class="strip-title">{% trans "Zarządzanie" %}</h3>
+                    <p class="strip-subtitle">{% trans "Struktura organizacyjna, zasoby ludzkie i podział ról." %}</p>
                 </div>
             </div>
             <div class="strip-hover-overlay">
                 <div class="overlay-buttons">
-                    <a href="{% url 'reports_index' %}" class="btn btn-warning btn-dashboard-action" title="Lista Raportów"><i class="bi bi-clipboard-data-fill"></i><span class="btn-text">Raporty</span></a>
-                    <a href="{% url 'user_list' %}" class="btn btn-warning btn-dashboard-action" title="Zarządzaj pracownikami"><i class="bi bi-person-fill"></i><span class="btn-text">Pracownicy</span></a>
-                    <a href="{% url 'team-list' %}" class="btn btn-warning btn-dashboard-action" title="Zarządzaj zespołami"><i class="bi bi-people-fill"></i></i><span class="btn-text">Zespoły</span></a>
+                    <a href="{% url 'reports_index' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Lista Raportów" %}"><i class="bi bi-clipboard-data-fill"></i><span class="btn-text">{% trans "Raporty" %}</span></a>
+                    <a href="{% url 'user_list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Zarządzaj pracownikami" %}"><i class="bi bi-person-fill"></i><span class="btn-text">{% trans "Pracownicy" %}</span></a>
+                    <a href="{% url 'team-list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Zarządzaj zespołami" %}"><i class="bi bi-people-fill"></i></i><span class="btn-text">{% trans "Zespoły" %}</span></a>
                 </div>
             </div>
         </div>
@@ -124,16 +125,16 @@
             <div class="strip-bg-icon"><i class="bi bi-terminal-fill"></i></div>
             <div class="strip-base-content">
                 <div class="strip-summary">
-                    <span class="strip-pretitle">Administracja</span>
-                    <h3 class="strip-title">Panel Admina</h3>
-                    <p class="strip-subtitle">Monitorowanie bezpieczeństwa i logów systemowych.</p>
+                    <span class="strip-pretitle">{% trans "Administracja" %}</span>
+                    <h3 class="strip-title">{% trans "Panel Admina" %}</h3>
+                    <p class="strip-subtitle">{% trans "Monitorowanie bezpieczeństwa i logów systemowych." %}</p>
                 </div>
             </div>
             <div class="strip-hover-overlay">
                 <div class="overlay-buttons">
-                    <a href="{% url 'activity_log' %}" class="btn btn-warning btn-dashboard-action" title="Logi aktywności systemowej"><i class="bi bi-keyboard-fill"></i></i><span class="btn-text">Logi Aktywności</span></a>
-                    <a href="{% url 'auth_log' %}" class="btn btn-warning btn-dashboard-action" title="Logi autoryzacji i logowań"><i class="bi bi-key-fill"></i><span class="btn-text">Logi Autoryzacji</span></a>
-                    <a href="{% url 'add_user' %}" class="btn btn-warning btn-dashboard-action" title="Dodaj nowego użytkownika"><i class="bi bi-person-plus-fill"></i><span class="btn-text">Dodaj Użytkownika</span></a>
+                    <a href="{% url 'activity_log' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Logi aktywności systemowej" %}"><i class="bi bi-keyboard-fill"></i></i><span class="btn-text">{% trans "Logi Aktywności" %}</span></a>
+                    <a href="{% url 'auth_log' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Logi autoryzacji i logowań" %}"><i class="bi bi-key-fill"></i><span class="btn-text">{% trans "Logi Autoryzacji" %}</span></a>
+                    <a href="{% url 'add_user' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Dodaj nowego użytkownika" %}"><i class="bi bi-person-plus-fill"></i><span class="btn-text">{% trans "Dodaj Użytkownika" %}</span></a>
                 </div>
             </div>
         </div>

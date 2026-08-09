@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raport: Lista wniosków urlopowych{% endblock %}
+{% block title %}{% trans "Raport: Lista wniosków urlopowych" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -107,19 +108,19 @@
 <div class="logs-wrapper mt-4">
     <div style="margin-bottom: 25px;">
         <h2 style="margin-bottom: 10px; font-size: 1.1rem;">
-            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; Wszystkie raporty</a>
+            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; {% trans "Wszystkie raporty" %}</a>
         </h2>
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
             <div>
-                <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Wnioski urlopowe</h1>
+                <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">{% trans "Wnioski urlopowe" %}</h1>
             </div>
 
             <div class="d-flex align-items-center gap-2">
                 <a href="{% url 'export_leave_requests_csv' %}?status={{ status_filter }}&processed={{ proc_filter }}&role={{ role_filter }}&team={{ team_filter }}&user={{ user_filter }}&search={{ search_query }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-primary font-weight-bold">
-                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Eksportuj do CSV
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> {% trans "Eksportuj do CSV" %}
                 </a>
                 <a href="{% url 'export_leave_requests_pdf' %}?status={{ status_filter }}&processed={{ proc_filter }}&role={{ role_filter }}&team={{ team_filter }}&user={{ user_filter }}&search={{ search_query }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-danger font-weight-bold">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> Pobierz PDF
+                    <i class="bi bi-file-earmark-pdf me-1"></i> {% trans "Pobierz PDF" %}
                 </a>
             </div>
         </div>
@@ -129,26 +130,26 @@
     <div class="filter-box">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label for="search" class="form-label font-weight-bold text-dark">Szukaj pracownika:</label>
-                <input type="text" name="search" id="search" class="form-control" placeholder="Imię, nazwisko lub login..." value="{{ search_query }}">
+                <label for="search" class="form-label font-weight-bold text-dark">{% trans "Szukaj pracownika:" %}</label>
+                <input type="text" name="search" id="search" class="form-control" placeholder="{% trans 'Imię, nazwisko lub login...' %}" value="{{ search_query }}">
             </div>
 
             <div class="col-md-3">
-                <label for="processed" class="form-label font-weight-bold text-dark">Stan wniosku:</label>
+                <label for="processed" class="form-label font-weight-bold text-dark">{% trans "Stan wniosku:" %}</label>
                 <select name="processed" id="processed" class="form-select">
-                    <option value="">Wszystkie</option>
-                    <option value="unprocessed" {% if proc_filter == 'unprocessed' %}selected{% endif %}>Nierozpatrzone (Oczekujące)</option>
-                    <option value="processed" {% if proc_filter == 'processed' %}selected{% endif %}>Rozpatrzone (Wszystkie)</option>
-                    <option value="approved" {% if proc_filter == 'approved' %}selected{% endif %}>Zatwierdzone</option>
-                    <option value="rejected" {% if proc_filter == 'rejected' %}selected{% endif %}>Odrzucone</option>
-                    <option value="canceled" {% if proc_filter == 'canceled' %}selected{% endif %}>Anulowane</option>
+                    <option value="">{% trans "Wszystkie" %}</option>
+                    <option value="unprocessed" {% if proc_filter == 'unprocessed' %}selected{% endif %}>{% trans "Nierozpatrzone (Oczekujące)" %}</option>
+                    <option value="processed" {% if proc_filter == 'processed' %}selected{% endif %}>{% trans "Rozpatrzone (Wszystkie)" %}</option>
+                    <option value="approved" {% if proc_filter == 'approved' %}selected{% endif %}>{% trans "Zatwierdzone" %}</option>
+                    <option value="rejected" {% if proc_filter == 'rejected' %}selected{% endif %}>{% trans "Odrzucone" %}</option>
+                    <option value="canceled" {% if proc_filter == 'canceled' %}selected{% endif %}>{% trans "Anulowane" %}</option>
                 </select>
             </div>
 
             <div class="col-md-3">
-                <label for="team" class="form-label font-weight-bold text-dark">Filtruj po zespole:</label>
+                <label for="team" class="form-label font-weight-bold text-dark">{% trans "Filtruj po zespole:" %}</label>
                 <select name="team" id="team" class="form-select">
-                    <option value="">Wszystkie zespoły</option>
+                    <option value="">{% trans "Wszystkie zespoły" %}</option>
                     {% for team in all_teams_list %}
                         <option value="{{ team.id }}" {% if team_filter == team.id|stringformat:"s" %}selected{% endif %}>
                             {{ team.name }}
@@ -157,18 +158,18 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label for="date_from" class="form-label font-weight-bold text-dark">Data urlopu od:</label>
+                <label for="date_from" class="form-label font-weight-bold text-dark">{% trans "Data urlopu od:" %}</label>
                 <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
             </div>
 
             <div class="col-md-3">
-                <label for="date_to" class="form-label font-weight-bold text-dark">Data urlopu do:</label>
+                <label for="date_to" class="form-label font-weight-bold text-dark">{% trans "Data urlopu do:" %}</label>
                 <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
             </div>
 
             <div class="col-md-6 d-flex gap-2 ms-auto">
-                <button type="submit" class="btn btn-primary w-100 font-weight-bold">Filtruj</button>
-                <a href="{% url 'leave_requests_report_list' %}" class="btn btn-outline-secondary w-100">Reset</a>
+                <button type="submit" class="btn btn-primary w-100 font-weight-bold">{% trans "Filtruj" %}</button>
+                <a href="{% url 'leave_requests_report_list' %}" class="btn btn-outline-secondary w-100">{% trans "Reset" %}</a>
             </div>
         </form>
     </div>
@@ -178,12 +179,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Pracownik</th>
-                        <th>Zespół</th>
-                        <th style="text-align: center;">Okres</th>
-                        <th style="text-align: center;">Dni</th>
-                        <th style="text-align: center;">Status</th>
-                        <th>Zatwierdził / Odrzucił</th>
+                        <th>{% trans "Pracownik" %}</th>
+                        <th>{% trans "Zespół" %}</th>
+                        <th style="text-align: center;">{% trans "Okres" %}</th>
+                        <th style="text-align: center;">{% trans "Dni" %}</th>
+                        <th style="text-align: center;">{% trans "Status" %}</th>
+                        <th>{% trans "Zatwierdził / Odrzucił" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -213,13 +214,13 @@
                         <td style="text-align: center; font-weight: bold;">{{ req.amount_days }}</td>
                         <td style="text-align: center;">
                             {% if req.status == 'approved' %}
-                                <span class="badge-status badge-approved">Zatwierdzony</span>
+                                <span class="badge-status badge-approved">{% trans "Zatwierdzony" %}</span>
                             {% elif req.status == 'rejected' %}
-                                <span class="badge-status badge-rejected">Odrzucony</span>
+                                <span class="badge-status badge-rejected">{% trans "Odrzucony" %}</span>
                             {% elif req.status == 'canceled' %}
-                                <span class="badge-status badge-canceled">Anulowany</span>
+                                <span class="badge-status badge-canceled">{% trans "Anulowany" %}</span>
                             {% else %}
-                                <span class="badge-status badge-pending">Oczekujący</span>
+                                <span class="badge-status badge-pending">{% trans "Oczekujący" %}</span>
                             {% endif %}
                         </td>
                         <td>
@@ -233,7 +234,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="7" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">
-                            Brak wniosków urlopowych spełniających kryteria filtracji.
+                            {% trans "Brak wniosków urlopowych spełniających kryteria filtracji." %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -244,15 +245,15 @@
         {% if page_obj.has_other_pages %}
         <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
             <span class="text-muted small">
-                Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }} (łącznie rekordów: {{ page_obj.paginator.count }})
+                {% blocktranslate with number=page_obj.number total_pages=page_obj.paginator.num_pages count=page_obj.paginator.count %}Strona {{ number }} z {{ total_pages }} (łącznie rekordów: {{ count }}){% endblocktranslate %}
             </span>
             <ul class="pagination pagination-sm m-0">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">&laquo; Pierwsza</a>
+                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">&laquo; {% trans "Pierwsza" %}</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Poprzednia</a>
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{% trans "Poprzednia" %}</a>
                     </li>
                 {% endif %}
 
@@ -262,10 +263,10 @@
 
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Następna</a>
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{% trans "Następna" %}</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Ostatnia &raquo;</a>
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if proc_filter %}&processed={{ proc_filter }}{% endif %}{% if team_filter %}&team={{ team_filter }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{% trans "Ostatnia" %} &raquo;</a>
                     </li>
                 {% endif %}
             </ul>

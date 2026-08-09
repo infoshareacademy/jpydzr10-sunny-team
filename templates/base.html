@@ -1,7 +1,7 @@
 {% load static %}
 {% load i18n %}
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ LANGUAGE_CODE|default:'pl' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,11 +21,11 @@
             padding-bottom: 1rem !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
             width: 100vw;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
         }
         .brand-logo {
             display: inline-flex;
@@ -262,7 +262,6 @@
             font-weight: bold;
             margin-bottom: 20px;
         }
-
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -281,30 +280,30 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-postcard-fill"></i>
-                            <span class="d-none d-lg-inline">Wnioski Urlopowe</span>
+                            <span class="d-none d-lg-inline">{% translate "Wnioski Urlopowe" %}</span>
                         </a>
                         <ul class="dropdown-menu shadow-sm">
                             {% if active_role == 'Worker' %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'new_request' %}"><i class="bi bi-file-earmark-plus-fill text-muted"></i> Nowy </a></li>
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'my_vacations' %}"><i class="bi bi-folder-fill text-muted"></i> Lista </a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'new_request' %}"><i class="bi bi-file-earmark-plus-fill text-muted"></i> {% translate "Nowy" %} </a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'my_vacations' %}"><i class="bi bi-folder-fill text-muted"></i> {% translate "Lista" %} </a></li>
                             {% else %}
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'pending_requests_list' %}"><i class="bi bi-stopwatch-fill text-muted"></i> Oczekujące</a></li>
-                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'history_requests_list' %}"><i class="bi bi-archive-fill text-muted"></i> Historia</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'pending_requests_list' %}"><i class="bi bi-stopwatch-fill text-muted"></i> {% translate "Oczekujące" %}</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'history_requests_list' %}"><i class="bi bi-archive-fill text-muted"></i> {% translate "Historia" %}</a></li>
                             {% endif %}
                         </ul>
-                        {% endif %}
                     </li>
+                    {% endif %}
                     {% if active_role in 'Manager,HR,COO, Admin' %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bar-chart-line-fill"></i>
-                            <span class="d-none d-lg-inline">Zarządzanie</span>
+                            <span class="d-none d-lg-inline">{% translate "Zarządzanie" %}</span>
                         </a>
                         <ul class="dropdown-menu shadow-sm">
                     {% if active_role in 'HR,COO,Admin,Manager' %}
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'reports_index' %}"><i class="bi bi-clipboard-data-fill text-muted"></i> Raporty</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'user_list' %}"><i class="bi bi-person-fill text-muted"></i> Pracownicy</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'team-list' %}"><i class="bi bi-people-fill text-muted"></i> Zespoły</a></li>
+                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'reports_index' %}"><i class="bi bi-clipboard-data-fill text-muted"></i> {% translate "Raporty" %}</a></li>
+                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'user_list' %}"><i class="bi bi-person-fill text-muted"></i> {% translate "Pracownicy" %}</a></li>
+                        <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'team-list' %}"><i class="bi bi-people-fill text-muted"></i> {% translate "Zespoły" %}</a></li>
                     {% endif %}
                         </ul>
                     </li>
@@ -313,12 +312,12 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-terminal-fill"></i>
-                            <span class="d-none d-lg-inline">Panel Admina</span>
+                            <span class="d-none d-lg-inline">{% translate "Panel Admina" %}</span>
                         </a>
                         <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'activity_log' %}"><i class="bi bi-keyboard-fill text-muted"></i> Logi Aktywności</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'auth_log' %}"><i class="bi bi-key-fill text-muted"></i> Logi Autoryzacji</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'add_user' %}"><i class="bi bi-person-plus-fill text-muted"></i> Dodaj użytkownika</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'activity_log' %}"><i class="bi bi-keyboard-fill text-muted"></i> {% translate "Logi Aktywności" %}</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'auth_log' %}"><i class="bi bi-key-fill text-muted"></i> {% translate "Logi Autoryzacji" %}</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center gap-2 rounded" href="{% url 'add_user' %}"><i class="bi bi-person-plus-fill text-muted"></i> {% translate "Dodaj użytkownika" %}</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -328,7 +327,7 @@
 {% if user.is_authenticated %}
 <div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
     <span class="navbar-text text-light fs-5 fw-bold text-nowrap">
-        <span class="d-none d-sm-inline">Rola: </span><strong style="color: #ffdf22;">{{ active_role }}</strong>
+        <span class="d-none d-sm-inline">{% translate "Rola:" %} </span><strong style="color: #ffdf22;">{{ active_role }}</strong>
     </span>
     <div class="dropdown profile-wrapper">
         <a class="nav-link dropdown-toggle profile-trigger" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -340,36 +339,37 @@
                     <div class="fw-bold text-dark fs-5 text-nowrap px-1">{{ user.first_name }} {{ user.last_name }}</div>
                 </div>
 
-                {% if available_roles|length == 1 %}
-                    <li>
-                        <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-single" class="m-0">
-                            {% csrf_token %}
-                            <input type="hidden" name="role" value="{{ available_roles.0 }}">
-                            <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" href="#" onclick="document.getElementById('switch-role-form-single').submit(); return false;">
-                                <i class="bi bi-compass-fill text-secondary"></i> Zmień rolę: {{ available_roles.0 }}
-                            </a>
-                        </form>
-                    </li>
-                {% elif available_roles|length > 1 %}
-                    <li>
-                        <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-select" class="m-0">
-                            {% csrf_token %}
-                            <div class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" style="background: none; cursor: default;">
-                                <i class="bi bi-compass-fill text-secondary"></i>
-                                <span class="text-dark me-1">Zmień rolę:</span>
-                                <select name="role" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
-                                    <option value="" disabled selected>Wybierz...</option>
-                                    {% for role in available_roles %}
-                                        <option value="{{ role }}">{{ role }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </form>
-                    </li>
-                {% endif %}
+                    {% if available_roles|length == 1 %}
+                        <li>
+                            <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-single" class="m-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="role" value="{{ available_roles.0 }}">
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" href="#" onclick="document.getElementById('switch-role-form-single').submit(); return false;">
+                                    <i class="bi bi-compass-fill text-secondary"></i>
+                                    {% blocktrans with role_name=available_roles.0 %}Zmień rolę: {{ role_name }}{% endblocktrans %}
+                                </a>
+                            </form>
+                        </li>
+                    {% elif available_roles|length > 1 %}
+                        <li>
+                            <form action="{% url 'switch_role' %}" method="post" id="switch-role-form-select" class="m-0">
+                                {% csrf_token %}
+                                <div class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" style="background: none; cursor: default;">
+                                    <i class="bi bi-compass-fill text-secondary"></i>
+                                    <span class="text-dark me-1">{% translate "Zmień rolę" %}:</span>
+                                    <select name="role" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                                        <option value="" disabled selected>{% translate "Wybierz..." %}</option>
+                                        {% for role in available_roles %}
+                                            <option value="{{ role }}">{{ role }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </form>
+                        </li>
+                    {% endif %}
                 <li>
                     <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap" href="{% url 'profile' user.id %}">
-                        <i class="bi bi-info-square-fill text-secondary"></i> Szczegóły profilu
+                        <i class="bi bi-info-square-fill text-secondary"></i> {% translate "Szczegóły profilu" %}
                     </a>
                 </li>
             {% endif %}
@@ -383,12 +383,12 @@
                     {% if LANGUAGE_CODE == 'pl' %}
                         <input type="hidden" name="language" value="en">
                         <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap">
-                            <span class="fi fi-gb"></span> Change language: English
+                            <span class="fi fi-gb"></span> {% translate "Zmień język: English" %}
                         </button>
                     {% else %}
                         <input type="hidden" name="language" value="pl">
                         <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-nowrap">
-                            <span class="fi fi-pl"></span> Zmień język: Polski
+                            <span class="fi fi-pl"></span> {% translate "Zmień język: Polski" %}
                         </button>
                     {% endif %}
                 </form>
@@ -398,7 +398,7 @@
                 <form action="{% url 'logout' %}" method="post" class="m-0">
                     {% csrf_token %}
                     <button type="submit" class="profile-form-btn d-flex align-items-center gap-2 text-danger text-nowrap fw-semibold py-2 px-2 rounded w-100">
-                        <i class="bi bi-door-open-fill"></i> Wyloguj się
+                        <i class="bi bi-door-open-fill"></i> {% translate "Wyloguj się" %}
                     </button>
                 </form>
             </li>
@@ -441,34 +441,34 @@
                 <div class="col-12 col-md-5">
                     <h5 class="footer-title mb-3 fs-3">Sunny ☀️</h5>
                     <p class="text-muted pe-md-4 mb-0">
-                        Intuicyjna platforma do zarządzania wnioskami urlopowymi, planowania pracy zespołowej oraz automatyzacji procesów wewnętrznych w firmie. Z nami zaplanujesz słoneczny wypoczynek.
+                        {% translate "Intuicyjna platforma do zarządzania wnioskami urlopowymi, planowania pracy zespołowej oraz automatyzacji procesów wewnętrznych w firmie. Z nami zaplanujesz słoneczny wypoczynek." %}
                     </p>
                 </div>
                 <div class="col-6 col-md-3">
-                    <h5 class="footer-title mb-3">Nawigacja</h5>
+                    <h5 class="footer-title mb-3">{% translate "Nawigacja" %}</h5>
                     <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
-                        <li><a href="{% url 'home' %}"><i class="bi bi-chevron-right small me-1"></i> Strona główna</a></li>
+                        <li><a href="{% url 'home' %}"><i class="bi bi-chevron-right small me-1"></i> {% translate "Strona główna" %}</a></li>
                         {% if user.is_authenticated %}
-                            <li><a href="{% url 'profile' user.id %}"><i class="bi bi-chevron-right small me-1"></i> Twój profil</a></li>
+                            <li><a href="{% url 'profile' user.id %}"><i class="bi bi-chevron-right small me-1"></i> {% translate "Twój profil" %}</a></li>
                         {% endif %}
                     </ul>
                 </div>
                 <div class="col-6 col-md-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h5 class="footer-title mb-3">Wsparcie</h5>
+                            <h5 class="footer-title mb-3">{% translate "Wsparcie" %}</h5>
                             <ul class="list-unstyled d-flex flex-column gap-2 text-muted mb-3">
                                 <li><i class="bi bi-envelope-fill text-secondary me-2"></i> pomoc@sunnyteam.com</li>
                                 <li><i class="bi bi-telephone-fill text-secondary me-2"></i> +48 123 456 789</li>
                             </ul>
                             <div class="social-icons d-flex align-items-center gap-3">
-                                <a href="https://infoshareacademy.com" target="_blank" title="infoShare Academy – kursy IT">
+                                <a href="https://infoshareacademy.com" target="_blank" title="{% translate 'infoShare Academy – kursy IT' %}">
                                     <img src="{% static 'images/InfoShare_Academy.svg' %}" alt="infoShare Academy" class="isa-footer-logo">
                                 </a>
-                                <a href="https://github.com/infoshareacademy/jpydzr10-sunny-team" target="_blank" title="Repozytorium GitHub"><i class="bi bi-github"></i></a>
+                                <a href="https://github.com/infoshareacademy/jpydzr10-sunny-team" target="_blank" title="{% translate 'Repozytorium GitHub' %}"><i class="bi bi-github"></i></a>
                             </div>
                         </div>
-                        <button type="button" class="btn-footer-top ms-2" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Wróć na górę">
+                        <button type="button" class="btn-footer-top ms-2" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="{% translate 'Wróć na górę' %}">
                             <i class="bi bi-arrow-up fs-5"></i>
                         </button>
                     </div>

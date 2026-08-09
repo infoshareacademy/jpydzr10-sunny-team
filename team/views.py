@@ -1,25 +1,28 @@
-from django.contrib import messages
-
-from django.shortcuts import redirect, get_object_or_404
-from django.urls import reverse_lazy, reverse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View, FormView
-
-from accounts.permission import RoleRequiredMixin
-from logs.models import ActivityLog
-from .models import Team
-from .forms import TeamForm,TeamMembersForm
-
-
-from leaves.utils import Calendar_utils
 import calendar
 from datetime import date, timedelta
-from leaves.models import WorkerProfile, LeaveRequest
+
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
+from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, UpdateView, View
+
+from accounts.permission import RoleRequiredMixin
+from leaves.models import LeaveRequest, WorkerProfile
+from leaves.utils import Calendar_utils
+from logs.models import ActivityLog, AuthLog
+from logs.utils import get_client_ip
+
+from .forms import TeamForm, TeamMembersForm
+from .models import Team
 
 
 class TeamListView(RoleRequiredMixin, ListView):
-    """
-    Widok listy zespołów.
-    """
+    """Widok listy zespołów."""
+
     required_action = "can_manage_team"
     model = Team
     template_name = "team/team_list.html"
@@ -28,13 +31,12 @@ class TeamListView(RoleRequiredMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         """
-         Logika przekierowań (UX):
+        Logika przekierowań (UX):
         - Manager: przekierowanie do szczegółów swojego zespołu.
         - HR posiadający dokładnie 1 zespół: automatyczne przekierowanie do szczegółów tego zespołu.
         - HR posiadający >1 zespołów: wyświetlenie listy jego zespołów.
         - Admin: wyświetlenie listy wszystkich zespołów w podziale na aktywne i nieaktywne.
-       """
-
+        """
         response = super().dispatch(request, *args, **kwargs)
         if not request.user.is_authenticated:
             return response
@@ -45,7 +47,7 @@ class TeamListView(RoleRequiredMixin, ListView):
             managed_team = Team.objects.for_user(request.user).filter(is_active=True).first()
             if managed_team:
                 return redirect("team-detail", pk=managed_team.pk)
-            messages.warning(request, "Nie jesteś przypisany jako manager do żadnego aktywnego zespołu.")
+            messages.warning(request, _("Nie jesteś przypisany jako manager do żadnego aktywnego zespołu."))
             return redirect("home")
 
         if active_role == "HR":
@@ -57,7 +59,7 @@ class TeamListView(RoleRequiredMixin, ListView):
                 return redirect("team-detail", pk=single_team.pk)
 
             elif teams_count == 0:
-                messages.info(request, "Nie jesteś obecnie opiekunem żadnego aktywnego zespołu.")
+                messages.info(request, _("Nie jesteś obecnie opiekunem żadnego aktywnego zespołu."))
                 return redirect("home")
 
             return response
@@ -110,35 +112,71 @@ EDIT_ROLES = ('HR', 'COO', 'Admin')
 DEACTIVATE_ROLES = ('COO', 'Admin')
 
 
-class TeamDetailView(DetailView):
-    """Widok szczegółów zespołu wraz z listą pracowników i kalendarzem urlopów."""
+class TeamDetailView(LoginRequiredMixin, DetailView):
+    """Widok szczegółów AKTYWNEGO zespołu wraz z listą pracowników i kalendarzem urlopów."""
     model = Team
     template_name = "team/team_detail.html"
     context_object_name = "team"
 
     def dispatch(self, request, *args, **kwargs):
-        team = self.get_object()
-        if not team.is_active:
+        self.request = request
+        self.object = self.get_object()
+
+        active_role = request.session.get('active_role', getattr(request.user, 'role', ''))
+
+        if not self.object.is_active:
+            return redirect("team-archive-detail", pk=self.object.pk)
+
+        if not self._has_access(request.user, self.object, active_role):
+            self._log_access_denied(request, self.object, active_role)
+            messages.info(request, _('Nie masz uprawnień do przeglądania tego zespołu'))
             return redirect("home")
+
         return super().dispatch(request, *args, **kwargs)
+
+    def _has_access(self, viewer, team, active_role):
+        if active_role == 'Admin':
+            return True
+
+        if active_role in ('Manager', 'HR'):
+            managed_team_ids = Team.objects.for_user(viewer).values_list('pk', flat=True)
+            return team.pk in managed_team_ids
+
+        try:
+            own_team_id = viewer.worker_profile.team_id
+        except WorkerProfile.DoesNotExist:
+            return False
+
+        return own_team_id == team.pk
+
+    def _log_access_denied(self, request, team, active_role):
+        AuthLog.objects.create(
+            user=request.user,
+            action='access_denied_403',
+            details=format_lazy(
+                _("Próba podglądu zespołu #{team_id} ({team_name}). Aktywna rola: {role}"),
+                team_id=team.id,
+                team_name=team.name,
+                role=active_role,
+            ),
+            ip_address=get_client_ip(request),
+            severity='warning',
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         team = self.object
         active_role = self.request.session.get('active_role', getattr(self.request.user, 'role', ''))
 
-        # Uprawnienia
         context["can_edit_team"] = active_role in EDIT_ROLES
         context["can_deactivate"] = active_role in DEACTIVATE_ROLES
 
-        # Manager i HR
         manager_user = team.manager if (team.manager and team.manager.is_active) else None
         hr_user = team.hr if (team.hr and team.hr.is_active) else None
 
-        context['manager_name'] = manager_user.get_full_name() if manager_user else "Brak przypisanego"
-        context['hr_name'] = hr_user.get_full_name() if hr_user else "Brak przypisanego"
+        context['manager_name'] = manager_user.get_full_name() if manager_user else _("Brak przypisanego")
+        context['hr_name'] = hr_user.get_full_name() if hr_user else _("Brak przypisanego")
 
-        # Pracownicy i statystyki
         team_profiles = self._get_team_profiles(team, manager_user, hr_user)
         member_users = [profile.user for profile in team_profiles]
         user_colors = self._build_user_colors(member_users)
@@ -262,8 +300,7 @@ class TeamDetailView(DetailView):
         return {'days_headers': days_headers, 'leaves': week_leaves}
 
     @staticmethod
-    def _build_leave_bar(leave, week_start,
-                         week_end, calendar_utils, user_colors, display_start, display_end):
+    def _build_leave_bar(leave, week_start, week_end, calendar_utils, user_colors, display_start, display_end):
         render_start = max(leave.start_date, week_start)
         render_end = min(leave.end_date, week_end)
 
@@ -283,7 +320,7 @@ class TeamDetailView(DetailView):
             'user_name': leave.employee.get_full_name() or leave.employee.username,
             'color': user_colors.get(leave.employee_id, DEFAULT_MEMBER_COLOR),
             'is_pending': is_pending,
-            'status_display': 'Oczekujący' if is_pending else 'Zaakceptowany',
+            'status_display': _('Oczekujący') if is_pending else _('Zaakceptowany'),
             'start_col': start_col,
             'span': span,
             'non_working_days': non_working_days,
@@ -292,6 +329,87 @@ class TeamDetailView(DetailView):
             'show_next_arrow': week_end == display_end and leave.end_date > display_end,
             'amount_days': getattr(leave, 'amount_days', (leave.end_date - leave.start_date).days + 1),
         }
+
+
+class TeamArchiveDetailView(LoginRequiredMixin, DetailView):
+    """
+    Widok szczegółów ZARCHIWIZOWANEGO (nieaktywnego) zespołu.
+    Zespół po soft_delete() nie ma już przypisanych pracowników/managera/HR,
+    więc dane odtwarzane są na podstawie historycznych wpisów LeaveRequest.team,
+    które są snapshotem z momentu złożenia wniosku.
+    """
+    model = Team
+    template_name = "team/team_archive_detail.html"
+    context_object_name = "team"
+
+    ARCHIVED_REQUESTS_PER_PAGE = 15
+
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        self.object = self.get_object()
+
+        active_role = request.session.get('active_role', getattr(request.user, 'role', ''))
+
+        if self.object.is_active:
+            return redirect("team-detail", pk=self.object.pk)
+
+        if active_role != 'Admin':
+            self._log_access_denied(request, self.object, active_role)
+            messages.info(request, _('Tylko administrator może przeglądać zarchiwizowane zespoły.'))
+            return redirect("home")
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def _log_access_denied(self, request, team, active_role):
+        AuthLog.objects.create(
+            user=request.user,
+            action='access_denied_403',
+            details=format_lazy(
+                _("Próba podglądu zarchiwizowanego zespołu #{team_id} ({team_name}). Aktywna rola: {role}"),
+                team_id=team.id,
+                team_name=team.name,
+                role=active_role,
+            ),
+            ip_address=get_client_ip(request),
+            severity='warning',
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        team = self.object
+
+        historical_requests = (
+            LeaveRequest.objects
+            .filter(team_id=team.pk)
+            .select_related('employee')
+            .order_by('-start_date')
+        )
+
+        seen = {}
+        for req in historical_requests:
+            emp = req.employee
+            if emp.id not in seen:
+                seen[emp.id] = {
+                    'user': emp,
+                    'full_name': emp.get_full_name() or emp.username,
+                    'is_active': emp.is_active,
+                }
+        archived_members = sorted(
+            seen.values(),
+            key=lambda m: ((m['user'].last_name or '').lower(), (m['user'].first_name or '').lower())
+        )
+
+        paginator = Paginator(historical_requests, self.ARCHIVED_REQUESTS_PER_PAGE)
+        page_number = self.request.GET.get('page')
+        archived_requests_page = paginator.get_page(page_number)
+
+        context['archived_members'] = archived_members
+        context['archived_members_count'] = len(archived_members)
+        context['archived_requests'] = archived_requests_page
+
+        return context
+
+
 class TeamCreateView(RoleRequiredMixin, CreateView):
     """
     Widok tworzenia nowego zespołu.
@@ -309,7 +427,7 @@ class TeamCreateView(RoleRequiredMixin, CreateView):
         Brak uprawnień skutkuje komunikatem błędu i przekierowaniem na stronę główną.
         """
         if request.user.role != "Admin":
-            messages.error(request, "Brak uprawnień. Tylko Administrator może tworzyć nowe zespoły.")
+            messages.error(request, _("Brak uprawnień. Tylko Administrator może tworzyć nowe zespoły."))
             return redirect("home")
         return super().dispatch(request, *args, **kwargs)
 
@@ -340,7 +458,8 @@ class TeamCreateView(RoleRequiredMixin, CreateView):
         )
 
         messages.success(
-            self.request, f"Pomyślnie utworzono zespół '{self.object.name}'."
+            self.request,
+            format_lazy(_("Pomyślnie utworzono zespół '{name}'."), name=self.object.name),
         )
         return response
 
@@ -353,7 +472,9 @@ class TeamUpdateView(RoleRequiredMixin, UpdateView):
     model = Team
     form_class = TeamForm
     template_name = "team/team_form.html"
-    success_url = reverse_lazy("team-list")
+
+    def get_success_url(self):
+        return reverse("team-detail", kwargs={"pk": self.object.pk})
 
     def get_queryset(self):
         """Zapewnia dostęp tylko do aktywnych zespołów (nieusuniętych miękko)."""
@@ -375,7 +496,7 @@ class TeamUpdateView(RoleRequiredMixin, UpdateView):
         if not (is_admin or is_assigned_hr):
             messages.error(
                 request,
-                "Brak uprawnień. Możesz edytować dane tylko tego zespołu, którego jesteś opiekunem HR.",
+                _("Brak uprawnień. Możesz edytować dane tylko tego zespołu, którego jesteś opiekunem HR."),
             )
             return redirect("home")
 
@@ -403,7 +524,7 @@ class TeamUpdateView(RoleRequiredMixin, UpdateView):
 
         messages.success(
             self.request,
-            f"Pomyślnie zaktualizowano dane zespołu '{self.object.name}'.",
+            format_lazy(_("Pomyślnie zaktualizowano dane zespołu '{name}'."), name=self.object.name),
         )
         return response
 
@@ -425,7 +546,7 @@ class TeamDeleteView(RoleRequiredMixin, DeleteView):
     def dispatch(self, request, *args, **kwargs):
         """Weryfikuje, czy żądanie usunięcia pochodzi od Administratora."""
         if request.user.role != "Admin":
-            messages.error(request, "Brak uprawnień. Tylko Administrator może dezaktywować zespół.")
+            messages.error(request, _("Brak uprawnień. Tylko Administrator może dezaktywować zespół."))
             return redirect("home")
         return super().dispatch(request, *args, **kwargs)
 
@@ -443,11 +564,12 @@ class TeamDeleteView(RoleRequiredMixin, DeleteView):
             object_type="team",
             object_id=team_id,
             severity="warning",
-            details=f"Dezaktywowano zespół '{team_name}'.",
+            details=str(format_lazy(_("Dezaktywowano zespół '{name}'."), name=team_name)),
         )
 
         messages.success(
-            self.request, f"Zespół '{team_name}' został pomyślnie dezaktywowany."
+            self.request,
+            format_lazy(_("Zespół '{name}' został pomyślnie dezaktywowany."), name=team_name),
         )
         return redirect(self.success_url)
 
@@ -477,7 +599,7 @@ class TeamMembersUpdateView(RoleRequiredMixin, FormView):
         if not (is_admin or is_assigned_manager or is_assigned_hr):
             messages.error(
                 request,
-                "Brak uprawnień. Możesz zarządzać składem osobowym tylko przypisanego do Ciebie zespołu.",
+                _("Brak uprawnień. Możesz zarządzać składem osobowym tylko przypisanego do Ciebie zespołu."),
             )
             return redirect("home")
 
@@ -510,7 +632,8 @@ class TeamMembersUpdateView(RoleRequiredMixin, FormView):
         )
 
         messages.success(
-            self.request, f"Pomyślnie zaktualizowano skład zespołu '{self.team.name}'."
+            self.request,
+            format_lazy(_("Pomyślnie zaktualizowano skład zespołu '{name}'."), name=self.team.name),
         )
         return super().form_valid(form)
 

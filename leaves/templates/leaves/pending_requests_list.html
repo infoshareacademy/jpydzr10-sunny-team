@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}Wnioski do zaakceptowania{% endblock %}
+{% block title %}{% trans "Wnioski do zaakceptowania" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -286,8 +286,8 @@
 <div class="logs-wrapper mt-4">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 30px;">
         <div>
-            <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">Oczekujące Wnioski</h1>
-            <p style="margin: 0;"><a href="{% url 'history_requests_list' %}" class="auth-link">Przejdź do historii wniosków </a></p>
+            <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">{% trans "Oczekujące Wnioski" %}</h1>
+            <p style="margin: 0;"><a href="{% url 'history_requests_list' %}" class="auth-link">{% trans "Przejdź do historii wniosków" %}</a></p>
         </div>
     </div>
 
@@ -295,14 +295,15 @@
     <section class="filters">
         <form method="get">
             <div class="filter-group">
-                <label for="id_search">Szukaj:</label>
-                <input type="text" name="search" id="id_search" value="{{ filters.search }}" placeholder="Pracownik...">
+                <label for="id_search">{% trans "Szukaj:" %}</label>
+                {% translate "Pracownik..." as search_placeholder %}
+                <input type="text" name="search" id="id_search" value="{{ filters.search }}" placeholder="{{ search_placeholder }}">
             </div>
 
             <div class="filter-group">
-                <label for="id_team">Zespół:</label>
+                <label for="id_team">{% trans "Zespół:" %}</label>
                 <select name="team" id="id_team">
-                    <option value="">Wszystkie</option>
+                    <option value="">{% trans "Wszystkie" %}</option>
                     {% for team in managed_teams %}
                     <option value="{{ team.id }}" {% if filters.team == team.id %}selected{% endif %}>{{ team.name }}</option>
                     {% endfor %}
@@ -310,18 +311,18 @@
             </div>
 
             <div class="filter-group">
-                <label for="id_date_from">Od:</label>
+                <label for="id_date_from">{% trans "Od:" %}</label>
                 <input type="date" name="date_from" id="id_date_from" value="{{ filters.date_from }}">
             </div>
 
             <div class="filter-group">
-                <label for="id_date_to">Do:</label>
+                <label for="id_date_to">{% trans "Do:" %}</label>
                 <input type="date" name="date_to" id="id_date_to" value="{{ filters.date_to }}">
             </div>
 
             <div class="actions-group">
-                <button type="submit" class="btn-filter">Filtruj</button>
-                <a href="{% url 'pending_requests_list' %}" class="btn-reset">Reset</a>
+                <button type="submit" class="btn-filter">{% trans "Filtruj" %}</button>
+                <a href="{% url 'pending_requests_list' %}" class="btn-reset">{% trans "Reset" %}</a>
             </div>
         </form>
     </section>
@@ -332,12 +333,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Pracownik</th>
-                        <th style="width: 15%;">Zespół</th>
-                        <th style="width: 15%;">Okres urlopu</th>
-                        <th style="width: 20%; text-align: center;">Dni</th>
-                        <th style="width: 15%;">Złożono dnia</th>
-                        <th style="width: 15%; text-align: right;">Decyzja</th>
+                        <th style="width: 20%;">{% trans "Pracownik" %}</th>
+                        <th style="width: 15%;">{% trans "Zespół" %}</th>
+                        <th style="width: 15%;">{% trans "Okres urlopu" %}</th>
+                        <th style="width: 20%; text-align: center;">{% trans "Dni" %}</th>
+                        <th style="width: 15%;">{% trans "Złożono dnia" %}</th>
+                        <th style="width: 15%; text-align: right;">{% trans "Decyzja" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -371,21 +372,24 @@
                             {{ req.created_at|date:"Y-m-d H:i" }}
                         </td>
                         <td style="text-align: right; white-space: nowrap;" onclick="event.stopPropagation();">
-                            {% if can_approve %}
+                            {% comment %} Ukrywanie przycisków decyzji, jeśli aktywna rola to Admin {% endcomment %}
+                            {% if active_role == 'Admin' %}
+                                <span style="color: #a0aec0; font-size: 0.85rem; font-style: italic;">&mdash;</span>
+                            {% elif can_approve %}
                                 <button type="button" class="btn btn-sm btn-success font-weight-bold" onclick='openLeaveActionModal("approve", "{% url "approve_request" req.id %}")'>
-                                    Zaakceptuj
+                                    {% trans "Zaakceptuj" %}
                                 </button>
                                 <button type="button" class="btn btn-sm btn-danger font-weight-bold" onclick='openLeaveActionModal("reject", "{% url "reject_request" req.id %}")'>
-                                    Odrzuć
+                                    {% trans "Odrzuć" %}
                                 </button>
                             {% else %}
-                                <span style="color: #a0aec0; font-size: 0.85rem; font-style: italic;">Brak uprawnień</span>
+                                <span style="color: #a0aec0; font-size: 0.85rem; font-style: italic;">{% trans "Brak uprawnień" %}</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">Brak oczekujących wniosków urlopowych.</td>
+                        <td colspan="6" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">{% trans "Brak oczekujących wniosków urlopowych do rozpatrzenia." %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -394,10 +398,11 @@
 
         <!-- Paginacja Zachowująca Filtry GET -->
         {% if pending_requests.has_other_pages %}
-        <nav class="pagination" aria-label="Nawigacja stronami">
+        {% translate "Nawigacja stronami" as aria_pagination_label %}
+        <nav class="pagination" aria-label="{{ aria_pagination_label }}">
             {% if pending_requests.has_previous %}
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; Pierwsza</a>
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.previous_page_number }}">&lsaquo; Poprzednia</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; {% trans "Pierwsza" %}</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.previous_page_number }}">&lsaquo; {% trans "Poprzednia" %}</a>
             {% endif %}
 
             {% for num in pending_requests.paginator.page_range %}
@@ -409,8 +414,8 @@
             {% endfor %}
 
             {% if pending_requests.has_next %}
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.next_page_number }}">Następna &rsaquo;</a>
-                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.paginator.num_pages }}">Ostatnia &raquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.next_page_number }}">{% trans "Następna" %} &rsaquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.paginator.num_pages }}">{% trans "Ostatnia" %} &raquo;</a>
             {% endif %}
         </nav>
         {% endif %}
@@ -429,7 +434,8 @@
                 <label for="id_global_answer_comment" style="display: block; font-weight: 600; margin-bottom: 5px; color: #2d3748; font-size: 0.9rem;">
                     {% trans "Komentarz / Odpowiedź (opcjonalnie):" %}
                 </label>
-                <textarea name="comment" id="id_global_answer_comment" maxlength="250" placeholder="{% trans 'Wpisz uzasadnienie lub uwagę...' %}"></textarea>
+                {% translate "Wpisz uzasadnienie lub uwagę..." as comment_placeholder %}
+                <textarea name="comment" id="id_global_answer_comment" maxlength="250" placeholder="{{ comment_placeholder }}"></textarea>
                 <div id="global-answer-counter" style="font-size: 0.8rem; color: #718096; text-align: right; margin-top: 4px;">
                     {% trans "Pozostało 250 / 250 znaków" %}
                 </div>
@@ -528,7 +534,9 @@
             const maxLength = 250;
             const currentLength = answerInput.value.length;
             const remaining = maxLength - currentLength;
-            answerCounter.textContent = `{% trans 'Pozostało' %} ${remaining} / ${maxLength} {% trans 'znaków' %}`;
+            const textRemaining = "{% trans 'Pozostało' %}";
+            const textChars = "{% trans 'znaków' %}";
+            answerCounter.textContent = `${textRemaining} ${remaining} / ${maxLength} ${textChars}`;
         }
     }
 

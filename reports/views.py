@@ -15,6 +15,7 @@ from django.db.models import Count, Q, QuerySet
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone as dj_timezone
+from django.utils.functional import Promise
 
 from reportlab.graphics.charts.piecharts import Pie
 from reportlab.graphics.shapes import Drawing
@@ -30,6 +31,9 @@ from accounts.permission import role_required
 from leaves.models import WorkerProfile, LeaveRequest
 from logs.models import AuthLog, ActivityLog
 from team.models import Team
+
+from django.utils.translation import gettext_lazy as _
+from django.utils.text import format_lazy
 
 User = get_user_model()
 
@@ -93,7 +97,12 @@ class NumberedCanvas(canvas.Canvas):
         """
         self.setFont(DEFAULT_FONT, 8)
         self.setFillColor(colors.HexColor("#64748B"))
-        self.drawRightString(A4[0] - 30, 20, f"Strona {self._pageNumber} z {page_count}")
+        page_text = _("Strona %(current)s z %(total)s") % {
+            'current': self._pageNumber,
+            'total': page_count
+        }
+
+        self.drawRightString(A4[0] - 30, 20, str(page_text))
 
 
 # =========================================================================
@@ -196,14 +205,41 @@ def _add_report_header(elements: list, styles: PdfStyles, *, title: str, request
     generation_date = dj_timezone.localtime(dj_timezone.now()).strftime(DATETIME_DISPLAY_FMT)
 
     elements.append(Paragraph(title, styles.title))
-    elements.append(Paragraph(f"<b>Wygenerowano przez:</b> {author_name}", styles.meta))
-    elements.append(Paragraph(f"<b>Rola użytkownika:</b> {author_role}", styles.meta))
-    elements.append(Paragraph(f"<b>Data utworzenia:</b> {generation_date}", styles.meta))
+
+    elements.append(
+        Paragraph(
+            format_lazy(_("<b>Wygenerowano przez:</b> {name}"), name=author_name),
+            styles.meta,
+        )
+    )
+    elements.append(
+        Paragraph(
+            format_lazy(_("<b>Rola użytkownika:</b> {role}"), role=author_role),
+            styles.meta,
+        )
+    )
+    elements.append(
+        Paragraph(
+            format_lazy(_("<b>Data utworzenia:</b> {date}"), date=generation_date),
+            styles.meta,
+        )
+    )
 
     if filters_desc is not None:
-        elements.append(Paragraph(f"<b>Zastosowane filtry:</b> {filters_desc}", styles.meta))
+        elements.append(
+            Paragraph(
+                format_lazy(_("<b>Zastosowane filtry:</b> {filters}"), filters=filters_desc),
+                styles.meta,
+            )
+        )
+
     if record_count is not None:
-        elements.append(Paragraph(f"<b>Liczba rekordów:</b> {record_count}", styles.meta))
+        elements.append(
+            Paragraph(
+                format_lazy(_("<b>Liczba rekordów:</b> {count}"), count=record_count),
+                styles.meta,
+            )
+        )
 
     elements.append(Spacer(1, 15))
 
@@ -221,7 +257,7 @@ def _new_pdf_document() -> tuple[io.BytesIO, SimpleDocTemplate]:
     return buffer, doc
 
 
-def _pdf_response(buffer: io.BytesIO, doc: SimpleDocTemplate, elements: list, filename_prefix: str) -> HttpResponse:
+def _pdf_response(buffer: io.BytesIO, doc: SimpleDocTemplate, elements: list, filename_prefix: str):
     """
     Generuje dokument PDF z przekazanych elementów i zwraca go jako obiekt HttpResponse
     przygotowany do pobrania pliku.
@@ -230,24 +266,25 @@ def _pdf_response(buffer: io.BytesIO, doc: SimpleDocTemplate, elements: list, fi
     buffer.seek(0)
 
     filename_date = datetime.now().strftime(DATE_FMT)
+    clean_prefix = str(filename_prefix)
+
     response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_{filename_date}.pdf"'
+    response["Content-Disposition"] = f'attachment; filename="{clean_prefix}_{filename_date}.pdf"'
     return response
 
 
-def _csv_response(filename_prefix: str, header_row: Sequence[str], rows: Iterable[Sequence], delimiter: str = ";") -> HttpResponse:
-    """
-    Tworzy i zwraca odpowiedź HttpResponse zawierającą plik CSV kodowany w UTF-8 BOM
-    (zgodny z programem Excel) z podanym separatorem.
-    """
+def _csv_response(filename_prefix: str, header_row: Sequence, rows: Iterable[Sequence], delimiter: str = ";"):
     response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
     filename_date = datetime.now().strftime(DATE_FMT)
-    response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_{filename_date}.csv"'
+    clean_prefix = str(filename_prefix)
+    response["Content-Disposition"] = f'attachment; filename="{clean_prefix}_{filename_date}.csv"'
 
     writer = csv.writer(response, delimiter=delimiter)
-    writer.writerow(header_row)
+    writer.writerow([str(h) for h in header_row])
+
     for row in rows:
-        writer.writerow(row)
+        writer.writerow([str(cell) if isinstance(cell, Promise) else cell for cell in row])
+
     return response
 
 
@@ -273,8 +310,8 @@ def _get_applied_filters_text(filters_dict: Mapping[str, str | None]) -> str:
     """
     Formatuje słownik aktywnych filtrów do postaci czytelnego ciągu tekstowego opisanego w raporcie.
     """
-    active_filters = [f"{label}: {val}" for label, val in filters_dict.items() if val]
-    return ", ".join(active_filters) if active_filters else "Brak (wszystkie rekordy)"
+    active_filters = [f"{str(label)}: {val}" for label, val in filters_dict.items() if val]
+    return ", ".join(active_filters) if active_filters else _("Brak (wszystkie rekordy)")
 
 
 def _get_user_display_name(user_id_str: str) -> str:
@@ -331,7 +368,7 @@ def _get_users_per_role_data() -> list[dict]:
     przypisanych do poszczególnych ról w systemie.
     """
     target_roles = [
-        (None, "Brak roli"),
+        (None, _("Brak roli")),
         ("Worker", "Worker"),
         ("Manager", "Manager"),
         ("HR", "HR"),
@@ -388,7 +425,7 @@ def users_per_role_report(request):
     report_rows = _get_users_per_role_data()
     context = {
         "report_rows": report_rows,
-        "chart_labels": json.dumps([row["role"] for row in report_rows]),
+        "chart_labels": json.dumps([row["role"] for row in report_rows], cls=DjangoJSONEncoder),
         "chart_data_total": json.dumps([row["total"] for row in report_rows]),
         "chart_data_active": json.dumps([row["active"] for row in report_rows]),
     }
@@ -410,8 +447,13 @@ def export_users_per_role_csv(request):
         for row in report_rows
     ]
     return _csv_response(
-        "raport_role",
-        ["Rola", "Liczba użytkowników", "Aktywni", "% aktywnych"],
+        _("raport_role"),
+        [
+            _("Rola"),
+            _("Liczba użytkowników"),
+            _("Aktywni"),
+            _("% aktywnych"),
+        ],
         rows,
     )
 
@@ -436,7 +478,7 @@ def export_users_per_role_pdf(request):
 
     _add_report_header(
         elements, styles,
-        title="Raport Użytkowników: Role",
+        title=_("Raport Użytkowników: Role"),
         request=request, active_role=active_role,
     )
 
@@ -444,32 +486,37 @@ def export_users_per_role_pdf(request):
         [row["role"], row["total"], row["active"], f"{row['percent_active']}%"]
         for row in report_rows
     ]
+    headers = [
+        _("Rola"),
+        _("Liczba użytkowników"),
+        _("Aktywni"),
+        _("% aktywnych"),
+    ]
+
     elements.append(_build_table(
-        ["Rola", "Liczba użytkowników", "Aktywni", "% aktywnych"],
+        headers,
         table_rows,
         [160, 125, 125, 125],
         styles,
     ))
     elements.append(Spacer(1, 20))
-
     chart_info_text = (
-        "* Wykres uwzględnia: Wszyscy użytkownicy (aktywni i nieaktywni)"
+        _("* Wykres uwzględnia: Wszyscy użytkownicy (aktywni i nieaktywni)")
         if include_inactive else
-        "* Wykres uwzględnia: Tylko aktywni użytkownicy"
+        _("* Wykres uwzględnia: Tylko aktywni użytkownicy")
     )
-    elements.append(Paragraph(chart_info_text, styles.chart_title))
+    elements.append(Paragraph(str(chart_info_text), styles.chart_title))
     elements.append(Spacer(1, 10))
     elements.append(_build_users_per_role_pie(report_rows, include_inactive))
 
-    return _pdf_response(buffer, doc, elements, "raport_role")
-
+    return _pdf_response(buffer, doc, elements, _("raport_role"))
 
 def _build_users_per_role_pie(report_rows: list[dict], include_inactive: bool) -> Drawing:
     """
     Tworzy i konfiguruje obiekt wykresu kołowego ReportLab (Drawing) na potrzeby raportu PDF.
     """
     pie_data = [row["total"] if include_inactive else row["active"] for row in report_rows]
-    pie_labels = [f"{row['role']} ({val})" for row, val in zip(report_rows, pie_data)]
+    pie_labels = [f"{str(row['role'])} ({val})" for row, val in zip(report_rows, pie_data)]
 
     drawing = Drawing(535, 180)
     pie = Pie()
@@ -520,19 +567,11 @@ def _leave_usage_profiles(request, active_role: str | None):
 
 def _get_teams_info_for_profile(profile) -> list[dict]:
     """
-    Zwraca listę słowników zawierających ID i nazwy wszystkich zespołów,
-    do których należy lub którymi zarządza dany profil.
+    Zwraca zespół, do którego należy profil
     """
-    teams_dict = {}
-
     if profile.team and profile.team.is_active:
-        teams_dict[profile.team.id] = profile.team.name
-
-    managed_teams = Team.objects.for_user(profile.user)
-    for team in managed_teams:
-        teams_dict[team.id] = team.name
-
-    return [{"id": tid, "name": name} for tid, name in teams_dict.items()]
+        return [{"id": profile.team.id, "name": profile.team.name}]
+    return []
 
 
 def _leave_usage_rows(profiles, role_filter: str | None = None, team_filter: str | None = None) -> list[dict]:
@@ -630,9 +669,16 @@ def export_leave_usage_csv(request):
         ])
 
     return _csv_response(
-        "raport_pracownicy",
-        ["Imię", "Nazwisko", "Zespół", "Przydzielone dni", "Wykorzystane dni",
-         "Pozostałe dni", "% wykorzystania"],
+        _("raport_pracownicy"),
+        [
+            _("Imię"),
+            _("Nazwisko"),
+            _("Zespół"),
+            _("Przydzielone dni"),
+            _("Wykorzystane dni"),
+            _("Pozostałe dni"),
+            _("% wykorzystania"),
+        ],
         rows,
     )
 
@@ -650,16 +696,15 @@ def export_leave_usage_pdf(request):
     report_rows = _leave_usage_rows(profiles, team_filter)
 
     if team_filter == "ALL":
-        team_display_name = "Wszystkie"
+        team_display_name = _("Wszystkie")
     elif team_filter == "NONE":
-        team_display_name = "Brak zespołu"
+        team_display_name = _("Brak zespołu")
     else:
         team_obj = Team.objects.filter(id=team_filter).first()
         team_display_name = team_obj.name if team_obj else team_filter
-
+    filters_desc = None
     if active_role in ("Manager", "HR"):
-        filters_desc = f"Zespół: <i>{team_display_name}</i>"
-
+        filters_desc = format_lazy("{label}: <i>{team}</i>", label=_("Zespół"), team=team_display_name)
 
     styles = _pdf_styles(cell_font_size=8.5, cell_leading=11)
     buffer, doc = _new_pdf_document()
@@ -667,8 +712,8 @@ def export_leave_usage_pdf(request):
 
     _add_report_header(
         elements, styles,
-        title="Raport Wykorzystania Urlopów: Pracownicy",
-        request=request, active_role=active_role, filters_desc=filters_desc,
+        title=_("Raport Wykorzystania Urlopów: Pracownicy"),
+    request=request, active_role=active_role, filters_desc=filters_desc,
     )
 
     table_rows = []
@@ -681,13 +726,13 @@ def export_leave_usage_pdf(request):
         ])
 
     elements.append(_build_table(
-        ["Pracownik", "Zespół", "Przydzielone", "Wykorzystane", "Pozostałe", "% wykorzystania"],
-        table_rows,
+        [_("Pracownik"), _("Zespół"), _("Przydzielone"), _("Wykorzystane"), _("Pozostałe"), _("% wykorzystania")],
+    table_rows,
         [100, 95, 75, 85, 75, 95],
         styles,
     ))
 
-    return _pdf_response(buffer, doc, elements, "raport_pracownicy")
+    return _pdf_response(buffer, doc, elements, _("raport_pracownicy"))
 
 
 # =========================================================================
@@ -730,7 +775,7 @@ def _team_rows(request) -> list[dict]:
         if not teams_list:
             if active_role in ("Manager", "HR"):
                 continue
-            targets = [("no_team", None, "Brak zespołu")]
+            targets = [("no_team", None, _("Brak zespołu"))]  # Poprawka: _()
         else:
             targets = [(t["id"], t["id"], t["name"]) for t in teams_list]
 
@@ -757,6 +802,7 @@ def _team_rows(request) -> list[dict]:
     report_rows.sort(key=lambda x: str(x["team"]))
     return report_rows
 
+
 @login_required
 @role_required("can_export_requests")
 def team_report(request):
@@ -778,9 +824,15 @@ def export_team_report_csv(request):
         for row in report_rows
     ]
     return _csv_response(
-        "raport_zespoly",
-        ["Zespół", "Liczba osób", "Przydzielone dni (suma)", "Wykorzystane dni (suma)",
-         "Pozostałe dni (suma)", "% wykorzystania"],
+        _("raport_zespoly"),  # Poprawka: _()
+        [
+            _("Zespół"),
+            _("Liczba osób"),
+            _("Przydzielone dni (suma)"),
+            _("Wykorzystane dni (suma)"),
+            _("Pozostałe dni (suma)"),
+            _("% wykorzystania"),
+        ],  # Poprawka: _()
         rows,
         delimiter=",",
     )
@@ -801,24 +853,37 @@ def export_team_report_pdf(request):
 
     _add_report_header(
         elements, styles,
-        title="Raport Wykorzystania Urlopów: Zespoły",
+        title=_("Raport Wykorzystania Urlopów: Zespoły"),  # Poprawka: _()
         request=request, active_role=active_role,
     )
 
+    days_suffix = _("dni")
     table_rows = [
-        [row["team"], row["members"], f"{row['total']} dni", f"{row['used']} dni",
-         f"{row['remaining']} dni", f"{row['percent_used']}%"]
+        [
+            row["team"],
+            row["members"],
+            f"{row['total']} {days_suffix}",
+            f"{row['used']} {days_suffix}",
+            f"{row['remaining']} {days_suffix}",
+            f"{row['percent_used']}%",
+        ]
         for row in report_rows
     ]
     elements.append(_build_table(
-        ["Zespół", "Liczba osób", "Przydzielone (suma)", "Wykorzystane (suma)",
-         "Pozostałe (suma)", "% wykorzystania"],
+        [
+            _("Zespół"),
+            _("Liczba osób"),
+            _("Przydzielone (suma)"),
+            _("Wykorzystane (suma)"),
+            _("Pozostałe (suma)"),
+            _("% wykorzystania"),
+        ],  # Poprawka: _()
         table_rows,
         [110, 75, 90, 90, 75, 85],
         styles,
     ))
 
-    return _pdf_response(buffer, doc, elements, "raport_zespoly")
+    return _pdf_response(buffer, doc, elements, _("raport_zespoly"))  # Poprawka: _()
 
 
 # =========================================================================
@@ -879,8 +944,15 @@ def export_activity_log_csv(request):
         ])
 
     return _csv_response(
-        "raport_log_aktywnosc",
-        ["Data i czas", "Użytkownik", "Akcja", "Typ obiektu", "ID obiektu", "Szczegóły"],
+        _("raport_log_aktywnosc"),
+        [
+            _("Data i czas"),
+            _("Użytkownik"),
+            _("Akcja"),
+            _("Typ obiektu"),
+            _("ID obiektu"),
+            _("Szczegóły"),
+        ],
         rows,
     )
 
@@ -896,11 +968,11 @@ def export_activity_log_pdf(request):
     active_role = _get_active_role(request)
 
     filters_desc = _get_applied_filters_text({
-        "Akcja": filters["action"],
-        "Typ obiektu": filters["object_type"],
-        "Użytkownik": _get_user_display_name(filters["user"]),
-        "Data od": filters["date_from"],
-        "Data do": filters["date_to"],
+        _("Akcja"): filters["action"],
+        _("Typ obiektu"): filters["object_type"],
+        _("Użytkownik"): _get_user_display_name(filters["user"]),
+        _("Data od"): filters["date_from"],
+        _("Data do"): filters["date_to"],
     })
 
     styles = _pdf_styles(cell_font_size=8, cell_leading=10)
@@ -909,7 +981,7 @@ def export_activity_log_pdf(request):
 
     _add_report_header(
         elements, styles,
-        title="Raport Logów Aktywności",
+        title=_("Raport Logów Aktywności"),
         request=request, active_role=active_role,
         filters_desc=filters_desc, record_count=logs.count(),
     )
@@ -927,13 +999,20 @@ def export_activity_log_pdf(request):
         ])
 
     elements.append(_build_table(
-        ["Data i czas", "Użytkownik", "Akcja", "Typ obiektu", "ID obiektu", "Szczegóły"],
+        [
+            _("Data i czas"),
+            _("Użytkownik"),
+            _("Akcja"),
+            _("Typ obiektu"),
+            _("ID obiektu"),
+            _("Szczegóły"),
+        ],
         table_rows,
         [75, 80, 70, 85, 55, 170],
         styles,
     ))
 
-    return _pdf_response(buffer, doc, elements, "raport_log_aktywnosc")
+    return _pdf_response(buffer, doc, elements, _("raport_log_aktywnosc"))
 
 
 # =========================================================================
@@ -986,7 +1065,7 @@ def export_auth_log_csv(request):
         local_time = dj_timezone.localtime(log.timestamp).strftime("%Y-%m-%d %H:%M:%S") if log.timestamp else "-"
         rows.append([
             local_time,
-            log.user.get_username() if log.user else "Anonim",
+            log.user.get_username() if log.user else _("Anonim"),
             log.get_action_display(),
             log.get_severity_display(),
             log.ip_address or "-",
@@ -994,8 +1073,15 @@ def export_auth_log_csv(request):
         ])
 
     return _csv_response(
-        "raport_log_autoryzacja",
-        ["Data i czas", "Użytkownik", "Akcja", "Poziom", "Adres IP", "Szczegóły"],
+        _("raport_log_autoryzacja"),
+        [
+            _("Data i czas"),
+            _("Użytkownik"),
+            _("Akcja"),
+            _("Poziom"),
+            _("Adres IP"),
+            _("Szczegóły"),
+        ],
         rows,
     )
 
@@ -1011,11 +1097,11 @@ def export_auth_log_pdf(request):
     active_role = _get_active_role(request)
 
     filters_desc = _get_applied_filters_text({
-        "Akcja": filters["action"],
-        "Poziom (severity)": filters["severity"],
-        "Użytkownik": _get_user_display_name(filters["user"]),
-        "Data od": filters["date_from"],
-        "Data do": filters["date_to"],
+        _("Akcja"): filters["action"],
+        _("Poziom (severity)"): filters["severity"],
+        _("Użytkownik"): _get_user_display_name(filters["user"]),
+        _("Data od"): filters["date_from"],
+        _("Data do"): filters["date_to"],
     })
 
     styles = _pdf_styles(cell_font_size=8, cell_leading=10)
@@ -1024,7 +1110,7 @@ def export_auth_log_pdf(request):
 
     _add_report_header(
         elements, styles,
-        title="Raport Logów Uwierzytelniania",
+        title=_("Raport Logów Uwierzytelniania"),
         request=request, active_role=active_role,
         filters_desc=filters_desc, record_count=logs.count(),
     )
@@ -1034,7 +1120,7 @@ def export_auth_log_pdf(request):
         local_time = dj_timezone.localtime(log.timestamp).strftime("%Y-%m-%d %H:%M") if log.timestamp else "-"
         table_rows.append([
             local_time,
-            log.user.get_username() if log.user else "Anonim",
+            log.user.get_username() if log.user else _("Anonim"),
             log.get_action_display(),
             log.get_severity_display(),
             log.ip_address or "-",
@@ -1042,13 +1128,20 @@ def export_auth_log_pdf(request):
         ])
 
     elements.append(_build_table(
-        ["Data i czas", "Użytkownik", "Akcja", "Poziom", "Adres IP", "Szczegóły"],
+        [
+            _("Data i czas"),
+            _("Użytkownik"),
+            _("Akcja"),
+            _("Poziom"),
+            _("Adres IP"),
+            _("Szczegóły"),
+        ],
         table_rows,
         [80, 75, 100, 60, 80, 140],
         styles,
     ))
 
-    return _pdf_response(buffer, doc, elements, "raport_log_autoryzacja")
+    return _pdf_response(buffer, doc, elements, _("raport_log_autoryzacja"))
 
 
 # =========================================================================
@@ -1156,31 +1249,33 @@ def _apply_report_filters(qs: QuerySet, filters: dict, all_roles_list: list) -> 
 
 def _get_applied_leave_filters_text(filters: dict) -> str:
     """
-    Tworzy opisu tekstowy przedstawiający listę nałożonych filtrów na wnioski urlopowe do zaprezentowania w raporcie.
+    Tworzy opis tekstowy przedstawiający listę nałożonych filtrów na wnioski urlopowe do zaprezentowania w raporcie.
     """
     active_filters = []
 
     if filters.get("status"):
-        active_filters.append(f"Status: {filters['status']}")
+        active_filters.append(f"{_('Status')}: {filters['status']}")
     if filters.get("processed"):
-        active_filters.append(f"Stan: {filters['processed']}")
+        active_filters.append(f"{_('Stan')}: {filters['processed']}")
 
     if (team_id := filters.get("team")) and str(team_id).isdigit():
         team_obj = Team.objects.filter(id=int(team_id)).first()
-        active_filters.append(f"Zespół: {team_obj.name if team_obj else team_id}")
+        team_name = team_obj.name if team_obj else team_id
+        active_filters.append(f"{_('Zespół')}: {team_name}")
 
     if (user_id := filters.get("user")) and str(user_id).isdigit():
         user_obj = User.objects.filter(id=int(user_id)).first()
-        active_filters.append(f"Użytkownik: {user_obj.username if user_obj else user_id}")
+        user_name = user_obj.username if user_obj else user_id
+        active_filters.append(f"{_('Użytkownik')}: {user_name}")
 
     if search := filters.get("search"):
-        active_filters.append(f'Szukaj: "{search}"')
+        active_filters.append(f'{_("Szukaj")}: "{search}"')
     if filters.get("date_from"):
-        active_filters.append(f"Data od: {filters['date_from']}")
+        active_filters.append(f"{_('Data od')}: {filters['date_from']}")
     if filters.get("date_to"):
-        active_filters.append(f"Data do: {filters['date_to']}")
+        active_filters.append(f"{_('Data do')}: {filters['date_to']}")
 
-    return ", ".join(active_filters) if active_filters else "Brak (wszystkie widoczne wnioski)"
+    return ", ".join(active_filters) if active_filters else str(_("Brak (wszystkie widoczne wnioski)"))
 
 
 def _leave_request_filters_from_get(request) -> dict:
@@ -1288,8 +1383,17 @@ def export_leave_requests_csv(request):
         ])
 
     return _csv_response(
-        "raport_wnioskow",
-        ["ID Wniosku", "Pracownik", "Zespół", "Od", "Do", "Dni", "Status", "Zatwierdził/Odrzucił"],
+        _("raport_wnioskow"),
+        [
+            _("ID Wniosku"),
+            _("Pracownik"),
+            _("Zespół"),
+            _("Od"),
+            _("Do"),
+            _("Dni"),
+            _("Status"),
+            _("Zatwierdził/Odrzucił"),
+        ],
         rows,
     )
 
@@ -1314,7 +1418,7 @@ def export_leave_requests_pdf(request):
 
     _add_report_header(
         elements, styles,
-        title="Raport Wniosków Urlopowych",
+        title=_("Raport Wniosków Urlopowych"),
         request=request, active_role=active_role,
         filters_desc=filters_desc, record_count=requests_qs.count(),
     )
@@ -1334,13 +1438,21 @@ def export_leave_requests_pdf(request):
         ])
 
     elements.append(_build_table(
-        ["Pracownik", "Zespół", "Od", "Do", "Dni", "Status", "Zatwierdził(a)"],
+        [
+            _("Pracownik"),
+            _("Zespół"),
+            _("Od"),
+            _("Do"),
+            _("Dni"),
+            _("Status"),
+            _("Zatwierdził(a)"),
+        ],
         table_rows,
         [110, 85, 65, 65, 35, 75, 100],
         styles,
     ))
 
-    return _pdf_response(buffer, doc, elements, "raport_wnioskow")
+    return _pdf_response(buffer, doc, elements, _("raport_wnioskow"))
 
 
 # =========================================================================
@@ -1379,6 +1491,7 @@ def _paginate_for_json(request, queryset_or_list, default_page_size: int = 20) -
     }
     return list(page_obj.object_list), meta
 
+
 # =========================================================================
 # JSON API - endpointy
 # =========================================================================
@@ -1390,7 +1503,7 @@ def api_users_per_role(request):
     Zwraca dane statystyczne o liczbie i aktywności użytkowników w podziale na role w formacie JSON.
     """
     if _manager_is_restricted(request):
-        return JsonResponse({"detail": "Brak dostępu dla Manager."}, status=403)
+        return JsonResponse({"detail": str(_("Brak dostępu dla Manager."))}, status=403)
 
     return _json_ok(_get_users_per_role_data())
 

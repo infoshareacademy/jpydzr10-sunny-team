@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Raport: Użytkownicy per rola{% endblock %}
+{% block title %}{% trans "Raport: Role użytkowników" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -81,17 +82,17 @@
 <div class="logs-wrapper mt-4">
     <div style="margin-bottom: 25px;">
         <h2 style="margin-bottom: 10px; font-size: 1.1rem;">
-            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; Wszystkie raporty</a>
+            <a href="{% url 'reports_index' %}" class="auth-link">&laquo; {% trans "Wszystkie raporty" %}</a>
         </h2>
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">Role systemowe</h1>
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">{% trans "Role systemowe" %}</h1>
 
             <div class="d-flex align-items-center gap-2">
                 <a href="{% url 'export_users_per_role_csv' %}" class="btn btn-primary font-weight-bold">
-                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Eksportuj do CSV
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> {% trans "Eksportuj do CSV" %}
                 </a>
                 <a id="pdfExportBtn" href="{% url 'export_users_per_role_pdf' %}?include_inactive=true" class="btn btn-danger font-weight-bold">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> Pobierz PDF
+                    <i class="bi bi-file-earmark-pdf me-1"></i> {% trans "Pobierz PDF" %}
                 </a>
             </div>
         </div>
@@ -105,10 +106,10 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 30%;">Rola</th>
-                                <th style="text-align: center;">Liczba użytkowników</th>
-                                <th style="text-align: center;">Aktywni</th>
-                                <th style="width: 30%; text-align: center;">% aktywnych</th>
+                                <th style="width: 30%;">{% trans "Rola" %}</th>
+                                <th style="text-align: center;">{% trans "Liczba użytkowników" %}</th>
+                                <th style="text-align: center;">{% trans "Aktywni" %}</th>
+                                <th style="width: 30%; text-align: center;">{% trans "% aktywnych" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -126,7 +127,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">Brak danych.</td>
+                                <td colspan="4" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">{% trans "Brak danych." %}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -140,7 +141,7 @@
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="toggleInactiveDonut" checked>
                         <label class="form-check-label font-weight-bold text-secondary" for="toggleInactiveDonut" style="cursor: pointer; font-size: 0.9rem;">
-                            Wliczaj nieaktywnych do wykresu
+                            {% trans "Wliczaj nieaktywnych do wykresu" %}
                         </label>
                     </div>
                 </div>
@@ -161,6 +162,7 @@
         const labels = JSON.parse('{{ chart_labels|escapejs }}');
         const dataTotal = JSON.parse('{{ chart_data_total|escapejs }}');
         const dataActive = JSON.parse('{{ chart_data_active|escapejs }}');
+        const tooltipUsersText = "{% trans 'użytkowników' %}";
 
         const donutChart = new Chart(canvas.getContext('2d'), {
             type: 'doughnut',
@@ -196,7 +198,7 @@
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return ` ${context.label}: ${context.raw} użytkowników`;
+                                return ` ${context.label}: ${context.raw} ${tooltipUsersText}`;
                             }
                         }
                     }

@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.text import format_lazy
 from django.views.generic import DetailView
 from .forms import WorkerProfileForm, ROLE_ASSIGNMENT_PERMISSIONS, EditUserForm
 from leaves.models import WorkerProfile, LeaveRequest
@@ -20,6 +21,7 @@ from django.core.paginator import Paginator
 from django.db.models import Case, When, Value, IntegerField, Q
 from accounts.models import User
 from team.models import Team
+from django.utils.translation import gettext_lazy as _
 
 
 @login_required
@@ -27,18 +29,8 @@ def deactivate_user(request, pk):
     target_user = get_object_or_404(User, pk=pk)
 
     if request.user == target_user:
-        messages.error(request, 'Nie możesz dezaktywować własnego konta.')
+        messages.error(request, _('Nie możesz dezaktywować własnego konta.'))
         return redirect('user_list')
-
-    required_action = (
-        'can_deactivate_staff'
-        if target_user.role in ('Admin', 'HR') or target_user.is_superuser
-        else 'can_deactivate_worker'
-    )
-
-    if not Permission.verifyPermission(request.user.role, required_action):
-        messages.error(request, 'Nie masz uprawnień do dezaktywacji tego konta.')
-        return redirect('home')
 
     if request.method == 'POST':
         target_user.is_active = False
@@ -51,7 +43,7 @@ def deactivate_user(request, pk):
                 site_url=settings.SITE_URL,
             )
 
-        messages.success(request, f'Użytkownik {target_user.username} został dezaktywowany.')
+        messages.success(request, format_lazy(_('Użytkownik {username} został dezaktywowany.'),username=target_user.username))
         return redirect('user_list')
 
     return render(request, 'accounts/deactivate_user.html', {'target_user': target_user})
@@ -77,9 +69,9 @@ def user_list(request):
         users = base_qs
     elif active_role in ('Manager', 'HR'):
         managed_team_ids = Team.objects.for_user(viewer).values_list('pk', flat=True)
-        users = base_qs.filter(worker_profile__team_id__in=managed_team_ids)
+        users = base_qs.filter(worker_profile__team_id__in=managed_team_ids, is_active=True)
     else:
-        messages.info(request, 'Nie masz uprawnień do przeglądania listy użytkowników.')
+        messages.info(request, _('Nie masz uprawnień do przeglądania listy użytkowników.'))
         return redirect('home')
 
     # Filtr wyszukiwania
@@ -158,27 +150,27 @@ def switch_role(request):
     old_role = request.session.get('active_role', request.user.role)
     if new_role in ALLOWED_ROLES.get(request.user.role, []):
         request.session['active_role'] = new_role
-        messages.success(request, f"Zmieniono aktywną rolę z {old_role} na {new_role}.")
+        messages.success(request, format_lazy(_("Zmieniono aktywną rolę z {old_role} na {new_role}."), old_role=old_role, new_role=new_role))
         AuthLog.objects.create(
             user=request.user,
             action='role_change',
             severity='info',
-            details=f"Zmieniono aktywną rolę z {old_role} na {new_role}.",
+            details=format_lazy(_("Zmieniono aktywną rolę z {old_role} na {new_role}."), old_role=old_role, new_role=new_role),
             ip_address=get_client_ip(request),
         )
         return redirect('home')
 
     elif  new_role == old_role:
-        messages.info(request, f"Jesteś już w roli: {new_role}")
+        messages.info(request, format_lazy(_("Jesteś już w roli: {new_role}"),new_role=new_role))
         return redirect('home')
 
     else:
-        messages.error(request, 'Nie masz uprawnień do tej roli')
+        messages.error(request, _('Nie masz uprawnień do tej roli'))
         AuthLog.objects.create(
             user=request.user,
             action='access_denied_403',
             severity='warning',
-            details=f"Proba zmiany roli na: {new_role}",
+            details=format_lazy(_("Proba zmiany roli na: {new_role}"), new_role=new_role),
             ip_address=get_client_ip(request),
         )
         return redirect('home')
@@ -186,12 +178,9 @@ def switch_role(request):
 
 def _render_profile_form(request, target_user, allowed_roles, instance, template):
     """Wspólna logika GET/POST dla assign i edit z blokadą edycji własnego profilu."""
+    current_user_role = request.session.get('active_role', request.user.role)
     if request.user == target_user:
-        messages.error(request, 'Nie możesz edytować własnego profilu.')
-        return redirect('user_list')
-
-    if request.user.role == 'HR' and target_user.role in 'HR':
-        messages.error(request, 'Nie możesz edytować tego profilu.')
+        messages.error(request, _('Nie możesz edytować własnego profilu.'))
         return redirect('user_list')
 
     is_new = instance is None
@@ -202,26 +191,32 @@ def _render_profile_form(request, target_user, allowed_roles, instance, template
             allowed_roles=allowed_roles,
             target_user=target_user,
             instance=instance,
+            user_role=current_user_role,
         )
         if form.is_valid():
             form.save()
             action_type = 'create' if is_new else 'update'
-            msg_prefix = 'Utworzono' if is_new else 'Zaktualizowano'
+            if is_new:
+                details_msg = format_lazy(_('Utworzono profil użytkownika: {username}'), username=target_user.username)
+            else:
+                details_msg = format_lazy(_('Zaktualizowano profil użytkownika: {username}'),
+                                          username=target_user.username)
 
             ActivityLog.objects.create(
                 who=request.user,
                 action=action_type,
                 object_type='worker_profile',
                 object_id=target_user.id,
-                details=f'{msg_prefix} profil użytkownika: {target_user.username}'
+                details=details_msg,
             )
-            messages.success(request, f'{msg_prefix} profil użytkownika {target_user.username}.')
+            messages.success(request, details_msg)
             return redirect('profile', user_id=target_user.id)
     else:
         form = WorkerProfileForm(
             allowed_roles=allowed_roles,
             target_user=target_user,
             instance=instance,
+            user_role=current_user_role
         )
 
     return render(request, template, {'form': form, 'target_user': target_user})
@@ -239,11 +234,11 @@ def add_user(request):
                 action='create',
                 object_type='user',
                 object_id=new_user.id,
-                details=f'Utworzono nowego użytkownika: {new_user.username}'
+                details=format_lazy(_('Utworzono nowego użytkownika: {new_username}'), new_username=new_user.username),
             )
             messages.success(
                 request,
-                f'Konto {new_user.username} zostało utworzone.'
+                format_lazy(_('Konto {new_username} zostało utworzone.'), new_username=new_user.username),
             )
             return redirect('assign_worker_profile', user_id=new_user.id)
     else:
@@ -256,6 +251,7 @@ def add_user(request):
 def edit_user(request, user_id):
     target_user = get_object_or_404(User, pk=user_id)
 
+
     if request.method == 'POST':
         form = EditUserForm(request.POST, instance=target_user)
         if form.is_valid():
@@ -266,12 +262,12 @@ def edit_user(request, user_id):
                 action='update',
                 object_type='user',
                 object_id=updated_user.id,
-                details=f'Zaktualizowano dane podstawowe użytkownika: {updated_user.username}'
+                details=format_lazy(_('Zaktualizowano dane podstawowe użytkownika: {updated_username}'), updated_username=updated_user.username),
             )
 
             messages.success(
                 request,
-                f'Dane użytkownika {updated_user.username} zostały zaktualizowane.'
+                format_lazy(_('Dane użytkownika {updated_username} zostały zaktualizowane.'),updated_username=updated_user.username),
             )
             return redirect('profile', user_id=updated_user.id)
     else:
@@ -309,6 +305,11 @@ def assign_worker_profile(request, user_id):
 def edit_worker_profile(request, user_id):
     """Edytuje istniejący WorkerProfile oraz rolę użytkownika."""
     target_user = get_object_or_404(User, id=user_id)
+
+    if not target_user.is_active:
+        messages.error(request, _("Nie można edytować profilu nieaktywnego użytkownika."))
+        return redirect('home')
+
     existing_profile = WorkerProfile.objects.filter(user=target_user).first()
 
     if not existing_profile:
@@ -333,64 +334,22 @@ def change_own_password(request):
                 user=request.user,
                 action='password_changed',
                 severity='info',
-                details=f"Zmieniono własne hasło.",
+                details=_("Zmieniono własne hasło."),
                 ip_address=get_client_ip(request),
             )
 
-            messages.success(request, "Twoje hasło zostało pomyślnie zmienione.")
+            messages.success(request, _("Twoje hasło zostało pomyślnie zmienione."))
             return redirect("profile", user_id=request.user.id)
         else:
             messages.error(
-                request, "Niepoprawne dane w formularzu."
+                request, _("Niepoprawne dane w formularzu.")
             )
     else:
         form = PasswordChangeForm(user=request.user)
 
     return render(request, "accounts/change_own_password.html", {"form": form})
 
-@login_required
-@role_required("can_reset_password")
-def reset_password(request):
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        new_password = request.POST.get('new_password')
-
-        if not user_id or not new_password:
-            messages.error(request, "Brak ID użytkownika lub hasła.")
-            return redirect('reset_password')
-
-        try:
-            User = get_user_model()
-            user = User.objects.get(id=user_id)
-
-            if len(new_password) < 6:
-                messages.error(request, 'Hasło musi mieć co najmniej 6 znaków.')
-                return redirect('reset_password')
-
-            user.set_password(new_password)
-            user.save()
-
-            ActivityLog.objects.create(
-                who=request.user,
-                action='password_reset',
-                object_type='user',
-                object_id=user_id,
-                details=f'Zresetowano hasło użytkownika: {user.username}',
-            )
-
-            messages.success(request, f'Hasło dla użytkownika {user.username} zostało zresetowane.')
-            return redirect('user_list')
-
-        except User.DoesNotExist:
-            messages.error(request, 'Nie znaleziono użytkownika.')
-        except Exception as e:
-            messages.error(request, f'Błąd podczas resetowania hasła: {e}')
-
-    users = User.objects.all()
-    return render(request, 'accounts/reset_password.html', {'users': users})
-
-MONTH_NAMES_PL = ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
-
+MONTH_NAMES_PL = [_('Sty'), _('Lut'), _('Mar'), _('Kwi'), _('Maj'), _('Cze'), _('Lip'), _('Sie'), _('Wrz'), _('Paź'), _('Lis'), _('Gru')]
 
 class ProfileView(LoginRequiredMixin, DetailView):
     model = WorkerProfile
@@ -404,7 +363,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
         try:
             profile = WorkerProfile.objects.select_related('team').get(user=target_user)
         except WorkerProfile.DoesNotExist:
-            messages.error(request, f'Użytkownik {target_user.username} nie ma przypisanego profilu.')
+            messages.error(request, format_lazy(_('Użytkownik {target_username} nie ma przypisanego profilu.'), target_username=target_user.username))
             return redirect('home')
 
         active_role = request.session.get('active_role', request.user.role)
@@ -412,7 +371,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
         if not self._has_access(request.user, target_user, active_role):
             self._log_access_denied(request, target_user, active_role)
-            messages.info(request, 'Nie masz uprawnień do przeglądania tego profilu')
+            messages.info(request, _('Nie masz uprawnień do przeglądania tego profilu'))
             return redirect('home')
 
         self.object = profile
@@ -428,9 +387,11 @@ class ProfileView(LoginRequiredMixin, DetailView):
         AuthLog.objects.create(
             user=request.user,
             action='access_denied_403',
-            details=(
-                f"Próba podglądu profilu {target_user.username} "
-                f"(id={target_user.id}). Aktywna rola: {active_role}"
+            details=format_lazy(
+                _("Próba podglądu profilu {target_username} (id={target_id}). Aktywna rola: {active_role}"),
+                target_username=target_user.username,
+                target_id=target_user.id,
+                active_role=active_role,
             ),
             ip_address=get_client_ip(request),
             severity='warning',
@@ -449,6 +410,8 @@ class ProfileView(LoginRequiredMixin, DetailView):
             return True
 
         if active_role in ['Manager', 'HR']:
+            if not target_user.is_active:
+                return False
             return self._is_user_in_managed_teams(viewer, target_user)
 
         return False

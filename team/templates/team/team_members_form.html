@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Zarządzaj składem: {{ team.name }}{% endblock %}
+{% load i18n %}
+
+{% block title %}{% blocktranslate with name=team.name %}Zarządzaj składem: {{ name }}{% endblocktranslate %}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/team.css' %}">
@@ -8,8 +10,8 @@
 <div class="form-wrapper">
     <div class="form-card">
         <div class="form-header">
-            <h1 class="form-title">Zarządzanie Składem Zespołu</h1>
-            <p class="form-subtitle">Zespół: <strong style="color: #007bff;">{{ team.name }}</strong></p>
+            <h1 class="form-title">{% trans "Zarządzanie Składem Zespołu" %}</h1>
+            <p class="form-subtitle">{% trans "Zespół:" %} <strong style="color: #007bff;">{{ team.name }}</strong></p>
         </div>
 
         <form method="post" id="membersForm" novalidate>
@@ -33,11 +35,11 @@
 
                 <!-- Pojedyncza lista rozwijana -->
                 <select id="members_dropdown" class="form-control">
-                    <option value="">-- Dodaj członka do zespołu... --</option>
+                    <option value="">-- {% trans "Dodaj członka do zespołu..." %} --</option>
                 </select>
 
                 <!-- Dynamiczna lista tagów / pigułek -->
-                <label style="margin-top: 15px; font-size: 0.85rem; color: #718096;">Aktualnie przypisani członkowie zespołu:</label>
+                <label style="margin-top: 15px; font-size: 0.85rem; color: #718096;">{% trans "Aktualnie przypisani członkowie zespołu:" %}</label>
                 <div id="members_tags" class="selected-tags-container"></div>
 
                 {% if form.members.errors %}
@@ -48,8 +50,8 @@
             </div>
 
             <div class="form-actions">
-                <a href="{% url 'team-detail' pk=team.pk %}" class="btn-custom btn-cancel">Anuluj</a>
-                <button type="submit" class="btn-custom btn-save">Zapisz skład zespołu</button>
+                <a href="{% url 'team-detail' pk=team.pk %}" class="btn-custom btn-cancel">{% trans "Anuluj" %}</a>
+                <button type="submit" class="btn-custom btn-save">{% trans "Zapisz skład zespołu" %}</button>
             </div>
         </form>
     </div>
@@ -65,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!originalSelect || !dropdown || !tagsContainer) return;
 
         function renderDropdown() {
-            dropdown.innerHTML = '<option value="">-- Wybierz osobę do dodania... --</option>';
+            dropdown.innerHTML = '<option value="">-- {% trans "Wybierz osobę do dodania..." %} --</option>';
             Array.from(originalSelect.options).forEach(opt => {
                 if (!opt.selected) {
                     const newOpt = document.createElement('option');
@@ -94,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!hasSelection) {
-                tagsContainer.innerHTML = '<span style="color: #a0aec0; font-size: 0.875rem; padding: 4px;">Brak dodanych osób w tym zespole.</span>';
+                tagsContainer.innerHTML = '<span style="color: #a0aec0; font-size: 0.875rem; padding: 4px;">{% trans "Brak dodanych osób w tym zespole." %}</span>';
             }
         }
 

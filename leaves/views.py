@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from datetime import datetime, date, timedelta
 
 from django.utils import timezone
+from django.utils.text import format_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, UpdateView, View, DetailView
 from django.contrib import messages
@@ -24,7 +25,7 @@ from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from mail.utils import send_approval_notification, send_reject_notification, send_new_request_notification
 from django.conf import settings
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from .utils import Calendar_utils
 
@@ -93,6 +94,7 @@ def _apply_common_filters_and_pagination(request, qs, page_size=10):
 
 
 @login_required
+@role_required("can_see_all_requests")
 def pending_requests_list(request):
     """Widok 1: Wnioski oczekujące na akceptację (PENDING) z filtracją i paginacją."""
     user = request.user
@@ -130,6 +132,7 @@ def pending_requests_list(request):
 
 
 @login_required
+@role_required("can_see_all_requests")
 def history_requests_list(request):
     """Widok 2: Historia wniosków (wszystkie widoczne zespoły) z filtracją i paginacją."""
     user = request.user
@@ -242,17 +245,17 @@ def approve_request(request, request_id):
     active_role = request.session.get('active_role', request.user.role)
 
     if not Permission.verifyPermission(active_role, 'can_approve_request'):
-        messages.error(request, 'Nie masz uprawnień do zatwierdzania wniosków urlopowych.')
+        messages.error(request, _('Nie masz uprawnień do zatwierdzania wniosków urlopowych.'))
         return redirect('pending_requests_list')
 
     if leave_request.employee_id == request.user.id:
-        messages.error(request, 'Nie możesz akceptować własnego wniosku.')
+        messages.error(request, _('Nie możesz akceptować własnego wniosku.'))
         return redirect('pending_requests_list')
 
     if not _can_act_on_request(request.user, active_role, leave_request):
         messages.error(
             request,
-            'Możesz akceptować tylko wnioski osób z zespołów, którymi zarządzasz.'
+            _('Nie możesz akceptować tego wniosku')
         )
         return redirect('pending_requests_list')
 
@@ -266,7 +269,14 @@ def approve_request(request, request_id):
             profile.subtract_leave_days(leave_request.amount_days)
         except WorkerProfile.DoesNotExist:
             pass
-        messages.success(request, f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został zatwierdzony.')
+        messages.success(
+            request,
+            format_lazy(
+                _('Wniosek od {first_name} {last_name} został zatwierdzony.'),
+                first_name=leave_request.employee.first_name,
+                last_name=leave_request.employee.last_name,
+            )
+        )
         try:
             send_approval_notification(
                 employee_email=leave_request.employee.email,
@@ -277,7 +287,10 @@ def approve_request(request, request_id):
         except Exception as mail_error:
             print(f"Błąd wysyłki powiadomienia e-mail: {mail_error}")
     except Exception as e:
-        messages.error(request, _(f'Błąd podczas zatwierdzania: {e}'))
+        messages.error(
+            request,
+            format_lazy(_('Błąd podczas zatwierdzania: {error}'), error=e)
+        )
     return redirect('pending_requests_list')
 
 
@@ -289,17 +302,17 @@ def reject_request(request, request_id):
     active_role = request.session.get('active_role', request.user.role)
 
     if not Permission.verifyPermission(active_role, 'can_reject_request'):
-        messages.error(request, 'Nie masz uprawnień do odrzucania wniosków urlopowych.')
+        messages.error(request, _('Nie masz uprawnień do odrzucania wniosków urlopowych.'))
         return redirect('pending_requests_list')
 
     if leave_request.employee_id == request.user.id:
-        messages.error(request, 'Nie możesz odrzucać własnego wniosku.')
+        messages.error(request, _('Nie możesz odrzucać własnego wniosku.'))
         return redirect('pending_requests_list')
 
     if not _can_act_on_request(request.user, active_role, leave_request):
         messages.error(
             request,
-            'Możesz odrzucać tylko wnioski osób z zespołów, którymi zarządzasz.'
+            _('Nie możesz odrzucić tego wniosku.')
         )
         return redirect('pending_requests_list')
 
@@ -308,8 +321,14 @@ def reject_request(request, request_id):
 
     try:
         leave_request.reject(who=request.user)
-        messages.success(request,
-                         f'Wniosek od {leave_request.employee.first_name} {leave_request.employee.last_name} został odrzucony.')
+        messages.success(
+            request,
+            format_lazy(
+                _('Wniosek od {first_name} {last_name} został odrzucony.'),
+                first_name=leave_request.employee.first_name,
+                last_name=leave_request.employee.last_name,
+            )
+        )
         try:
             send_reject_notification(
                 employee_email=leave_request.employee.email,
@@ -321,8 +340,10 @@ def reject_request(request, request_id):
         except Exception as mail_error:
             print(f"Błąd wysyłki powiadomienia e-mail o odrzuceniu: {mail_error}")
     except Exception as e:
-        messages.error(request, _(f'Błąd podczas odrzucania: {e}'))
-
+        messages.error(
+            request,
+            format_lazy(_('Błąd podczas odrzucania: {error}'), error=e)
+        )
     return redirect('pending_requests_list')
 
 class LeaveRequestView(RoleRequiredMixin, CreateView):
@@ -361,17 +382,6 @@ class LeaveRequestView(RoleRequiredMixin, CreateView):
         obj = form.save(commit=False)
         obj.employee = self.request.user
         obj.amount_days = form.cleaned_data['amount_days']
-
-        user_role = getattr(self.request.user, "role", None)
-        if user_role == "COO":
-            obj.status = LeaveRequest.Status.APPROVED
-            obj.who_confirmed = self.request.user
-            try:
-                profile = WorkerProfile.objects.get(user=self.request.user)
-                profile.subtract_leave_days(obj.amount_days)
-            except (WorkerProfile.DoesNotExist, ValueError) as e:
-                pass
-
         obj.save()
         self.object = obj
 
@@ -455,7 +465,11 @@ class LeaveRequestUpdateView(RoleRequiredMixin,UpdateView):
             AuthLog.objects.create(
                 user=request.user,
                 action='access_denied_403',
-                details=f'Brak permisji: {self.required_action}. Aktywna rola: {active_role}',
+                details=format_lazy(
+                    _('Brak permisji: {action}. Aktywna rola: {role}'),
+                    action=self.required_action,
+                    role=active_role,
+                ),
                 ip_address=get_client_ip(request),
                 severity='warning'
             )
@@ -676,8 +690,16 @@ def export_requests_csv(request):
 
     # nagłówki kolumn
     writer.writerow([
-        'ID', 'Imię', 'Nazwisko', 'Zespół', 'Data od', 'Data do',
-        'Liczba dni', 'Status', 'Potwierdził', 'Data złożenia'
+        str(_('ID')),
+        str(_('Imię')),
+        str(_('Nazwisko')),
+        str(_('Zespół')),
+        str(_('Data od')),
+        str(_('Data do')),
+        str(_('Liczba dni')),
+        str(_('Status')),
+        str(_('Potwierdził')),
+        str(_('Data złożenia')),
     ])
 
     # dane z bazy
@@ -703,10 +725,19 @@ def export_requests_csv(request):
     return response
 
 MONTH_NAMES_PL = [
-    "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-    "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
+    _("Styczeń"),
+    _("Luty"),
+    _("Marzec"),
+    _("Kwiecień"),
+    _("Maj"),
+    _("Czerwiec"),
+    _("Lipiec"),
+    _("Sierpień"),
+    _("Wrzesień"),
+    _("Październik"),
+    _("Listopad"),
+    _("Grudzień"),
 ]
-
 
 def month_range(start_date, end_date):
     """Generuje kolejne pary (rok, miesiąc) pokrywające zakres dat."""
@@ -749,7 +780,7 @@ def build_leave_calendars(leave):
             weeks_data.append(week_days)
 
         calendars_data.append({
-            'title': f"{MONTH_NAMES_PL[month - 1]} {year}",
+            'title': f"{str(MONTH_NAMES_PL[month - 1])} {year}",
             'weeks': weeks_data,
         })
 
@@ -781,7 +812,7 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
 
         if not self._has_access(request.user, target_user, active_role):
             self._log_access_denied(request, leave_request, target_user, active_role)
-            messages.info(request, 'Nie masz uprawnień do przeglądania tego wniosku')
+            messages.info(request, _('Nie masz uprawnień do przeglądania tego wniosku'))
             return redirect('home')
 
         context = self._build_context(request.user, leave_request, target_user, active_role)
@@ -791,9 +822,11 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
         AuthLog.objects.create(
             user=request.user,
             action='access_denied_403',
-            details=(
-                f"Próba podglądu wniosku #{leave_request.id} użytkownika "
-                f"{target_user.username}. Aktywna rola: {active_role}"
+            details=format_lazy(
+                _("Próba podglądu wniosku #{request_id} użytkownika {username}. Aktywna rola: {active_role}"),
+                request_id=leave_request.id,
+                username=target_user.username,
+                active_role=active_role,
             ),
             ip_address=get_client_ip(request),
             severity='warning',
@@ -819,7 +852,7 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
 
         if active_role in ('Manager', 'HR'):
             if target_user == viewer:
-                return False  # własny wniosek niedostępny w roli Manager/HR
+                return False
 
             if managed_team_ids is None:
                 managed_team_ids = self._managed_team_ids(viewer, active_role)
@@ -883,15 +916,20 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
         return target_team_id in manageable_team_ids
 
     def _get_adjacent_leave_ids(self, viewer, current_leave, active_role):
-        base_qs = self._base_visible_queryset(viewer, active_role).order_by('id')
-        leave_ids = list(base_qs.values_list('id', flat=True))
-        try:
-            current_index = leave_ids.index(current_leave.id)
-            prev_id = leave_ids[current_index - 1] if current_index > 0 else None
-            next_id = leave_ids[current_index + 1] if current_index < len(leave_ids) - 1 else None
-        except ValueError:
-            prev_id = None
-            next_id = None
+        base_qs = self._base_visible_queryset(viewer, active_role)
+
+        prev_id = (
+            base_qs.filter(id__lt=current_leave.id)
+            .order_by('-id')
+            .values_list('id', flat=True)
+            .first()
+        )
+        next_id = (
+            base_qs.filter(id__gt=current_leave.id)
+            .order_by('id')
+            .values_list('id', flat=True)
+            .first()
+        )
         return prev_id, next_id
 
     def _build_context(self, viewer, leave, target_user, active_role):
@@ -899,8 +937,8 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
         if leave.who_confirmed:
             confirmed_by = leave.who_confirmed
             confirmed_by_name = (
-                f"{confirmed_by.first_name} {confirmed_by.last_name}".strip()
-                or confirmed_by.username
+                    f"{confirmed_by.first_name} {confirmed_by.last_name}".strip()
+                    or confirmed_by.username
             )
 
         activity_logs = ActivityLog.objects.filter(
@@ -918,18 +956,16 @@ class LeaveDetailView(LoginRequiredMixin, DetailView):
             for log in activity_logs
         ]
 
-        user_teams = []
-        if hasattr(target_user, 'worker_profile') and target_user.worker_profile.team:
-            user_teams = [target_user.worker_profile.team]
-        elif target_user.role == 'Manager':
-            user_teams = list(Team.objects.for_user(target_user))
+        # POPRAWIONE POBIERANIE ZESPOŁU
+        profile = getattr(target_user, 'worker_profile', None) or getattr(target_user, 'workerprofile', None)
+        team_obj = profile.team if (profile and profile.team_id) else None
 
         prev_id, next_id = self._get_adjacent_leave_ids(viewer, leave, active_role)
 
         return {
             'leave_id': leave.id,
             'owner_full_name': f"{target_user.first_name} {target_user.last_name}".strip() or target_user.username,
-            'user_teams': user_teams,
+            'team': team_obj,
             'status_code': leave.status.lower(),
             'status_display': leave.get_status_display(),
             'start_date': leave.start_date,
