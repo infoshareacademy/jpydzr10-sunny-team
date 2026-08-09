@@ -3,6 +3,7 @@ from django.conf import settings
 from datetime import date
 from dateutil.relativedelta import relativedelta
 # from .services import count_leave_days_service
+from django.utils.translation import gettext_lazy as _
 
 
 
@@ -75,10 +76,10 @@ class WorkerProfile(models.Model):
 
 class LeaveRequest(models.Model):
     class Status(models.TextChoices):
-        PENDING  = "pending",  "Oczekujący"
-        APPROVED = "approved", "Zatwierdzony"
-        REJECTED = "rejected", "Odrzucony"
-        CANCELED = "canceled", "Anulowany"
+        PENDING  = "pending",  _("Oczekujący")
+        APPROVED = "approved", _("Zatwierdzony")
+        REJECTED = "rejected", _("Odrzucony")
+        CANCELED = "canceled", _("Anulowany")
 
 
     employee = models.ForeignKey(

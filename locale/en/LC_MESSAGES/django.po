@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-08 13:37+0200\n"
+"POT-Creation-Date: 2026-08-09 14:22+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -118,6 +118,35 @@ msgstr "Polish"
 #: calendar_app/settings.py:141 calendar_app/settings_prod.py:125
 msgid "English"
 msgstr "English"
+
+#: leaves/models.py:79 leaves/templates/leaves/all_requests_list.html:116
+#: leaves/templates/leaves/all_requests_list.html:162
+#: leaves/templates/leaves/my_vacations.html:71
+#: leaves/templates/leaves/my_vacations.html:112
+#: leaves/templates/leaves/team_calendar.html:212
+msgid "Oczekujący"
+msgstr "Pending"
+
+#: leaves/models.py:80 leaves/templates/leaves/all_requests_list.html:115
+#: leaves/templates/leaves/all_requests_list.html:161
+#: leaves/templates/leaves/my_vacations.html:69
+#: leaves/templates/leaves/my_vacations.html:110
+#: leaves/templates/leaves/my_vacations.html:164
+msgid "Zatwierdzony"
+msgstr "Approved"
+
+#: leaves/models.py:81 leaves/templates/leaves/all_requests_list.html:117
+#: leaves/templates/leaves/all_requests_list.html:163
+#: leaves/templates/leaves/my_vacations.html:73
+#: leaves/templates/leaves/my_vacations.html:166
+msgid "Odrzucony"
+msgstr "Rejected"
+
+#: leaves/models.py:82 leaves/templates/leaves/my_vacations.html:75
+#: leaves/templates/leaves/my_vacations.html:114
+#: leaves/templates/leaves/my_vacations.html:168
+msgid "Anulowany"
+msgstr "Canceled"
 
 #: leaves/templates/leaves/access_denied.html:4 templates/403.html:10
 msgid "Brak dostępu"
@@ -290,29 +319,6 @@ msgstr "Application date"
 #, python-format
 msgid "Zespół: %(team)s"
 msgstr "Team: %(team)s"
-
-#: leaves/templates/leaves/all_requests_list.html:115
-#: leaves/templates/leaves/all_requests_list.html:161
-#: leaves/templates/leaves/my_vacations.html:69
-#: leaves/templates/leaves/my_vacations.html:110
-#: leaves/templates/leaves/my_vacations.html:164
-msgid "Zatwierdzony"
-msgstr "Approved"
-
-#: leaves/templates/leaves/all_requests_list.html:116
-#: leaves/templates/leaves/all_requests_list.html:162
-#: leaves/templates/leaves/my_vacations.html:71
-#: leaves/templates/leaves/my_vacations.html:112
-#: leaves/templates/leaves/team_calendar.html:212
-msgid "Oczekujący"
-msgstr "Pending"
-
-#: leaves/templates/leaves/all_requests_list.html:117
-#: leaves/templates/leaves/all_requests_list.html:163
-#: leaves/templates/leaves/my_vacations.html:73
-#: leaves/templates/leaves/my_vacations.html:166
-msgid "Odrzucony"
-msgstr "Rejected"
 
 #: leaves/templates/leaves/all_requests_list.html:125
 #: leaves/templates/leaves/all_requests_list.html:171
@@ -541,12 +547,6 @@ msgstr "My Vacations"
 #: leaves/templates/leaves/my_vacations.html:50
 msgid "Aktualne (trwające)"
 msgstr "Current (ongoing)"
-
-#: leaves/templates/leaves/my_vacations.html:75
-#: leaves/templates/leaves/my_vacations.html:114
-#: leaves/templates/leaves/my_vacations.html:168
-msgid "Anulowany"
-msgstr "Canceled"
 
 #: leaves/templates/leaves/my_vacations.html:85
 msgid "Brak aktualnych urlopów."
@@ -1052,8 +1052,7 @@ msgid ""
 "Przepraszamy, ale strona, której szukasz, nie istnieje lub została "
 "przeniesiona."
 msgstr ""
-"We're sorry, but the page you're looking for doesn't exist or has been "
-"moved."
+"We're sorry, but the page you're looking for doesn't exist or has been moved."
 
 #: templates/base.html:23
 msgid "Pulpit"
@@ -1119,7 +1118,8 @@ msgstr ""
 
 #: templates/emails/account_deactivated.html:11
 msgid "Jeśli uważasz, że to pomyłka, skontaktuj się z administratorem systemu."
-msgstr "If you think this is a mistake, please contact the system administrator."
+msgstr ""
+"If you think this is a mistake, please contact the system administrator."
 
 #: templates/emails/account_deactivated.html:12
 msgid "Z poważaniem,"
@@ -1233,7 +1233,9 @@ msgstr "<p>Rejected by: <strong>%(who)s</strong></p>"
 
 #: templates/emails/request_rejected.html:21
 msgid "Jeśli masz pytania, skontaktuj się z działem HR lub przełożonym."
-msgstr "If you have any questions, please contact the HR department or your supervisor."
+msgstr ""
+"If you have any questions, please contact the HR department or your "
+"supervisor."
 
 #: templates/emails/request_rejected.html:23
 msgid "Sprawdź swoje wnioski"
@@ -1268,7 +1270,9 @@ msgstr "Note:"
 
 #: templates/emails/welcome_email.html:11
 msgid "Po pierwszym logowaniu zalecamy zmianę hasła w panelu użytkownika."
-msgstr "After logging in for the first time, we recommend that you change your password in the user dashboard."
+msgstr ""
+"After logging in for the first time, we recommend that you change your "
+"password in the user dashboard."
 
 #: templates/emails/welcome_email.html:13
 msgid "Zaloguj się do systemu"
