@@ -9,6 +9,7 @@ class User(AbstractUser):
         ('Worker', 'Worker'),
     ]
     role = models.CharField(max_length=20, choices=ROLES, null=True, blank=True)
+    email_notifications = models.BooleanField(default=True)
 
     must_change_password = models.BooleanField(
         default=True,

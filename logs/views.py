@@ -1,6 +1,13 @@
 from datetime import datetime, time
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from logs.models import ChangeLog
+from django.core.paginator import Paginator
+
+
+@login_required
+def log_history(request):
+    logs = ChangeLog.objects.all().order_by('-created_at')
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.utils import timezone as dj_timezone

@@ -1651,9 +1651,9 @@ def chart_leave_over_time(request):
     active_role = request.session.get('active_role', request.user.role)
     if active_role not in ['Admin', 'Manager', 'HR']:
         return render(request, 'leaves/access_denied.html')
-
     data = (
         LeaveRequest.objects
+        .select_related('employee')
         .annotate(month=TruncMonth('start_date'))
         .values('month')
         .annotate(count=Count('id'))

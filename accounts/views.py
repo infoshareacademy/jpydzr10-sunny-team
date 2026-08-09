@@ -530,10 +530,12 @@ class ProfileView(LoginRequiredMixin, DetailView):
             context['is_own_profile'] or active_role in ['Admin', 'HR', 'Manager']
         )
 
-        if has_access_to_activity:
-            context['activity_logs'] = ActivityLog.objects.filter(
-                who=target_user,
-                object_type='leave_request',
-            ).order_by('-created_at')[:6]
-        else:
-            context['activity_logs'] = []
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        email_notifications = request.POST.get('email_notifications') == 'on'
+        request.user.email_notifications = email_notifications
+        request.user.save()
+        messages.success(request, 'Preferencje zapisane.')
+        return redirect('profile')
+    return render(request, 'accounts/profile.html', {'user': request.user})
