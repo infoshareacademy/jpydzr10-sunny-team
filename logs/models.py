@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+import uuid
+from django.utils import timezone
+from datetime import timedelta
 
 
 class ActivityLog(models.Model):
@@ -151,5 +154,23 @@ class AuthLog(models.Model):
         ]
 
     def __str__(self):
-        user_info = self.user.get_username() if self.user else _("Anonim")
-        return f"{user_info} - {self.get_action_display()} - {self.ip_address} - {self.timestamp}"
+        status = 'OK' if self.success else 'FAIL'
+        return f"{self.username} - {status} - {self.ip_address} - {self.timestamp}"
+      
+class EmailVerificationCode(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(hours=24)
+
+    def __str__(self):
+        return f"{self.user} - {self.token} - {self.created_at}"

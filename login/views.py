@@ -12,6 +12,7 @@ from mail.models import EmailVerificationCode
 from django.core.mail import send_mail
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import format_lazy
+from logs.models import EmailVerificationCode, PasswordResetToken
 
 
 User = get_user_model()
@@ -172,3 +173,45 @@ class FirstPasswordChangeView(PasswordChangeView):
         )
 
         return super().form_valid(form)
+    
+    return render(request, 'verify_2fa.html')
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            token = PasswordResetToken.objects.create(user=user)
+            reset_link = f"http://127.0.0.1:8000/login/reset-password/{token.token}/"
+            print(f"LINK RESETU: {reset_link}")  # TODO: zastąpić send_mail 
+            # send_mail(
+            #     subject='Reset hasła - Sunny Team',
+            #     message=f'Kliknij w link aby zresetować hasło: {reset_link}',
+            #     from_email='noreply@sunnyteam.pl',
+            #     recipient_list=[user.email],
+            # )
+        except User.DoesNotExist:
+            pass  
+    return render(request, 'forgot_password.html')
+
+
+def reset_password_confirm(request, token):
+    try:
+        reset_token = PasswordResetToken.objects.get(token=token, is_used=False)
+    except PasswordResetToken.DoesNotExist:
+        return render(request, 'reset_password_confirm.html', {'error': 'Nieprawidłowy lub wygasły link.'})
+
+    if reset_token.is_expired():
+       return render(request, 'reset_password_confirm.html', {'error': 'Link wygasł.'})
+    
+    if request.method == 'POST':
+        new_password = request.POST.get('password')
+        if len(new_password) < 6:
+            return render(request, 'reset_password_confirm.html', {'error': 'Hasło musi mieć co najmniej 6 znaków.'})
+        reset_token.user.set_password(new_password)
+        reset_token.user.save()
+        reset_token.is_used = True
+        reset_token.save()
+        return redirect('login')
+
+    return render(request, 'reset_password_confirm.html')

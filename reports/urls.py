@@ -19,4 +19,7 @@ urlpatterns = [
     path('leave-requests/', views.leave_requests_report_list, name='leave_requests_report_list'),
     path('leave-requests/export/csv/', views.export_leave_requests_csv, name='export_leave_requests_csv'),
     path('leave-requests/export/pdf/', views.export_leave_requests_pdf, name='export_leave_requests_pdf'),
+    path('team/export/', views.export_team_report_csv, name='export_team_report_csv'),
+    path('charts/leave-over-time/', views.chart_leave_over_time, name='chart_leave_over_time'),
+    path('charts/team-workload/', views.chart_team_workload, name='chart_team_workload'),  
 ]

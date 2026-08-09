@@ -5,6 +5,9 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Iterable, Mapping, Sequence
+from leaves.models import LeaveRequest
+from django.db.models.functions import TruncMonth
+import json
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -1641,3 +1644,43 @@ def api_leave_requests(request):
         applied_filters=_get_applied_leave_filters_text(filters),
         **meta,
     )
+    return response
+
+@login_required
+def chart_leave_over_time(request):
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Admin', 'Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    data = (
+        LeaveRequest.objects
+        .annotate(month=TruncMonth('start_date'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+
+    labels = [row['month'].strftime('%Y-%m') for row in data]
+    values = [row['count'] for row in data]
+
+    return render(request, 'reports/chart_leave_over_time.html', {
+        'labels': json.dumps(labels),
+        'values': json.dumps(values),
+    })
+
+
+@login_required
+def chart_team_workload(request):
+    active_role = request.session.get('active_role', request.user.role)
+    if active_role not in ['Admin', 'Manager', 'HR']:
+        return render(request, 'leaves/access_denied.html')
+
+    rows = _team_rows(request, active_role)
+    
+    labels = [row['team'] for row in rows]
+    values = [row['used'] for row in rows]
+
+    return render(request, 'reports/chart_team_workload.html', {
+        'labels': json.dumps(labels),
+        'values': json.dumps(values),
+})
