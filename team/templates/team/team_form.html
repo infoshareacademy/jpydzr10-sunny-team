@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% if object %}{% blocktranslate with name=object.name %}Edycja: {{ name }}{% endblocktranslate %}{% else %}{% trans "Dodaj nowy zespół" %}{% endif %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/team.css' %}">
+
+<div class="form-wrapper">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">
+                {% if object %}{% blocktranslate with name=object.name %}Edycja Zespołu: {{ name }}{% endblocktranslate %}{% else %}{% trans "Utwórz Nowy Zespół" %}{% endif %}
+            </h1>
+            <p class="form-subtitle">{% trans "Zdefiniuj podstawowe dane oraz przydziel kierownictwo zespołu." %}</p>
+        </div>
+
+        <form method="post" id="teamForm" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors-banner">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Nazwa Zespołu -->
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}<ul class="error-list">{% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <!-- Opis Zespołu -->
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}<ul class="error-list">{% for error in form.description.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <!-- Główny Manager -->
+            <div class="form-group">
+                <label for="{{ form.manager.id_for_label }}">{{ form.manager.label }}</label>
+                {{ form.manager }}
+                {% if form.manager.errors %}<ul class="error-list">{% for error in form.manager.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <!-- Opiekun HR -->
+            <div class="form-group">
+                <label for="{{ form.hr.id_for_label }}">{{ form.hr.label }}</label>
+                {{ form.hr }}
+                {% if form.hr.errors %}<ul class="error-list">{% for error in form.hr.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <!-- Współzarządzający (Co-Managers) -->
+            {% if form.co_managers %}
+            <div class="form-group">
+                <label>{{ form.co_managers.label }}</label>
+
+                <div style="display: none;">
+                    {{ form.co_managers }}
+                </div>
+
+                <select id="co_managers_dropdown" class="form-control">
+                    <option value="">-- {% trans "Wybierz współzarządzającego z listy" %} --</option>
+                </select>
+
+                <div id="co_managers_tags" class="selected-tags-container"></div>
+
+                {% if form.co_managers.errors %}<ul class="error-list">{% for error in form.co_managers.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{% url 'team-list' %}" class="btn-custom btn-cancel">{% trans "Anuluj" %}</a>
+                <button type="submit" class="btn-custom btn-submit">{% trans "Zapisz zespół" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function setupTagSelector(originalSelectId, dropdownId, tagsContainerId) {
+        const originalSelect = document.getElementById(originalSelectId);
+        const dropdown = document.getElementById(dropdownId);
+        const tagsContainer = document.getElementById(tagsContainerId);
+
+        if (!originalSelect || !dropdown || !tagsContainer) return;
+
+        function renderDropdown() {
+            dropdown.innerHTML = '<option value="">-- {% trans "Wybierz osobę z listy" %} --</option>';
+            Array.from(originalSelect.options).forEach(opt => {
+                if (!opt.selected) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = opt.value;
+                    newOpt.textContent = opt.textContent;
+                    dropdown.appendChild(newOpt);
+                }
+            });
+        }
+
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            let hasSelection = false;
+
+            Array.from(originalSelect.options).forEach(opt => {
+                if (opt.selected) {
+                    hasSelection = true;
+                    const tag = document.createElement('div');
+                    tag.className = 'user-tag';
+                    tag.innerHTML = `
+                        <span>${opt.textContent}</span>
+                        <button type="button" class="remove-btn" data-value="${opt.value}">✕</button>
+                    `;
+                    tagsContainer.appendChild(tag);
+                }
+            });
+
+            if (!hasSelection) {
+                tagsContainer.innerHTML = '<span style="color: #a0aec0; font-size: 0.875rem; padding: 4px;">{% trans "Brak wybranych osób" %}</span>';
+            }
+        }
+
+        dropdown.addEventListener('change', function() {
+            const val = this.value;
+            if (!val) return;
+
+            Array.from(originalSelect.options).forEach(opt => {
+                if (opt.value === val) opt.selected = true;
+            });
+
+            renderDropdown();
+            renderTags();
+        });
+
+        tagsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-btn')) {
+                const val = e.target.getAttribute('data-value');
+                Array.from(originalSelect.options).forEach(opt => {
+                    if (opt.value === val) opt.selected = false;
+                });
+
+                renderDropdown();
+                renderTags();
+            }
+        });
+
+        renderDropdown();
+        renderTags();
+    }
+
+    setupTagSelector('id_co_managers', 'co_managers_dropdown', 'co_managers_tags');
+});
+</script>
+{% endblock %}

@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}404 - Strona nie znaleziona{% endblock %}
+{% block title %}404 - {% trans "Strona nie znaleziona" %}{% endblock %}
 
 {% block content %}
 <div style="text-align: center; margin-top: 100px;">
     <h1 style="font-size: 120px; color: #dc3545; margin: 0;">404</h1>
-    <h2>Strona nie została znaleziona</h2>
-    <p>Przepraszamy, ale strona, której szukasz, nie istnieje lub została przeniesiona.</p>
-    <a href="{% url 'dashboard' %}" class="btn btn-primary">Wróć na Dashboard</a>
+    <h2>{% trans "Strona nie została znaleziona" %}</h2>
+    <p>{% trans "Przepraszamy, ale strona, której szukasz, nie istnieje lub została przeniesiona." %}</p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">{% trans "Wróć na Dashboard" %}</a>
 </div>
 {% endblock %}

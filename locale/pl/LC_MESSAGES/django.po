@@ -3,333 +3,910 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-19 02:23+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-08-09 12:02+0200\n"
+"PO-Revision-Date: 2026-08-09 12:02+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language-Team: Polish <LL@li.org>\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && "
-"(n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && "
-"n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: calendar_app/settings.py:136
-msgid "Polski"
-msgstr "Polski"
+#: accounts/templates/accounts/add_user.html:4
+#: accounts/templates/accounts/add_user.html:41
+#: core/templates/core/main.html:137
+msgid "Dodaj nowego użytkownika"
+msgstr "Dodaj nowego użytkownika"
 
-#: calendar_app/settings.py:137
-msgid "English"
-msgstr "Angielski"
+#: accounts/templates/accounts/add_user.html:53
+msgid "Nazwa użytkownika:"
+msgstr "Nazwa użytkownika:"
 
-#: leaves/templates/leaves/all_requests_list.html:3
-#: leaves/templates/leaves/all_requests_list.html:52
-msgid "Wszystkie wnioski urlopowe"
-msgstr "Wszystkie wnioski urlopowe"
+#: accounts/templates/accounts/add_user.html:59
+msgid "Imię:"
+msgstr "Imię:"
 
-#: leaves/templates/leaves/all_requests_list.html:57
-msgid "Filtry:"
-msgstr "Filtry:"
+#: accounts/templates/accounts/add_user.html:65
+msgid "Nazwisko:"
+msgstr "Nazwisko:"
 
-#: leaves/templates/leaves/all_requests_list.html:59
-msgid "Wszystkie statusy"
-msgstr "Wszystkie statusy"
+#: accounts/templates/accounts/add_user.html:71
+msgid "Email:"
+msgstr "Email:"
 
-#: leaves/templates/leaves/all_requests_list.html:60
-msgid "Oczekujące"
-msgstr "Oczekujące"
+#: accounts/templates/accounts/add_user.html:77
+msgid "Hasło:"
+msgstr "Hasło:"
 
-#: leaves/templates/leaves/all_requests_list.html:61
-msgid "Zatwierdzone"
-msgstr "Zatwierdzone"
+#: accounts/templates/accounts/add_user.html:83
+msgid "Powtórz hasło:"
+msgstr "Powtórz hasło:"
 
-#: leaves/templates/leaves/all_requests_list.html:62
-msgid "Odrzucone"
-msgstr "Odrzucone"
+#: accounts/templates/accounts/add_user.html:89
+#: accounts/templates/accounts/user_list.html:248 templates/base.html:320
+msgid "Dodaj użytkownika"
+msgstr "Dodaj użytkownika"
 
-#: leaves/templates/leaves/all_requests_list.html:65
-#: leaves/templates/leaves/log_history.html:57
-msgid "Od:"
-msgstr "Od:"
+#: accounts/templates/accounts/assign_worker_profile.html:9
+msgid "Przypisz profil pracowniczy"
+msgstr "Przypisz profil pracowniczy"
 
-#: leaves/templates/leaves/all_requests_list.html:68
-#: leaves/templates/leaves/log_history.html:58
-msgid "Do:"
-msgstr "Do:"
+#: accounts/templates/accounts/assign_worker_profile.html:15
+msgid "Użytkownik:"
+msgstr "Użytkownik:"
 
-#: leaves/templates/leaves/all_requests_list.html:71
-msgid "Filtruj"
-msgstr "Filtruj"
-
-#: leaves/templates/leaves/all_requests_list.html:74
-msgid "Reset"
-msgstr "Reset"
-
-#: leaves/templates/leaves/all_requests_list.html:85
-msgid "Eksportuj do CSV"
-msgstr "Eksportuj do CSV"
-
-#: leaves/templates/leaves/all_requests_list.html:93
-#: leaves/templates/leaves/team_leave_balance.html:18
-#, python-format
-msgid "Zespół: %(name)s"
-msgstr "Zespół: %(name)s"
-
-#: leaves/templates/leaves/all_requests_list.html:96
-#: leaves/templates/leaves/all_requests_list.html:142
-#: leaves/templates/leaves/team_leave_balance.html:24
-msgid "Pracownik"
-msgstr "Pracownik"
-
-#: leaves/templates/leaves/all_requests_list.html:97
-#: leaves/templates/leaves/all_requests_list.html:143
-#: leaves/templates/leaves/my_vacations.html:55
-#: leaves/templates/leaves/my_vacations.html:95
-#: leaves/templates/leaves/my_vacations.html:150
-msgid "Data rozpoczęcia"
-msgstr "Data rozpoczęcia"
-
-#: leaves/templates/leaves/all_requests_list.html:98
-#: leaves/templates/leaves/all_requests_list.html:144
-#: leaves/templates/leaves/my_vacations.html:56
-#: leaves/templates/leaves/my_vacations.html:96
-#: leaves/templates/leaves/my_vacations.html:151
-msgid "Data zakończenia"
-msgstr "Data zakończenia"
-
-#: leaves/templates/leaves/all_requests_list.html:99
-#: leaves/templates/leaves/all_requests_list.html:145
-#: leaves/templates/leaves/my_vacations.html:57
-#: leaves/templates/leaves/my_vacations.html:97
-#: leaves/templates/leaves/my_vacations.html:152
-msgid "Liczba dni"
-msgstr "Liczba dni"
-
-#: leaves/templates/leaves/all_requests_list.html:100
-#: leaves/templates/leaves/all_requests_list.html:146
-#: leaves/templates/leaves/my_vacations.html:58
-#: leaves/templates/leaves/my_vacations.html:98
-#: leaves/templates/leaves/my_vacations.html:153
-msgid "Status"
-msgstr "Status"
-
-#: leaves/templates/leaves/all_requests_list.html:101
-#: leaves/templates/leaves/all_requests_list.html:147
-msgid "Kto zatwierdził"
-msgstr "Kto zatwierdził"
-
-#: leaves/templates/leaves/all_requests_list.html:102
-#: leaves/templates/leaves/all_requests_list.html:148
-msgid "Data wniosku"
-msgstr "Data wniosku"
-
-#: leaves/templates/leaves/all_requests_list.html:103
-#: leaves/templates/leaves/all_requests_list.html:149
-#: leaves/templates/leaves/my_vacations.html:99
-msgid "Akcje"
-msgstr "Akcje"
-
-#: leaves/templates/leaves/all_requests_list.html:109
-#: leaves/templates/leaves/all_requests_list.html:155
-#, python-format
-msgid "Zespół: %(team)s"
-msgstr "Zespół: %(team)s"
-
-#: leaves/templates/leaves/all_requests_list.html:115
-#: leaves/templates/leaves/all_requests_list.html:161
-#: leaves/templates/leaves/my_vacations.html:69
-#: leaves/templates/leaves/my_vacations.html:110
-#: leaves/templates/leaves/my_vacations.html:164
-msgid "Zatwierdzony"
-msgstr "Zatwierdzony"
-
-#: leaves/templates/leaves/all_requests_list.html:116
-#: leaves/templates/leaves/all_requests_list.html:162
-#: leaves/templates/leaves/my_vacations.html:71
-#: leaves/templates/leaves/my_vacations.html:112
-#: leaves/templates/leaves/team_calendar.html:212
-msgid "Oczekujący"
-msgstr "Oczekujący"
-
-#: leaves/templates/leaves/all_requests_list.html:117
-#: leaves/templates/leaves/all_requests_list.html:163
-#: leaves/templates/leaves/my_vacations.html:73
-#: leaves/templates/leaves/my_vacations.html:166
-msgid "Odrzucony"
-msgstr "Odrzucony"
-
-#: leaves/templates/leaves/all_requests_list.html:125
-#: leaves/templates/leaves/all_requests_list.html:171
-msgid "Czy na pewno chcesz ZATWIERDZIĆ ten wniosek?"
-msgstr "Czy na pewno chcesz ZATWIERDZIĆ ten wniosek?"
-
-#: leaves/templates/leaves/all_requests_list.html:125
-#: leaves/templates/leaves/all_requests_list.html:171
-msgid "Zatwierdź"
-msgstr "Zatwierdź"
-
-#: leaves/templates/leaves/all_requests_list.html:128
-#: leaves/templates/leaves/all_requests_list.html:174
-msgid "Czy na pewno chcesz ODRZUCIĆ ten wniosek?"
-msgstr "Czy na pewno chcesz ODRZUCIĆ ten wniosek?"
-
-#: leaves/templates/leaves/all_requests_list.html:128
-#: leaves/templates/leaves/all_requests_list.html:174
-msgid "Odrzuć"
-msgstr "Odrzuć"
-
-#: leaves/templates/leaves/all_requests_list.html:130
-#: leaves/templates/leaves/all_requests_list.html:176
-msgid "Przetworzony"
-msgstr "Przetworzony"
-
-#: leaves/templates/leaves/all_requests_list.html:133
-msgid "Brak wniosków."
-msgstr "Brak wniosków."
-
-#: leaves/templates/leaves/all_requests_list.html:179
-msgid "Brak wniosków urlopowych."
-msgstr "Brak wniosków urlopowych."
-
-#: leaves/templates/leaves/all_requests_list.html:183
-msgid "Poprzednia"
-msgstr "Poprzednia"
-
-#: leaves/templates/leaves/all_requests_list.html:184
-msgid "Strona"
-msgstr "Strona"
-
-#: leaves/templates/leaves/all_requests_list.html:185
-msgid "Następna"
-msgstr "Następna"
-
-#: leaves/templates/leaves/all_requests_list.html:194
-msgid "Potwierdź akcję"
-msgstr "Potwierdź akcję"
-
-#: leaves/templates/leaves/all_requests_list.html:197
-#: leaves/templates/leaves/my_vacations.html:130
-#: templates/request_base.html:125
+#: accounts/templates/accounts/assign_worker_profile.html:60
+#: accounts/templates/accounts/change_own_password.html:60
+#: accounts/templates/accounts/deactivate_user.html:46
+#: accounts/templates/accounts/edit_user.html:60
+#: accounts/templates/accounts/edit_worker_profile.html:60
+#: leaves/templates/leaves/leave_detail.html:282
+#: leaves/templates/leaves/my_vacations.html:281
+#: leaves/templates/leaves/pending_requests_list.html:446
+#: team/templates/team/team_confirm_delete.html:28
+#: team/templates/team/team_form.html:78
+#: team/templates/team/team_members_form.html:53
+#: templates/request_base.html:129
 msgid "Anuluj"
 msgstr "Anuluj"
 
-#: leaves/templates/leaves/all_requests_list.html:198
-msgid "Tak, wykonaj"
-msgstr "Tak, wykonaj"
+#: accounts/templates/accounts/assign_worker_profile.html:63
+msgid "Zapisz i utworzyć profil"
+msgstr "Zapisz i utworzyć profil"
 
-#: leaves/templates/leaves/dashboard.html:3
-#: leaves/templates/leaves/dashboard.html:77
-msgid "Dashboard Urlopowy"
-msgstr "Pulpit Urlopowy"
+#: accounts/templates/accounts/change_own_password.html:4
+#: accounts/templates/accounts/change_own_password.html:27
+msgid "Zmiana własnego hasła"
+msgstr "Zmiana własnego hasła"
 
-#: leaves/templates/leaves/dashboard.html:81
-msgid "Dostępne dni urlopu"
-msgstr "Dostępne dni urlopu"
+#: accounts/templates/accounts/change_own_password.html:17
+#: accounts/templates/accounts/deactivate_user.html:17
+#: accounts/templates/accounts/edit_user.html:17
+#: accounts/templates/accounts/edit_worker_profile.html:17
+#: login/templates/login.html:38
+#: team/templates/team/team_archive_detail.html:203
+msgid "Nazwa użytkownika"
+msgstr "Nazwa użytkownika"
 
-#: leaves/templates/leaves/dashboard.html:84
+#: accounts/templates/accounts/change_own_password.html:18
+#: accounts/templates/accounts/deactivate_user.html:18
+#: accounts/templates/accounts/edit_user.html:18
+#: accounts/templates/accounts/edit_worker_profile.html:18
+msgid "Email"
+msgstr "Email"
+
+#: accounts/templates/accounts/change_own_password.html:63
+#: login/templates/first_password_change.html:58
+#: templates/registration/password_reset_confirm.html:29
+msgid "Zapisz nowe hasło"
+msgstr "Zapisz nowe hasło"
+
+#: accounts/templates/accounts/deactivate_user.html:4
+msgid "Dezaktywacja użytkownika"
+msgstr "Dezaktywacja użytkownika"
+
+#: accounts/templates/accounts/deactivate_user.html:27
+msgid "Potwierdzenie dezaktywacji"
+msgstr "Potwierdzenie dezaktywacji"
+
+#: accounts/templates/accounts/deactivate_user.html:34
+msgid "Czy na pewno chcesz dezaktywować to konto?"
+msgstr "Czy na pewno chcesz dezaktywować to konto?"
+
+#: accounts/templates/accounts/deactivate_user.html:37
+msgid "Ten użytkownik straci możliwość ponownego zalogowania się do systemu."
+msgstr "Ten użytkownik straci możliwość ponownego zalogowania się do systemu."
+
+#: accounts/templates/accounts/deactivate_user.html:49
+msgid "Tak, dezaktywuj"
+msgstr "Tak, dezaktywuj"
+
+#: accounts/templates/accounts/edit_user.html:4
+msgid "Edycja danych konta"
+msgstr "Edycja danych konta"
+
+#: accounts/templates/accounts/edit_user.html:27
+msgid "Edycja danych podstawowych"
+msgstr "Edycja danych podstawowych"
+
+#: accounts/templates/accounts/edit_user.html:63
+#: accounts/templates/accounts/edit_worker_profile.html:63
+msgid "Zapisz zmiany"
+msgstr "Zapisz zmiany"
+
+#: accounts/templates/accounts/edit_worker_profile.html:4
+msgid "Edycja profilu"
+msgstr "Edycja profilu"
+
+#: accounts/templates/accounts/edit_worker_profile.html:27
+msgid "Ustawienia profilu pracowniczego"
+msgstr "Ustawienia profilu pracowniczego"
+
+#: accounts/templates/accounts/profile.html:4
+msgid "Profil Użytkownika"
+msgstr "Profil Użytkownika"
+
+#: accounts/templates/accounts/profile.html:11 templates/base.html:451
+msgid "Twój profil"
+msgstr "Twój profil"
+
+#: accounts/templates/accounts/profile.html:11 core/templates/core/main.html:23
+msgid "Profil użytkownika"
+msgstr "Profil użytkownika"
+
+#: accounts/templates/accounts/profile.html:14
+msgid "Zarządzanie kontem i podsumowanie aktywności"
+msgstr "Zarządzanie kontem i podsumowanie aktywności"
+
+#: accounts/templates/accounts/profile.html:44
+msgid "Status konta"
+msgstr "Status konta"
+
+#: accounts/templates/accounts/profile.html:47
+msgid "Aktywny"
+msgstr "Aktywny"
+
+#: accounts/templates/accounts/profile.html:49
+msgid "Nieaktywny"
+msgstr "Nieaktywny"
+
+#: accounts/templates/accounts/profile.html:56
+#: accounts/templates/accounts/user_list.html:323
+msgid "Należy do zespołu"
+msgstr "Należy do zespołu"
+
+#: accounts/templates/accounts/profile.html:67
+#: accounts/templates/accounts/profile.html:109
+#: accounts/templates/accounts/user_list.html:359
+#: accounts/templates/accounts/user_list.html:381
+#: team/templates/team/team_list.html:219
+#: team/templates/team/team_list.html:236
+msgid "Brak"
+msgstr "Brak"
+
+#: accounts/templates/accounts/profile.html:75
+msgid "Manager dla"
+msgstr "Manager dla"
+
+#: accounts/templates/accounts/profile.html:75
+msgid "HR dla"
+msgstr "HR dla"
+
+#: accounts/templates/accounts/profile.html:95
+msgid "Pozostałe zespoły"
+msgstr "Pozostałe zespoły"
+
+#: accounts/templates/accounts/profile.html:116
+msgid "Data zatrudnienia"
+msgstr "Data zatrudnienia"
+
+#: accounts/templates/accounts/profile.html:121
+msgid "Staż zewnętrzny"
+msgstr "Staż zewnętrzny"
+
+#: accounts/templates/accounts/profile.html:138
+msgid "Zmień hasło"
+msgstr "Zmień hasło"
+
+#: accounts/templates/accounts/profile.html:143
+#: accounts/templates/accounts/user_list.html:391
+msgid "Edytuj profil"
+msgstr "Edytuj profil"
+
+#: accounts/templates/accounts/profile.html:147
+#: accounts/templates/accounts/user_list.html:397
+#: team/templates/team/team_detail.html:33
+msgid "Dezaktywuj"
+msgstr "Dezaktywuj"
+
+#: accounts/templates/accounts/profile.html:160
+msgid "Dostępny urlop"
+msgstr "Dostępny urlop"
+
+#: accounts/templates/accounts/profile.html:165
 #, python-format
-msgid ""
-"\n"
-"                    <p>z %(total)s dni w 2026 roku</p>\n"
-"                "
-msgstr ""
-"\n"
-"                    <p>z %(total)s dni w 2026 roku</p>\n"
-"                "
+msgid "z %(total)s dni w %(year)s roku"
+msgstr "z %(total)s dni w %(year)s roku"
 
-#: leaves/templates/leaves/dashboard.html:90
+#: accounts/templates/accounts/profile.html:169
 #, python-format
-msgid ""
-"\n"
-"                    <small style=\"color: #888;\">%(percent)s%% "
-"wykorzystano</small>\n"
-"                "
-msgstr ""
-"\n"
-"                    <small style=\"color: #888;\">%(percent)s%% "
-"wykorzystano</small>\n"
-"                "
+msgid "Wykorzystano: %(percent)s%%"
+msgstr "Wykorzystano: %(percent)s%%"
 
-#: leaves/templates/leaves/dashboard.html:95
-msgid "Brak profilu pracownika"
-msgstr "Brak profilu pracownika"
+#: accounts/templates/accounts/profile.html:172
+msgid "Brak profilu"
+msgstr "Brak profilu"
 
-#: leaves/templates/leaves/dashboard.html:100
+#: accounts/templates/accounts/profile.html:177
 msgid "Aktywne wnioski"
 msgstr "Aktywne wnioski"
 
-#: leaves/templates/leaves/dashboard.html:102
+#: accounts/templates/accounts/profile.html:179
+msgid "oczekuje na decyzję"
+msgstr "oczekuje na decyzję"
+
+#: accounts/templates/accounts/profile.html:183
+#: reports/templates/reports/leave_usage.html:151 reports/views.py:729
+msgid "Wykorzystane"
+msgstr "Wykorzystane"
+
+#: accounts/templates/accounts/profile.html:187
+msgid "dni urlopu w tym roku"
+msgstr "dni urlopu w tym roku"
+
+#: accounts/templates/accounts/profile.html:193
 #, python-format
-msgid ""
-"\n"
-"                <p>%(count)s oczekujący na decyzję</p>\n"
-"            "
-msgstr ""
-"\n"
-"                <p>%(count)s oczekujący na decyzję</p>\n"
-"            "
+msgid "Wykorzystanie urlopu w %(year)s roku"
+msgstr "Wykorzystanie urlopu w %(year)s roku"
 
-#: leaves/templates/leaves/dashboard.html:108
-msgid "Wykorzystane w tym roku"
-msgstr "Wykorzystane w tym roku"
+#: accounts/templates/accounts/profile.html:207
+msgid "Planowane urlopy"
+msgstr "Planowane urlopy"
 
-#: leaves/templates/leaves/dashboard.html:114
+#: accounts/templates/accounts/profile.html:222
+msgid "Czas trwania:"
+msgstr "Czas trwania:"
+
+#: accounts/templates/accounts/profile.html:222
+#, python-format
+msgid "%(amount)s dni"
+msgstr "%(amount)s dni"
+
+#: accounts/templates/accounts/profile.html:235
+msgid "Brak przyszłych urlopów."
+msgstr "Brak przyszłych urlopów."
+
+#: accounts/templates/accounts/profile.html:249
+#: accounts/templates/accounts/profile.html:252
+msgid "Najnowsza aktywność"
+msgstr "Najnowsza aktywność"
+
+#: accounts/templates/accounts/profile.html:288
+msgid "Brak zarejestrowanych akcji w systemie dla tego profilu."
+msgstr "Brak zarejestrowanych akcji w systemie dla tego profilu."
+
+#: accounts/templates/accounts/profile.html:478
+msgid "Wykorzystane dni urlopu"
+msgstr "Wykorzystane dni urlopu"
+
+#: accounts/templates/accounts/profile.html:499
+msgid "Dni urlopu"
+msgstr "Dni urlopu"
+
+#: accounts/templates/accounts/profile.html:515
 msgid "dni urlopu"
 msgstr "dni urlopu"
 
-#: leaves/templates/leaves/dashboard.html:120
-msgid "Zarządzanie zespołem"
-msgstr "Zarządzanie zespołem"
+#: accounts/templates/accounts/user_list.html:3
+#: accounts/templates/accounts/user_list.html:226
+msgid "Lista Użytkowników"
+msgstr "Lista Użytkowników"
 
-#: leaves/templates/leaves/dashboard.html:121
-msgid "Zobacz wnioski zespołu"
-msgstr "Zobacz wnioski zespołu"
+#: accounts/templates/accounts/user_list.html:229
+msgid "Panel zarządzania kontami użytkowników w systemie"
+msgstr "Panel zarządzania kontami użytkowników w systemie"
 
-#: leaves/templates/leaves/dashboard.html:122
-msgid "Bilans urlopów zespołu"
-msgstr "Bilans urlopów zespołu"
+#: accounts/templates/accounts/user_list.html:231
+msgid "Przegląd użytkowników"
+msgstr "Przegląd użytkowników"
 
-#: leaves/templates/leaves/dashboard.html:124
-msgid "Kalendarz zespołu"
-msgstr "Kalendarz zespołu"
+#: accounts/templates/accounts/user_list.html:241
+msgid "Raport użytkowników"
+msgstr "Raport użytkowników"
 
-#: leaves/templates/leaves/dashboard.html:129
-msgid "Moje wnioski"
-msgstr "Moje wnioski"
+#: accounts/templates/accounts/user_list.html:258
+#: leaves/templates/leaves/history_requests_list.html:266
+#: leaves/templates/leaves/pending_requests_list.html:298
+msgid "Szukaj:"
+msgstr "Szukaj:"
 
-#: leaves/templates/leaves/dashboard.html:130
-msgid "Zobacz moje urlopy"
-msgstr "Zobacz moje urlopy"
+#: accounts/templates/accounts/user_list.html:259
+msgid "Imię, nazwisko, login..."
+msgstr "Imię, nazwisko, login..."
 
-#: leaves/templates/leaves/dashboard.html:131
-msgid "Złóż nowy wniosek"
-msgstr "Złóż nowy wniosek"
+#: accounts/templates/accounts/user_list.html:264
+#: leaves/templates/leaves/history_requests_list.html:272
+#: leaves/templates/leaves/pending_requests_list.html:304
+#: team/templates/team/team_members_form.html:14
+msgid "Zespół:"
+msgstr "Zespół:"
 
-#: leaves/templates/leaves/dashboard.html:137
-msgid "Zarządzanie użytkownikami"
-msgstr "Zarządzanie użytkownikami"
+#: accounts/templates/accounts/user_list.html:266
+#: reports/templates/reports/leave_requests_report_list.html:152
+#: reports/templates/reports/leave_usage.html:125
+msgid "Wszystkie zespoły"
+msgstr "Wszystkie zespoły"
 
-#: leaves/templates/leaves/dashboard.html:138
-msgid "Dodaj użytkownika"
-msgstr "Dodaj użytkkownika"
+#: accounts/templates/accounts/user_list.html:277 templates/base.html:330
+msgid "Rola:"
+msgstr "Rola:"
 
-#: leaves/templates/leaves/dashboard.html:139
-msgid "Lista użytkowników"
-msgstr "Lista użytkowników"
+#: accounts/templates/accounts/user_list.html:279
+msgid "Wszystkie role"
+msgstr "Wszystkie role"
 
-#: leaves/templates/leaves/dashboard.html:144
-msgid "Ostatnie akcje"
-msgstr "Ostatnie akcje"
+#: accounts/templates/accounts/user_list.html:280
+msgid "Admin"
+msgstr "Admin"
 
-#: leaves/templates/leaves/dashboard.html:154
-msgid "Brak ostatnich akcji."
-msgstr "Brak ostatnich akcji."
+#: accounts/templates/accounts/user_list.html:281
+#: team/templates/team/team_detail.html:21
+#: team/templates/team/team_list.html:192
+msgid "Manager"
+msgstr "Manager"
+
+#: accounts/templates/accounts/user_list.html:282
+#: team/templates/team/team_detail.html:21
+#: team/templates/team/team_list.html:193
+msgid "HR"
+msgstr "HR"
+
+#: accounts/templates/accounts/user_list.html:283
+#: leaves/templates/leaves/history_requests_list.html:316
+#: leaves/templates/leaves/pending_requests_list.html:336
+#: leaves/templates/leaves/team_leave_balance.html:24
+#: reports/templates/reports/leave_requests_report_list.html:182
+#: reports/templates/reports/leave_usage.html:148 reports/views.py:729
+#: reports/views.py:1389 reports/views.py:1442
+msgid "Pracownik"
+msgstr "Pracownik"
+
+#: accounts/templates/accounts/user_list.html:289
+#: leaves/templates/leaves/history_requests_list.html:282
+msgid "Status:"
+msgstr "Status:"
+
+#: accounts/templates/accounts/user_list.html:291
+msgid "Wszyscy"
+msgstr "Wszyscy"
+
+#: accounts/templates/accounts/user_list.html:292
+#: reports/templates/reports/users_per_role.html:111 reports/views.py:454
+#: reports/views.py:492
+msgid "Aktywni"
+msgstr "Aktywni"
+
+#: accounts/templates/accounts/user_list.html:293
+msgid "Nieaktywni"
+msgstr "Nieaktywni"
+
+#: accounts/templates/accounts/user_list.html:298
+msgid "Bez zespołu"
+msgstr "Bez zespołu"
+
+#: accounts/templates/accounts/user_list.html:302
+msgid "Bez profilu"
+msgstr "Bez profilu"
+
+#: accounts/templates/accounts/user_list.html:307
+#: leaves/templates/leaves/history_requests_list.html:304
+#: leaves/templates/leaves/pending_requests_list.html:324
+#: reports/templates/reports/leave_requests_report_list.html:171
+#: reports/templates/reports/leave_usage.html:137
+msgid "Filtruj"
+msgstr "Filtruj"
+
+#: accounts/templates/accounts/user_list.html:308
+#: leaves/templates/leaves/history_requests_list.html:305
+#: leaves/templates/leaves/pending_requests_list.html:325
+#: reports/templates/reports/leave_requests_report_list.html:172
+#: reports/templates/reports/leave_usage.html:138
+msgid "Reset"
+msgstr "Reset"
+
+#: accounts/templates/accounts/user_list.html:320
+msgid "Imię i Nazwisko"
+msgstr "Imię i Nazwisko"
+
+#: accounts/templates/accounts/user_list.html:327
+#: reports/templates/reports/users_per_role.html:109 reports/views.py:452
+#: reports/views.py:490
+msgid "Rola"
+msgstr "Rola"
+
+#: accounts/templates/accounts/user_list.html:332
+msgid "Zarządza zespołami"
+msgstr "Zarządza zespołami"
+
+#: accounts/templates/accounts/user_list.html:335
+#: leaves/templates/leaves/my_vacations.html:253
+msgid "Akcje"
+msgstr "Akcje"
+
+#: accounts/templates/accounts/user_list.html:390
+msgid "Edytuj profil użytkownika"
+msgstr "Edytuj profil użytkownika"
+
+#: accounts/templates/accounts/user_list.html:394
+msgid "Czy na pewno chcesz dezaktywować tego użytkownika?"
+msgstr "Czy na pewno chcesz dezaktywować tego użytkownika?"
+
+#: accounts/templates/accounts/user_list.html:408
+msgid "Brak użytkowników spełniających podane kryteria."
+msgstr "Brak użytkowników spełniających podane kryteria."
+
+#: accounts/views.py:32
+msgid "Nie możesz dezaktywować własnego konta."
+msgstr "Nie możesz dezaktywować własnego konta."
+
+#: accounts/views.py:46
+#, python-brace-format
+msgid "Użytkownik {username} został dezaktywowany."
+msgstr "Użytkownik {username} został dezaktywowany."
+
+#: accounts/views.py:74
+msgid "Nie masz uprawnień do przeglądania listy użytkowników."
+msgstr "Nie masz uprawnień do przeglądania listy użytkowników."
+
+#: accounts/views.py:153 accounts/views.py:158
+#, python-brace-format
+msgid "Zmieniono aktywną rolę z {old_role} na {new_role}."
+msgstr "Zmieniono aktywną rolę z {old_role} na {new_role}."
+
+#: accounts/views.py:164
+#, python-brace-format
+msgid "Jesteś już w roli: {new_role}"
+msgstr "Jesteś już w roli: {new_role}"
+
+#: accounts/views.py:168
+msgid "Nie masz uprawnień do tej roli"
+msgstr "Nie masz uprawnień do tej roli"
+
+#: accounts/views.py:173
+#, python-brace-format
+msgid "Proba zmiany roli na: {new_role}"
+msgstr "Proba zmiany roli na: {new_role}"
+
+#: accounts/views.py:183
+msgid "Nie możesz edytować własnego profilu."
+msgstr "Nie możesz edytować własnego profilu."
+
+#: accounts/views.py:199
+#, python-brace-format
+msgid "Utworzono profil użytkownika: {username}"
+msgstr "Utworzono profil użytkownika: {username}"
+
+#: accounts/views.py:201
+#, python-brace-format
+msgid "Zaktualizowano profil użytkownika: {username}"
+msgstr "Zaktualizowano profil użytkownika: {username}"
+
+#: accounts/views.py:235
+#, python-brace-format
+msgid "Utworzono nowego użytkownika: {new_username}"
+msgstr "Utworzono nowego użytkownika: {new_username}"
+
+#: accounts/views.py:239
+#, python-brace-format
+msgid "Konto {new_username} zostało utworzone."
+msgstr "Konto {new_username} zostało utworzone."
+
+#: accounts/views.py:263
+#, python-brace-format
+msgid "Zaktualizowano dane podstawowe użytkownika: {updated_username}"
+msgstr "Zaktualizowano dane podstawowe użytkownika: {updated_username}"
+
+#: accounts/views.py:268
+#, python-brace-format
+msgid "Dane użytkownika {updated_username} zostały zaktualizowane."
+msgstr "Dane użytkownika {updated_username} zostały zaktualizowane."
+
+#: accounts/views.py:308
+msgid "Nie można edytować profilu nieaktywnego użytkownika."
+msgstr "Nie można edytować profilu nieaktywnego użytkownika."
+
+#: accounts/views.py:335
+msgid "Zmieniono własne hasło."
+msgstr "Zmieniono własne hasło."
+
+#: accounts/views.py:339
+msgid "Twoje hasło zostało pomyślnie zmienione."
+msgstr "Twoje hasło zostało pomyślnie zmienione."
+
+#: accounts/views.py:343
+msgid "Niepoprawne dane w formularzu."
+msgstr "Niepoprawne dane w formularzu."
+
+#: accounts/views.py:350
+msgid "Sty"
+msgstr "Sty"
+
+#: accounts/views.py:350
+msgid "Lut"
+msgstr "Lut"
+
+#: accounts/views.py:350
+msgid "Mar"
+msgstr "Mar"
+
+#: accounts/views.py:350
+msgid "Kwi"
+msgstr "Kwi"
+
+#: accounts/views.py:350 leaves/views.py:730
+msgid "Maj"
+msgstr "Maj"
+
+#: accounts/views.py:350
+msgid "Cze"
+msgstr "Cze"
+
+#: accounts/views.py:350
+msgid "Lip"
+msgstr "Lip"
+
+#: accounts/views.py:350
+msgid "Sie"
+msgstr "Sie"
+
+#: accounts/views.py:350
+msgid "Wrz"
+msgstr "Wrz"
+
+#: accounts/views.py:350
+msgid "Paź"
+msgstr "Paź"
+
+#: accounts/views.py:350
+msgid "Lis"
+msgstr "Lis"
+
+#: accounts/views.py:350
+msgid "Gru"
+msgstr "Gru"
+
+#: accounts/views.py:364
+#, python-brace-format
+msgid "Użytkownik {target_username} nie ma przypisanego profilu."
+msgstr "Użytkownik {target_username} nie ma przypisanego profilu."
+
+#: accounts/views.py:372
+msgid "Nie masz uprawnień do przeglądania tego profilu"
+msgstr "Nie masz uprawnień do przeglądania tego profilu"
+
+#: accounts/views.py:389
+#, python-brace-format
+msgid ""
+"Próba podglądu profilu {target_username} (id={target_id}). Aktywna rola: "
+"{active_role}"
+msgstr ""
+"Próba podglądu profilu {target_username} (id={target_id}). Aktywna rola: "
+"{active_role}"
+
+#: calendar_app/settings.py:143 calendar_app/settings_prod.py:128
+msgid "Polski"
+msgstr "Polski"
+
+#: calendar_app/settings.py:144 calendar_app/settings_prod.py:129
+msgid "English"
+msgstr "English"
+
+#: calendar_app/validators.py:17
+msgid "Hasło musi zawierać co najmniej jedną wielką literę."
+msgstr "Hasło musi zawierać co najmniej jedną wielką literę."
+
+#: calendar_app/validators.py:23
+msgid "Hasło musi zawierać co najmniej jedną małą literę."
+msgstr "Hasło musi zawierać co najmniej jedną małą literę."
+
+#: calendar_app/validators.py:29
+msgid "Hasło musi zawierać co najmniej jedną cyfrę."
+msgstr "Hasło musi zawierać co najmniej jedną cyfrę."
+
+#: calendar_app/validators.py:35
+msgid "Hasło musi zawierać co najmniej jeden znak specjalny."
+msgstr "Hasło musi zawierać co najmniej jeden znak specjalny."
+
+#: calendar_app/validators.py:41
+msgid ""
+"Twoje hasło musi zawierać co najmniej jedną wielką literę, jedną małą "
+"literę, jedną cyfrę oraz jeden znak specjalny."
+msgstr ""
+"Twoje hasło musi zawierać co najmniej jedną wielką literę, jedną małą "
+"literę, jedną cyfrę oraz jeden znak specjalny."
+
+#: core/templates/core/main.html:4
+msgid "Sunny - aplikacja urlopowa"
+msgstr "Sunny - aplikacja urlopowa"
+
+#: core/templates/core/main.html:10
+#, python-format
+msgid "Witaj %(user.first_name)s! 👋"
+msgstr "Witaj %(user.first_name)s! 👋"
+
+#: core/templates/core/main.html:25
+#, python-format
+msgid "Aktualna rola: %(active_role)s"
+msgstr "Aktualna rola: %(active_role)s"
+
+#: core/templates/core/main.html:35 core/templates/core/main.html:37
+#, python-format
+msgid "Zmień rolę: %(available_roles.0)s"
+msgstr "Zmień rolę: %(available_roles.0)s"
+
+#: core/templates/core/main.html:43 core/templates/core/main.html:45
+#: core/templates/core/main.html:47
+msgid "Zmień rolę"
+msgstr "Zmień rolę"
+
+#: core/templates/core/main.html:57 templates/base.html:371
+msgid "Szczegóły profilu"
+msgstr "Szczegóły profilu"
+
+#: core/templates/core/main.html:58 reports/views.py:954 reports/views.py:1008
+#: reports/views.py:1083 reports/views.py:1137
+msgid "Szczegóły"
+msgstr "Szczegóły"
+
+#: core/templates/core/main.html:64 templates/base.html:400
+msgid "Wyloguj się"
+msgstr "Wyloguj się"
+
+#: core/templates/core/main.html:65
+msgid "Wyloguj"
+msgstr "Wyloguj"
+
+#: core/templates/core/main.html:80
+msgid "Planowanie"
+msgstr "Planowanie"
+
+#: core/templates/core/main.html:81 templates/base.html:283
+msgid "Wnioski Urlopowe"
+msgstr "Wnioski Urlopowe"
+
+#: core/templates/core/main.html:83
+msgid "Obsługa Twoich wniosków urlopowych."
+msgstr "Obsługa Twoich wniosków urlopowych."
+
+#: core/templates/core/main.html:83
+msgid "Przeglądanie listy wniosków w systemie."
+msgstr "Przeglądanie listy wniosków w systemie."
+
+#: core/templates/core/main.html:90
+msgid "Złóż nowy wniosek urlopowy"
+msgstr "Złóż nowy wniosek urlopowy"
+
+#: core/templates/core/main.html:90 templates/base.html:287
+msgid "Nowy"
+msgstr "Nowy"
+
+#: core/templates/core/main.html:91
+msgid "Przejrzyj aktualne wnioski"
+msgstr "Przejrzyj aktualne wnioski"
+
+#: core/templates/core/main.html:91 templates/base.html:288
+msgid "Lista"
+msgstr "Lista"
+
+#: core/templates/core/main.html:93
+msgid "Wnioski do rozważenia"
+msgstr "Wnioski do rozważenia"
+
+#: core/templates/core/main.html:93 templates/base.html:290
+msgid "Oczekujące"
+msgstr "Oczekujące"
+
+#: core/templates/core/main.html:94
+msgid "Zapis wniosków"
+msgstr "Zapis wniosków"
+
+#: core/templates/core/main.html:94 templates/base.html:291
+msgid "Historia"
+msgstr "Historia"
+
+#: core/templates/core/main.html:107
+msgid "Organizacja"
+msgstr "Organizacja"
+
+#: core/templates/core/main.html:108 templates/base.html:300
+msgid "Zarządzanie"
+msgstr "Zarządzanie"
+
+#: core/templates/core/main.html:109
+msgid "Struktura organizacyjna, zasoby ludzkie i podział ról."
+msgstr "Struktura organizacyjna, zasoby ludzkie i podział ról."
+
+#: core/templates/core/main.html:114
+msgid "Lista Raportów"
+msgstr "Lista Raportów"
+
+#: core/templates/core/main.html:114 reports/templates/reports/index.html:10
+#: templates/base.html:304
+msgid "Raporty"
+msgstr "Raporty"
+
+#: core/templates/core/main.html:115
+msgid "Zarządzaj pracownikami"
+msgstr "Zarządzaj pracownikami"
+
+#: core/templates/core/main.html:115
+#: reports/templates/reports/team_report.html:102
+#: team/templates/team/team_detail.html:42 templates/base.html:305
+msgid "Pracownicy"
+msgstr "Pracownicy"
+
+#: core/templates/core/main.html:116
+msgid "Zarządzaj zespołami"
+msgstr "Zarządzaj zespołami"
+
+#: core/templates/core/main.html:116 templates/base.html:306
+msgid "Zespoły"
+msgstr "Zespoły"
+
+#: core/templates/core/main.html:128
+msgid "Administracja"
+msgstr "Administracja"
+
+#: core/templates/core/main.html:129 templates/base.html:315
+msgid "Panel Admina"
+msgstr "Panel Admina"
+
+#: core/templates/core/main.html:130
+msgid "Monitorowanie bezpieczeństwa i logów systemowych."
+msgstr "Monitorowanie bezpieczeństwa i logów systemowych."
+
+#: core/templates/core/main.html:135
+msgid "Logi aktywności systemowej"
+msgstr "Logi aktywności systemowej"
+
+#: core/templates/core/main.html:135 templates/base.html:318
+msgid "Logi Aktywności"
+msgstr "Logi Aktywności"
+
+#: core/templates/core/main.html:136
+msgid "Logi autoryzacji i logowań"
+msgstr "Logi autoryzacji i logowań"
+
+#: core/templates/core/main.html:136 templates/base.html:319
+msgid "Logi Autoryzacji"
+msgstr "Logi Autoryzacji"
+
+#: core/templates/core/main.html:137
+msgid "Dodaj Użytkownika"
+msgstr "Dodaj Użytkownika"
+
+#: core/views.py:16
+msgid ""
+"Planujesz zasłużony odpoczynek czy na razie po prostu sprawdzasz, ile dni "
+"wolnych Ci zostało?"
+msgstr ""
+"Planujesz zasłużony odpoczynek czy na razie po prostu sprawdzasz, ile dni "
+"wolnych Ci zostało?"
+
+#: core/views.py:17
+msgid ""
+"Szukasz idealnego momentu na złapanie oddechu czy masz już konkretne plany "
+"na wyjazd?"
+msgstr ""
+"Szukasz idealnego momentu na złapanie oddechu czy masz już konkretne plany "
+"na wyjazd?"
+
+#: core/views.py:18
+msgid ""
+"Czas na ładowanie baterii? Sprawdź swój kalendarz i zaplanuj kolejny urlop."
+msgstr ""
+"Czas na ładowanie baterii? Sprawdź swój kalendarz i zaplanuj kolejny urlop."
+
+#: core/views.py:19
+msgid ""
+"Pogoda za oknem kusi – myślisz już o wolnym piątku czy sprawdzasz opcje na "
+"dłuższy wypad?"
+msgstr ""
+"Pogoda za oknem kusi – myślisz już o wolnym piątku czy sprawdzasz opcje na "
+"dłuższy wypad?"
+
+#: core/views.py:20
+msgid ""
+"Masz już w głowie plan na kolejny relaks czy potrzebujesz chwili, by go "
+"spokojnie rozpisać?"
+msgstr ""
+"Masz już w głowie plan na kolejny relaks czy potrzebujesz chwili, by go "
+"spokojnie rozpisać?"
+
+#: core/views.py:23
+msgid ""
+"Planujesz własny urlop czy przyszedł czas na zatwierdzanie wniosków w Twoim "
+"zespole?"
+msgstr ""
+"Planujesz własny urlop czy przyszedł czas na zatwierdzanie wniosków w Twoim "
+"zespole?"
+
+#: core/views.py:24
+msgid ""
+"Szykuje się chwila wytchnienia czy trzymasz rękę na pulsie i sprawdzasz "
+"dostępność ekipy?"
+msgstr ""
+"Szykuje się chwila wytchnienia czy trzymasz rękę na pulsie i sprawdzasz "
+"dostępność ekipy?"
+
+#: core/views.py:25
+msgid ""
+"Twój zespół myśli już o wakacjach – czas zerknąć w grafik i zadbać o "
+"ciągłość pracy."
+msgstr ""
+"Twój zespół myśli już o wakacjach – czas zerknąć w grafik i zadbać o "
+"ciągłość pracy."
+
+#: core/views.py:26
+msgid ""
+"Przeglądasz kalendarz pod kątem własnych planów czy pomagasz zespołowi w "
+"organizacji wolnego?"
+msgstr ""
+"Przeglądasz kalendarz pod kątem własnych planów czy pomagasz zespołowi w "
+"organizacji wolnego?"
+
+#: core/views.py:27
+msgid ""
+"Chwila dla siebie czy szybka weryfikacja planów urlopowych Twoich ludzi? "
+"Zobaczmy, co w projekcie."
+msgstr ""
+"Chwila dla siebie czy szybka weryfikacja planów urlopowych Twoich ludzi? "
+"Zobaczmy, co w projekcie."
+
+#: core/views.py:30
+msgid ""
+"Planujesz własny wyjazd czy czuwasz dziś nad urlopowym porządkiem w całej "
+"firmie?"
+msgstr ""
+"Planujesz własny wyjazd czy czuwasz dziś nad urlopowym porządkiem w całej "
+"firmie?"
+
+#: core/views.py:31
+msgid ""
+"Szykuje się urlopowa ucieczka od biurka czy pilnujesz, żeby w naszym "
+"kalendarzu wszystko idealnie grało?"
+msgstr ""
+"Szykuje się urlopowa ucieczka od biurka czy pilnujesz, żeby w naszym "
+"kalendarzu wszystko idealnie grało?"
+
+#: core/views.py:32
+msgid ""
+"Sprawdzasz statusy zaległych wniosków czy kompletujesz dokumenty przed "
+"własnymi wakacjami?"
+msgstr ""
+"Sprawdzasz statusy zaległych wniosków czy kompletujesz dokumenty przed "
+"własnymi wakacjami?"
+
+#: core/views.py:33
+msgid ""
+"Dbasz o to, by każdy w firmie mógł spokojnie odpocząć – a kiedy czas na Twój "
+"relaks?"
+msgstr ""
+"Dbasz o to, by każdy w firmie mógł spokojnie odpocząć – a kiedy czas na Twój "
+"relaks?"
+
+#: core/views.py:34
+msgid ""
+"Masz dziś oko na plany urlopowe wszystkich działów czy właśnie domykasz swój "
+"własny wniosek?"
+msgstr ""
+"Masz dziś oko na plany urlopowe wszystkich działów czy właśnie domykasz swój "
+"własny wniosek?"
 
 #: leaves/templates/leaves/edit_request.html:4
 msgid "Edycja wniosku"
@@ -338,116 +915,489 @@ msgstr "Edycja wniosku"
 #: leaves/templates/leaves/edit_request.html:5
 #: leaves/templates/leaves/edit_request.html:6
 #: leaves/templates/leaves/edit_request.html:8
+#: leaves/templates/leaves/leave_detail.html:157
 msgid "Edytuj wniosek"
 msgstr "Edytuj wniosek"
 
-#: leaves/templates/leaves/edit_request.html:11
+#: leaves/templates/leaves/edit_request.html:12
 msgid "Aktualny zakres dat:"
 msgstr "Aktualny zakres dat:"
 
-#: leaves/templates/leaves/edit_request.html:15
+#: leaves/templates/leaves/edit_request.html:17
 msgid "edytować"
 msgstr "edytować"
 
-#: leaves/templates/leaves/log_history.html:3
-#: leaves/templates/leaves/log_history.html:36
-msgid "Historia Logów"
-msgstr "Historia Logów"
+#: leaves/templates/leaves/history_requests_list.html:4
+#: leaves/templates/leaves/history_requests_list.html:257
+msgid "Historia Wniosków Urlopowych"
+msgstr "Historia Wniosków Urlopowych"
 
-#: leaves/templates/leaves/log_history.html:41
-msgid "Akcja:"
-msgstr "Akcja:"
+#: leaves/templates/leaves/history_requests_list.html:258
+msgid "Przejdź do wniosków oczekujących"
+msgstr "Przejdź do wniosków oczekujących"
 
-#: leaves/templates/leaves/log_history.html:43
-#: leaves/templates/leaves/log_history.html:51
+#: leaves/templates/leaves/history_requests_list.html:267
+#: leaves/templates/leaves/pending_requests_list.html:299
+msgid "Pracownik..."
+msgstr "Pracownik..."
+
+#: leaves/templates/leaves/history_requests_list.html:274
+#: leaves/templates/leaves/history_requests_list.html:284
+#: leaves/templates/leaves/pending_requests_list.html:306
+#: reports/templates/reports/leave_requests_report_list.html:140
+#: reports/views.py:699
 msgid "Wszystkie"
 msgstr "Wszystkie"
 
-#: leaves/templates/leaves/log_history.html:49
-msgid "Typ obiektu:"
-msgstr "Typ obiektu:"
+#: leaves/templates/leaves/history_requests_list.html:294
+#: leaves/templates/leaves/pending_requests_list.html:314
+msgid "Od:"
+msgstr "Od:"
 
-#: leaves/templates/leaves/log_history.html:69
-msgid "Data i godzina"
-msgstr "Data i godzina"
+#: leaves/templates/leaves/history_requests_list.html:299
+#: leaves/templates/leaves/pending_requests_list.html:319
+msgid "Do:"
+msgstr "Do:"
 
-#: leaves/templates/leaves/log_history.html:70
-msgid "Użytkownik"
-msgstr "Użytkownik"
+#: leaves/templates/leaves/history_requests_list.html:317
+#: leaves/templates/leaves/leave_detail.html:66
+#: leaves/templates/leaves/pending_requests_list.html:337
+#: leaves/templates/leaves/team_calendar.html:277 leaves/views.py:694
+#: reports/templates/reports/leave_requests_report_list.html:183
+#: reports/templates/reports/leave_usage.html:149
+#: reports/templates/reports/team_report.html:101 reports/views.py:676
+#: reports/views.py:707 reports/views.py:729 reports/views.py:829
+#: reports/views.py:874 reports/views.py:1390 reports/views.py:1443
+msgid "Zespół"
+msgstr "Zespół"
 
-#: leaves/templates/leaves/log_history.html:71
-msgid "Akcja"
-msgstr "Akcja"
+#: leaves/templates/leaves/history_requests_list.html:318
+#: leaves/templates/leaves/leave_detail.html:80
+#: leaves/templates/leaves/pending_requests_list.html:338
+msgid "Okres urlopu"
+msgstr "Okres urlopu"
 
-#: leaves/templates/leaves/log_history.html:72
-msgid "Typ obiektu"
-msgstr "Typ obiektu"
+#: leaves/templates/leaves/history_requests_list.html:319
+#: leaves/templates/leaves/pending_requests_list.html:339
+#: reports/templates/reports/leave_requests_report_list.html:185
+#: reports/views.py:1393 reports/views.py:1446
+msgid "Dni"
+msgstr "Dni"
 
-#: leaves/templates/leaves/log_history.html:85
-msgid "Brak wpisów w historii."
-msgstr "Brak wpisów w historii."
+#: leaves/templates/leaves/history_requests_list.html:320
+#: leaves/templates/leaves/pending_requests_list.html:340
+msgid "Złożono dnia"
+msgstr "Złożono dnia"
 
-#: leaves/templates/leaves/my_vacations.html:3
-#: leaves/templates/leaves/my_vacations.html:47 templates/base.html:24
-msgid "Moje Urlopy"
-msgstr "Moje Urlopy"
+#: leaves/templates/leaves/history_requests_list.html:321
+#: leaves/templates/leaves/my_vacations.html:206
+#: leaves/templates/leaves/my_vacations.html:252
+#: leaves/templates/leaves/my_vacations.html:310 leaves/views.py:698
+#: reports/templates/reports/leave_requests_report_list.html:186
+#: reports/views.py:1394 reports/views.py:1447
+msgid "Status"
+msgstr "Status"
 
-#: leaves/templates/leaves/my_vacations.html:50
-msgid "Aktualne (trwające)"
-msgstr "Aktualne (trwające)"
+#: leaves/templates/leaves/history_requests_list.html:356 team/views.py:323
+msgid "Zaakceptowany"
+msgstr "Zaakceptowany"
 
-#: leaves/templates/leaves/my_vacations.html:75
-#: leaves/templates/leaves/my_vacations.html:114
-#: leaves/templates/leaves/my_vacations.html:168
+#: leaves/templates/leaves/history_requests_list.html:358
+#: leaves/templates/leaves/my_vacations.html:221
+#: leaves/templates/leaves/my_vacations.html:323
+#: reports/templates/reports/leave_requests_report_list.html:219
+msgid "Odrzucony"
+msgstr "Odrzucony"
+
+#: leaves/templates/leaves/history_requests_list.html:360
+#: leaves/templates/leaves/my_vacations.html:223
+#: leaves/templates/leaves/my_vacations.html:268
+#: leaves/templates/leaves/my_vacations.html:325
+#: reports/templates/reports/leave_requests_report_list.html:221
 msgid "Anulowany"
 msgstr "Anulowany"
 
-#: leaves/templates/leaves/my_vacations.html:85
+#: leaves/templates/leaves/history_requests_list.html:368
+msgid "Brak wpisów w historii wniosków dla wybranych filtrów."
+msgstr "Brak wpisów w historii wniosków dla wybranych filtrów."
+
+#: leaves/templates/leaves/history_requests_list.html:377
+#: leaves/templates/leaves/pending_requests_list.html:402
+msgid "Nawigacja stronami"
+msgstr "Nawigacja stronami"
+
+#: leaves/templates/leaves/history_requests_list.html:380
+#: leaves/templates/leaves/pending_requests_list.html:405
+#: reports/templates/reports/leave_requests_report_list.html:253
+msgid "Pierwsza"
+msgstr "Pierwsza"
+
+#: leaves/templates/leaves/history_requests_list.html:381
+#: leaves/templates/leaves/pending_requests_list.html:406
+#: reports/templates/reports/leave_requests_report_list.html:256
+msgid "Poprzednia"
+msgstr "Poprzednia"
+
+#: leaves/templates/leaves/history_requests_list.html:393
+#: leaves/templates/leaves/pending_requests_list.html:418
+#: reports/templates/reports/leave_requests_report_list.html:266
+msgid "Następna"
+msgstr "Następna"
+
+#: leaves/templates/leaves/history_requests_list.html:394
+#: leaves/templates/leaves/pending_requests_list.html:419
+#: reports/templates/reports/leave_requests_report_list.html:269
+msgid "Ostatnia"
+msgstr "Ostatnia"
+
+#: leaves/templates/leaves/leave_detail.html:4
+msgid "Szczegóły Wniosku Urlopowego"
+msgstr "Szczegóły Wniosku Urlopowego"
+
+#: leaves/templates/leaves/leave_detail.html:13
+msgid "Wniosek Urlopowy"
+msgstr "Wniosek Urlopowy"
+
+#: leaves/templates/leaves/leave_detail.html:23
+msgid "Zobacz wszystkie wnioski właściciela"
+msgstr "Zobacz wszystkie wnioski właściciela"
+
+#: leaves/templates/leaves/leave_detail.html:31
+msgid "Poprzedni wniosek"
+msgstr "Poprzedni wniosek"
+
+#: leaves/templates/leaves/leave_detail.html:35
+msgid "Brak wcześniejszych wniosków"
+msgstr "Brak wcześniejszych wniosków"
+
+#: leaves/templates/leaves/leave_detail.html:39
+msgid "Następny wniosek"
+msgstr "Następny wniosek"
+
+#: leaves/templates/leaves/leave_detail.html:43
+msgid "Brak kolejnych wniosków"
+msgstr "Brak kolejnych wniosków"
+
+#: leaves/templates/leaves/leave_detail.html:58
+msgid "Właściciel"
+msgstr "Właściciel"
+
+#: leaves/templates/leaves/leave_detail.html:73
+#: reports/templates/reports/leave_usage.html:127 reports/views.py:701
+#: reports/views.py:778
+msgid "Brak zespołu"
+msgstr "Brak zespołu"
+
+#: leaves/templates/leaves/leave_detail.html:86
+#: leaves/templates/leaves/my_vacations.html:205
+#: leaves/templates/leaves/my_vacations.html:251
+#: leaves/templates/leaves/my_vacations.html:309 leaves/views.py:697
+msgid "Liczba dni"
+msgstr "Liczba dni"
+
+#: leaves/templates/leaves/leave_detail.html:97
+msgid "Wniosek zaakceptowany przez:"
+msgstr "Wniosek zaakceptowany przez:"
+
+#: leaves/templates/leaves/leave_detail.html:99
+msgid "Wniosek odrzucony przez:"
+msgstr "Wniosek odrzucony przez:"
+
+#: leaves/templates/leaves/leave_detail.html:101
+msgid "Wniosek anulowany przez:"
+msgstr "Wniosek anulowany przez:"
+
+#: leaves/templates/leaves/leave_detail.html:103
+msgid "Decyzję podjął(a):"
+msgstr "Decyzję podjął(a):"
+
+#: leaves/templates/leaves/leave_detail.html:129
+msgid "Komentarz wniosku"
+msgstr "Komentarz wniosku"
+
+#: leaves/templates/leaves/leave_detail.html:142
+msgid "Odpowiedź"
+msgstr "Odpowiedź"
+
+#: leaves/templates/leaves/leave_detail.html:158
+#: leaves/templates/leaves/leave_detail.html:536
+#: leaves/templates/leaves/my_vacations.html:414
+#: leaves/templates/leaves/pending_requests_list.html:510
+msgid "Anuluj wniosek"
+msgstr "Anuluj wniosek"
+
+#: leaves/templates/leaves/leave_detail.html:163
+msgid "Akceptuj"
+msgstr "Akceptuj"
+
+#: leaves/templates/leaves/leave_detail.html:164
+#: leaves/templates/leaves/leave_detail.html:533
+#: leaves/templates/leaves/pending_requests_list.html:384
+#: leaves/templates/leaves/pending_requests_list.html:503
+msgid "Odrzuć"
+msgstr "Odrzuć"
+
+#: leaves/templates/leaves/leave_detail.html:173
+msgid "Ostatnia historia zmian"
+msgstr "Ostatnia historia zmian"
+
+#: leaves/templates/leaves/leave_detail.html:176
+msgid "Zobacz całą aktywność właściciela wniosku"
+msgstr "Zobacz całą aktywność właściciela wniosku"
+
+#: leaves/templates/leaves/leave_detail.html:185
+msgid "Data i godzina"
+msgstr "Data i godzina"
+
+#: leaves/templates/leaves/leave_detail.html:186 reports/views.py:951
+#: reports/views.py:971 reports/views.py:1005 reports/views.py:1080
+#: reports/views.py:1100 reports/views.py:1134
+msgid "Akcja"
+msgstr "Akcja"
+
+#: leaves/templates/leaves/leave_detail.html:187
+msgid "Szczegóły akcji"
+msgstr "Szczegóły akcji"
+
+#: leaves/templates/leaves/leave_detail.html:203
+msgid "Brak wpisów w historii."
+msgstr "Brak wpisów w historii."
+
+#: leaves/templates/leaves/leave_detail.html:218
+#: team/templates/team/team_detail.html:139
+msgid "Pn"
+msgstr "Pn"
+
+#: leaves/templates/leaves/leave_detail.html:219
+#: leaves/templates/leaves/team_calendar.html:221
+#: team/templates/team/team_detail.html:140
+msgid "Wt"
+msgstr "Wt"
+
+#: leaves/templates/leaves/leave_detail.html:220
+#: leaves/templates/leaves/team_calendar.html:222
+#: team/templates/team/team_detail.html:141
+msgid "Śr"
+msgstr "Śr"
+
+#: leaves/templates/leaves/leave_detail.html:221
+#: leaves/templates/leaves/team_calendar.html:223
+#: team/templates/team/team_detail.html:142
+msgid "Czw"
+msgstr "Czw"
+
+#: leaves/templates/leaves/leave_detail.html:222
+#: leaves/templates/leaves/team_calendar.html:224
+#: team/templates/team/team_detail.html:143
+msgid "Pt"
+msgstr "Pt"
+
+#: leaves/templates/leaves/leave_detail.html:223
+#: team/templates/team/team_detail.html:144
+msgid "Sb"
+msgstr "Sb"
+
+#: leaves/templates/leaves/leave_detail.html:224
+#: leaves/templates/leaves/team_calendar.html:226
+#: team/templates/team/team_detail.html:145
+msgid "Nd"
+msgstr "Nd"
+
+#: leaves/templates/leaves/leave_detail.html:246
+msgid "Uwzględnione dni urlopu"
+msgstr "Uwzględnione dni urlopu"
+
+#: leaves/templates/leaves/leave_detail.html:250
+msgid "Weekendy i Święta"
+msgstr "Weekendy i Święta"
+
+#: leaves/templates/leaves/leave_detail.html:275
+msgid "Wpisz opcjonalny komentarz do tej decyzji..."
+msgstr "Wpisz opcjonalny komentarz do tej decyzji..."
+
+#: leaves/templates/leaves/leave_detail.html:277
+#: leaves/templates/leaves/leave_detail.html:537
+#: leaves/templates/leaves/my_vacations.html:442
+#: leaves/templates/leaves/pending_requests_list.html:538
+#: templates/request_base.html:110
+msgid "Pozostało"
+msgstr "Pozostało"
+
+#: leaves/templates/leaves/leave_detail.html:277
+#: leaves/templates/leaves/leave_detail.html:538
+#: leaves/templates/leaves/my_vacations.html:442
+#: leaves/templates/leaves/pending_requests_list.html:539
+#: templates/request_base.html:110
+msgid "znaków"
+msgstr "znaków"
+
+#: leaves/templates/leaves/leave_detail.html:528
+#: leaves/templates/leaves/pending_requests_list.html:492
+msgid "Zatwierdzenie wniosku"
+msgstr "Zatwierdzenie wniosku"
+
+#: leaves/templates/leaves/leave_detail.html:529
+#: leaves/templates/leaves/pending_requests_list.html:494
+msgid "Czy na pewno chcesz <b>zatwierdzić</b> ten wniosek urlopowy?"
+msgstr "Czy na pewno chcesz <b>zatwierdzić</b> ten wniosek urlopowy?"
+
+#: leaves/templates/leaves/leave_detail.html:530
+#: leaves/templates/leaves/pending_requests_list.html:496
+msgid "Zatwierdź"
+msgstr "Zatwierdź"
+
+#: leaves/templates/leaves/leave_detail.html:531
+#: leaves/templates/leaves/pending_requests_list.html:499
+msgid "Odrzucenie wniosku"
+msgstr "Odrzucenie wniosku"
+
+#: leaves/templates/leaves/leave_detail.html:532
+#: leaves/templates/leaves/pending_requests_list.html:501
+msgid "Czy na pewno chcesz <b>odrzucić</b> ten wniosek urlopowy?"
+msgstr "Czy na pewno chcesz <b>odrzucić</b> ten wniosek urlopowy?"
+
+#: leaves/templates/leaves/leave_detail.html:534
+#: leaves/templates/leaves/my_vacations.html:410
+#: leaves/templates/leaves/pending_requests_list.html:506
+msgid "Anulowanie wniosku"
+msgstr "Anulowanie wniosku"
+
+#: leaves/templates/leaves/leave_detail.html:535
+#: leaves/templates/leaves/my_vacations.html:412
+#: leaves/templates/leaves/pending_requests_list.html:508
+msgid "Czy na pewno chcesz <b>anulować</b> ten wniosek urlopowy?"
+msgstr "Czy na pewno chcesz <b>anulować</b> ten wniosek urlopowy?"
+
+#: leaves/templates/leaves/my_vacations.html:4
+#: leaves/templates/leaves/my_vacations.html:189
+msgid "Moje Urlopy"
+msgstr "Moje Urlopy"
+
+#: leaves/templates/leaves/my_vacations.html:195
+msgid "Aktualne (trwające)"
+msgstr "Aktualne (trwające)"
+
+#: leaves/templates/leaves/my_vacations.html:203
+#: leaves/templates/leaves/my_vacations.html:249
+#: leaves/templates/leaves/my_vacations.html:307
+msgid "Data rozpoczęcia"
+msgstr "Data rozpoczęcia"
+
+#: leaves/templates/leaves/my_vacations.html:204
+#: leaves/templates/leaves/my_vacations.html:250
+#: leaves/templates/leaves/my_vacations.html:308
+msgid "Data zakończenia"
+msgstr "Data zakończenia"
+
+#: leaves/templates/leaves/my_vacations.html:217
+#: leaves/templates/leaves/my_vacations.html:264
+#: leaves/templates/leaves/my_vacations.html:321
+#: reports/templates/reports/leave_requests_report_list.html:217
+#: team/templates/team/team_detail.html:125
+msgid "Zatwierdzony"
+msgstr "Zatwierdzony"
+
+#: leaves/templates/leaves/my_vacations.html:219
+#: leaves/templates/leaves/my_vacations.html:266
+#: leaves/templates/leaves/team_calendar.html:212
+#: reports/templates/reports/leave_requests_report_list.html:223
+#: team/templates/team/team_detail.html:131 team/views.py:323
+msgid "Oczekujący"
+msgstr "Oczekujący"
+
+#: leaves/templates/leaves/my_vacations.html:234
 msgid "Brak aktualnych urlopów."
 msgstr "Brak aktualnych urlopów."
 
-#: leaves/templates/leaves/my_vacations.html:90
+#: leaves/templates/leaves/my_vacations.html:241
 msgid "Planowane"
 msgstr "Planowane"
 
-#: leaves/templates/leaves/my_vacations.html:122
+#: leaves/templates/leaves/my_vacations.html:277
 msgid "Edytuj"
 msgstr "Edytuj"
 
-#: leaves/templates/leaves/my_vacations.html:129
-msgid "Czy na pewno chcesz anulować?"
-msgstr "Czy na pewno chcesz anulować?"
-
-#: leaves/templates/leaves/my_vacations.html:140
+#: leaves/templates/leaves/my_vacations.html:292
 msgid "Brak planowanych urlopów."
 msgstr "Brak planowanych urlopów."
 
-#: leaves/templates/leaves/my_vacations.html:145
+#: leaves/templates/leaves/my_vacations.html:299
 msgid "Archiwalne"
 msgstr "Archiwalne"
 
-#: leaves/templates/leaves/my_vacations.html:178
+#: leaves/templates/leaves/my_vacations.html:336
 msgid "Brak archiwalnych urlopów."
 msgstr "Brak archiwalnych urlopów."
 
-#: leaves/templates/leaves/new_request.html:3
-#: leaves/templates/leaves/new_request.html:4 templates/request_base.html:3
+#: leaves/templates/leaves/my_vacations.html:350
+msgid "Komentarz (opcjonalnie)..."
+msgstr "Komentarz (opcjonalnie)..."
+
+#: leaves/templates/leaves/my_vacations.html:356
+msgid "Zamknij"
+msgstr "Zamknij"
+
+#: leaves/templates/leaves/new_request.html:4
+#: leaves/templates/leaves/new_request.html:6 templates/request_base.html:3
 msgid "Nowy wniosek"
 msgstr "Nowy wniosek"
 
-#: leaves/templates/leaves/new_request.html:7
+#: leaves/templates/leaves/new_request.html:10
 msgid "Wyślij wniosek"
 msgstr "Wyślij wniosek"
 
-#: leaves/templates/leaves/new_request.html:9
+#: leaves/templates/leaves/new_request.html:12
+msgctxt "leave request submit action verb"
 msgid "wysłać"
 msgstr "wysłać"
+
+#: leaves/templates/leaves/pending_requests_list.html:3
+msgid "Wnioski do zaakceptowania"
+msgstr "Wnioski do zaakceptowania"
+
+#: leaves/templates/leaves/pending_requests_list.html:289
+msgid "Oczekujące Wnioski"
+msgstr "Oczekujące Wnioski"
+
+#: leaves/templates/leaves/pending_requests_list.html:290
+msgid "Przejdź do historii wniosków"
+msgstr "Przejdź do historii wniosków"
+
+#: leaves/templates/leaves/pending_requests_list.html:341
+msgid "Decyzja"
+msgstr "Decyzja"
+
+#: leaves/templates/leaves/pending_requests_list.html:381
+msgid "Zaakceptuj"
+msgstr "Zaakceptuj"
+
+#: leaves/templates/leaves/pending_requests_list.html:387
+msgid "Brak uprawnień"
+msgstr "Brak uprawnień"
+
+#: leaves/templates/leaves/pending_requests_list.html:393
+msgid "Brak oczekujących wniosków urlopowych do rozpatrzenia."
+msgstr "Brak oczekujących wniosków urlopowych do rozpatrzenia."
+
+#: leaves/templates/leaves/pending_requests_list.html:436
+msgid "Komentarz / Odpowiedź (opcjonalnie):"
+msgstr "Komentarz / Odpowiedź (opcjonalnie):"
+
+#: leaves/templates/leaves/pending_requests_list.html:438
+msgid "Wpisz uzasadnienie lub uwagę..."
+msgstr "Wpisz uzasadnienie lub uwagę..."
+
+#: leaves/templates/leaves/pending_requests_list.html:441
+msgid "Pozostało 250 / 250 znaków"
+msgstr "Pozostało 250 / 250 znaków"
 
 #: leaves/templates/leaves/team_calendar.html:3
 msgid "Kalendarz urlopów zespołu"
 msgstr "Kalendarz urlopów zespołu"
 
 #: leaves/templates/leaves/team_calendar.html:183
+#: team/templates/team/team_detail.html:105
+#: team/templates/team/team_detail.html:107
 msgid "Poprzedni"
 msgstr "Poprzedni"
 
@@ -457,6 +1407,8 @@ msgid "Kalendarz urlopów — %(month)s %(y)s"
 msgstr "Kalendarz urlopów — %(month)s %(y)s"
 
 #: leaves/templates/leaves/team_calendar.html:194
+#: team/templates/team/team_detail.html:111
+#: team/templates/team/team_detail.html:113
 msgid "Następny"
 msgstr "Następny"
 
@@ -464,29 +1416,9 @@ msgstr "Następny"
 msgid "Pon"
 msgstr "Pon"
 
-#: leaves/templates/leaves/team_calendar.html:221
-msgid "Wt"
-msgstr "Wt"
-
-#: leaves/templates/leaves/team_calendar.html:222
-msgid "Śr"
-msgstr "Śr"
-
-#: leaves/templates/leaves/team_calendar.html:223
-msgid "Czw"
-msgstr "Czw"
-
-#: leaves/templates/leaves/team_calendar.html:224
-msgid "Pt"
-msgstr "Pt"
-
 #: leaves/templates/leaves/team_calendar.html:225
 msgid "Sob"
 msgstr "Sob"
-
-#: leaves/templates/leaves/team_calendar.html:226
-msgid "Nd"
-msgstr "Nd"
 
 #: leaves/templates/leaves/team_calendar.html:257
 #, python-format
@@ -507,10 +1439,6 @@ msgstr ""
 "                                        </span>\n"
 "                                        "
 
-#: leaves/templates/leaves/team_calendar.html:277
-msgid "Zespół"
-msgstr "Zespół:"
-
 #: leaves/templates/leaves/team_calendar.html:285
 msgid "Brak pracowników"
 msgstr "Brak pracowników"
@@ -528,13 +1456,18 @@ msgstr "Bilans urlopów — zespół %(name)s"
 msgid "Bilans urlopów"
 msgstr "Bilans urlopów"
 
+#: leaves/templates/leaves/team_leave_balance.html:18
+#, python-format
+msgid "Zespół: %(name)s"
+msgstr "Zespół: %(name)s"
+
 #: leaves/templates/leaves/team_leave_balance.html:25
 msgid "Całkowity"
 msgstr "Całkowity"
 
 #: leaves/templates/leaves/team_leave_balance.html:26
 msgid "Wykorzystany"
-msgstr "Wykorzystane"
+msgstr "Wykorzystany"
 
 #: leaves/templates/leaves/team_leave_balance.html:27
 msgid "Pozostały"
@@ -552,97 +1485,1227 @@ msgstr "Brak pracowników w zespole lub brak przypisanego zespołu."
 msgid "Brak danych do wyświetlenia."
 msgstr "Brak danych do wyświetlenia."
 
-#: login/templates/login.html:7
+#: leaves/views.py:246
+msgid "Nie masz uprawnień do zatwierdzania wniosków urlopowych."
+msgstr "Nie masz uprawnień do zatwierdzania wniosków urlopowych."
+
+#: leaves/views.py:250
+msgid "Nie możesz akceptować własnego wniosku."
+msgstr "Nie możesz akceptować własnego wniosku."
+
+#: leaves/views.py:256
+msgid "Nie możesz akceptować tego wniosku"
+msgstr "Nie możesz akceptować tego wniosku"
+
+#: leaves/views.py:273
+#, python-brace-format
+msgid "Wniosek od {first_name} {last_name} został zatwierdzony."
+msgstr "Wniosek od {first_name} {last_name} został zatwierdzony."
+
+#: leaves/views.py:290
+#, python-brace-format
+msgid "Błąd podczas zatwierdzania: {error}"
+msgstr "Błąd podczas zatwierdzania: {error}"
+
+#: leaves/views.py:303
+msgid "Nie masz uprawnień do odrzucania wniosków urlopowych."
+msgstr "Nie masz uprawnień do odrzucania wniosków urlopowych."
+
+#: leaves/views.py:307
+msgid "Nie możesz odrzucać własnego wniosku."
+msgstr "Nie możesz odrzucać własnego wniosku."
+
+#: leaves/views.py:313
+msgid "Nie możesz odrzucić tego wniosku."
+msgstr "Nie możesz odrzucić tego wniosku."
+
+#: leaves/views.py:325
+#, python-brace-format
+msgid "Wniosek od {first_name} {last_name} został odrzucony."
+msgstr "Wniosek od {first_name} {last_name} został odrzucony."
+
+#: leaves/views.py:343
+#, python-brace-format
+msgid "Błąd podczas odrzucania: {error}"
+msgstr "Błąd podczas odrzucania: {error}"
+
+#: leaves/views.py:467
+#, python-brace-format
+msgid "Brak permisji: {action}. Aktywna rola: {role}"
+msgstr "Brak permisji: {action}. Aktywna rola: {role}"
+
+#: leaves/views.py:480
+msgid "Można edytować tylko wnioski oczekujące."
+msgstr "Można edytować tylko wnioski oczekujące."
+
+#: leaves/views.py:485
+msgid "Możesz edytować tylko własne wnioski."
+msgstr "Możesz edytować tylko własne wnioski."
+
+#: leaves/views.py:554
+msgid "Możesz anulować tylko własne wnioski."
+msgstr "Możesz anulować tylko własne wnioski."
+
+#: leaves/views.py:558
+msgid "Można anulować tylko wnioski oczekujące."
+msgstr "Można anulować tylko wnioski oczekujące."
+
+#: leaves/views.py:565
+msgid "Wniosek został anulowany."
+msgstr "Wniosek został anulowany."
+
+#: leaves/views.py:691
+msgid "ID"
+msgstr "ID"
+
+#: leaves/views.py:692 reports/views.py:674
+msgid "Imię"
+msgstr "Imię"
+
+#: leaves/views.py:693 reports/views.py:675
+msgid "Nazwisko"
+msgstr "Nazwisko"
+
+#: leaves/views.py:695 reports/views.py:974 reports/views.py:1103
+msgid "Data od"
+msgstr "Data od"
+
+#: leaves/views.py:696 reports/views.py:975 reports/views.py:1104
+msgid "Data do"
+msgstr "Data do"
+
+#: leaves/views.py:699
+msgid "Potwierdził"
+msgstr "Potwierdził"
+
+#: leaves/views.py:700
+msgid "Data złożenia"
+msgstr "Data złożenia"
+
+#: leaves/views.py:726
+msgid "Styczeń"
+msgstr "Styczeń"
+
+#: leaves/views.py:727
+msgid "Luty"
+msgstr "Luty"
+
+#: leaves/views.py:728
+msgid "Marzec"
+msgstr "Marzec"
+
+#: leaves/views.py:729
+msgid "Kwiecień"
+msgstr "Kwiecień"
+
+#: leaves/views.py:731
+msgid "Czerwiec"
+msgstr "Czerwiec"
+
+#: leaves/views.py:732
+msgid "Lipiec"
+msgstr "Lipiec"
+
+#: leaves/views.py:733
+msgid "Sierpień"
+msgstr "Sierpień"
+
+#: leaves/views.py:734
+msgid "Wrzesień"
+msgstr "Wrzesień"
+
+#: leaves/views.py:735
+msgid "Październik"
+msgstr "Październik"
+
+#: leaves/views.py:736
+msgid "Listopad"
+msgstr "Listopad"
+
+#: leaves/views.py:737
+msgid "Grudzień"
+msgstr "Grudzień"
+
+#: leaves/views.py:813
+msgid "Nie masz uprawnień do przeglądania tego wniosku"
+msgstr "Nie masz uprawnień do przeglądania tego wniosku"
+
+#: leaves/views.py:824
+#, python-brace-format
+msgid ""
+"Próba podglądu wniosku #{request_id} użytkownika {username}. Aktywna rola: "
+"{active_role}"
+msgstr ""
+"Próba podglądu wniosku #{request_id} użytkownika {username}. Aktywna rola: "
+"{active_role}"
+
+#: login/templates/first_password_change.html:4
+msgid "Pierwsze logowanie – Sunny"
+msgstr "Pierwsze logowanie – Sunny"
+
+#: login/templates/first_password_change.html:24
+msgid "Pierwsze logowanie 🔐"
+msgstr "Pierwsze logowanie 🔐"
+
+#: login/templates/first_password_change.html:25
+msgid "Ze względów bezpieczeństwa musisz zmienić swoje hasło."
+msgstr "Ze względów bezpieczeństwa musisz zmienić swoje hasło."
+
+#: login/templates/first_password_change_done.html:4
+msgid "Hasło zaktualizowane – Sunny"
+msgstr "Hasło zaktualizowane – Sunny"
+
+#: login/templates/first_password_change_done.html:12
+msgid "Hasło ustawione pomyślnie!"
+msgstr "Hasło ustawione pomyślnie!"
+
+#: login/templates/first_password_change_done.html:14
+msgid "Twoje nowe hasło jest już aktywne i w pełni zabezpiecza konto."
+msgstr "Twoje nowe hasło jest już aktywne i w pełni zabezpiecza konto."
+
+#: login/templates/first_password_change_done.html:17
+msgid "Przejdź do aplikacji"
+msgstr "Przejdź do aplikacji"
+
+#: login/templates/login.html:4
 msgid "Logowanie – Sunny"
 msgstr "Logowanie – Sunny"
 
-#: login/templates/login.html:233
-msgid "System zarządzania urlopami"
-msgstr "System zarządzania urlopami"
-
-#: login/templates/login.html:237
+#: login/templates/login.html:22
 msgid "Witaj z powrotem 👋"
 msgstr "Witaj z powrotem 👋"
 
-#: login/templates/login.html:238
+#: login/templates/login.html:23
 msgid "Zaloguj się do swojego konta"
 msgstr "Zaloguj się do swojego konta"
 
-#: login/templates/login.html:251
-msgid "Nazwa użytkownika"
-msgstr "Nazwa użytkownika"
+#: login/templates/login.html:47
+msgid "Wprowadź nazwę"
+msgstr "Wprowadź nazwę"
 
-#: login/templates/login.html:262
+#: login/templates/login.html:55
 msgid "Hasło"
 msgstr "Hasło"
 
-#: login/templates/login.html:272
+#: login/templates/login.html:63
+msgid "Wprowadź hasło"
+msgstr "Wprowadź hasło"
+
+#: login/templates/login.html:65
+msgid "Pokaż hasło"
+msgstr "Pokaż hasło"
+
+#: login/templates/login.html:76
+msgid "Nie pamiętam hasła"
+msgstr "Nie pamiętam hasła"
+
+#: login/templates/login.html:81
+#: templates/registration/password_reset_complete.html:17
 msgid "Zaloguj się"
 msgstr "Zaloguj się"
 
-#: login/templates/login.html:287 templates/base.html:77
-msgid "© 2026 SunnyTeam"
-msgstr "© 2026 SunnyTeam"
+#: login/templates/verify_2fa.html:4
+msgid "Weryfikacja 2FA – Sunny"
+msgstr "Weryfikacja 2FA – Sunny"
 
-#: templates/base.html:23
-msgid "Pulpit"
-msgstr "Pulpit"
+#: login/templates/verify_2fa.html:14
+msgid "Weryfikacja 2FA ✉️"
+msgstr "Weryfikacja 2FA ✉️"
 
-#: templates/base.html:25
-msgid "Nowy Wniosek"
-msgstr "Nowy Wniosek"
+#: login/templates/verify_2fa.html:15
+msgid "Wprowadź 6-cyfrowy kod wysłany na Twój adres e-mail."
+msgstr "Wprowadź 6-cyfrowy kod wysłany na Twój adres e-mail."
 
-#: templates/base.html:27
-msgid "Raporty"
-msgstr "Raporty"
+#: login/templates/verify_2fa.html:29
+msgid "Kod weryfikacyjny"
+msgstr "Kod weryfikacyjny"
 
-#: templates/base.html:31
+#: login/templates/verify_2fa.html:44
+msgid "Zweryfikuj kod"
+msgstr "Zweryfikuj kod"
+
+#: login/templates/verify_2fa.html:50
+msgid "Powrót do logowania"
+msgstr "Powrót do logowania"
+
+#: login/views.py:23
+msgid "Błędne dane."
+msgstr "Błędne dane."
+
+#: login/views.py:24
+msgid "Konto nieaktywne."
+msgstr "Konto nieaktywne."
+
+#: login/views.py:37
+#, python-brace-format
+msgid "Zbyt wiele prób logowania. Blokada do {time}."
+msgstr "Zbyt wiele prób logowania. Blokada do {time}."
+
+#: login/views.py:65
+msgid "Poprawne uwierzytelnienie hasłem. Rozpoczęto procedurę 2FA."
+msgstr "Poprawne uwierzytelnienie hasłem. Rozpoczęto procedurę 2FA."
+
+#: login/views.py:74
+msgid "Kod weryfikacyjny 2FA"
+msgstr "Kod weryfikacyjny 2FA"
+
+#: login/views.py:75
 #, python-format
+msgid "Twój kod weryfikacyjny: %(code)s"
+msgstr "Twój kod weryfikacyjny: %(code)s"
+
+#: login/views.py:99
+msgid "Poprawne wylogowanie."
+msgstr "Poprawne wylogowanie."
+
+#: login/views.py:134
+msgid "Pomyślna weryfikacja dwuetapowa (2FA). Zalogowano użytkownika."
+msgstr "Pomyślna weryfikacja dwuetapowa (2FA). Zalogowano użytkownika."
+
+#: login/views.py:150
+msgid "Wprowadzono błędny kod 2FA."
+msgstr "Wprowadzono błędny kod 2FA."
+
+#: login/views.py:152
+msgid "Nieprawidłowy kod."
+msgstr "Nieprawidłowy kod."
+
+#: login/views.py:171
+msgid "Użytkownik pomyślnie zmienił tymczasowe hasło."
+msgstr "Użytkownik pomyślnie zmienił tymczasowe hasło."
+
+#: reports/templates/reports/index.html:4
+msgid "Raporty - Sunny"
+msgstr "Raporty - Sunny"
+
+#: reports/templates/reports/index.html:11
+msgid "Przegląd dostępnych raportów systemowych."
+msgstr "Przegląd dostępnych raportów systemowych."
+
+#: reports/templates/reports/index.html:19
+msgid "Analiza indywidualna"
+msgstr "Analiza indywidualna"
+
+#: reports/templates/reports/index.html:20
+msgid "Urlopy użytkowników"
+msgstr "Urlopy użytkowników"
+
+#: reports/templates/reports/index.html:21
+msgid "Podsumowanie wykorzystania dni urlopowych z podziałem na pracowników."
+msgstr "Podsumowanie wykorzystania dni urlopowych z podziałem na pracowników."
+
+#: reports/templates/reports/index.html:29
+msgid "Analiza zespołowa"
+msgstr "Analiza zespołowa"
+
+#: reports/templates/reports/index.html:30
+msgid "Urlopy zespołów"
+msgstr "Urlopy zespołów"
+
+#: reports/templates/reports/index.html:31
+msgid "Zbiorczy podgląd wykorzystania urlopów w poszczególnych zespołach."
+msgstr "Zbiorczy podgląd wykorzystania urlopów w poszczególnych zespołach."
+
+#: reports/templates/reports/index.html:37
+msgid "Raport"
+msgstr "Raport"
+
+#: reports/templates/reports/index.html:38
+#: reports/templates/reports/leave_requests_report_list.html:115
+msgid "Wnioski urlopowe"
+msgstr "Wnioski urlopowe"
+
+#: reports/templates/reports/index.html:39
 msgid ""
-"\n"
-"            Witaj %(first)s %(last)s (%(role)s) !\n"
-"            "
+"Zestawienie wniosków o urlop, ich statusów oraz decyzji osób "
+"zatwierdzających."
 msgstr ""
-"\n"
-"            Witaj %(first)s %(last)s (%(role)s) !\n"
-"            "
+"Zestawienie wniosków o urlop, ich statusów oraz decyzji osób "
+"zatwierdzających."
 
-#: templates/base.html:35
-msgid "Wybierz rolę:"
-msgstr "Wybierz rolę:"
+#: reports/templates/reports/index.html:46
+#: reports/templates/reports/index.html:54
+msgid "Logi"
+msgstr "Logi"
 
-#: templates/base.html:43
-msgid "Przełącz"
-msgstr "Przełącz"
+#: reports/templates/reports/index.html:47
+msgid "Aktywność"
+msgstr "Aktywność"
 
-#: templates/base.html:57
-msgid "Wyloguj się"
-msgstr "Wyloguj się"
+#: reports/templates/reports/index.html:48
+msgid "Historia akcji i modyfikacji obiektów dokonywanych w aplikacji."
+msgstr "Historia akcji i modyfikacji obiektów dokonywanych w aplikacji."
 
-#: templates/request_base.html:109
-msgid "Button"
-msgstr "Przycisk"
+#: reports/templates/reports/index.html:55
+msgid "Autoryzacja"
+msgstr "Autoryzacja"
 
-#: templates/request_base.html:117
-msgid "Potwierdzenie"
-msgstr "Potwierdzenie"
+#: reports/templates/reports/index.html:56
+msgid ""
+"Historia zdarzeń związanych z logowaniem, dostępem i bezpieczeństwem kont."
+msgstr ""
+"Historia zdarzeń związanych z logowaniem, dostępem i bezpieczeństwem kont."
 
-#: templates/request_base.html:118
-msgid "Czy na pewno chcesz"
-msgstr "Czy na pewno chcesz"
+#: reports/templates/reports/index.html:62
+msgid "Statystyki ról"
+msgstr "Statystyki ról"
 
-#: templates/request_base.html:118
-msgid "wniosek?"
-msgstr "wniosek?"
+#: reports/templates/reports/index.html:63
+#: reports/templates/reports/users_per_role.html:88
+msgid "Role systemowe"
+msgstr "Role systemowe"
 
-#: templates/request_base.html:121
-msgid "Wnioskowane / Dostępne dni:"
-msgstr "Wnioskowane / Dostępne dni:"
+#: reports/templates/reports/index.html:64
+msgid "Liczba użytkowników przypisanych do ról oraz procent aktywnych kont."
+msgstr "Liczba użytkowników przypisanych do ról oraz procent aktywnych kont."
 
-#: templates/request_base.html:122
+#: reports/templates/reports/leave_requests_report_list.html:4
+msgid "Raport: Lista wniosków urlopowych"
+msgstr "Raport: Lista wniosków urlopowych"
+
+#: reports/templates/reports/leave_requests_report_list.html:111
+#: reports/templates/reports/leave_usage.html:99
+#: reports/templates/reports/team_report.html:79
+#: reports/templates/reports/users_per_role.html:85
+msgid "Wszystkie raporty"
+msgstr "Wszystkie raporty"
+
+#: reports/templates/reports/leave_requests_report_list.html:120
+#: reports/templates/reports/leave_usage.html:107
+#: reports/templates/reports/team_report.html:87
+#: reports/templates/reports/users_per_role.html:92
+msgid "Eksportuj do CSV"
+msgstr "Eksportuj do CSV"
+
+#: reports/templates/reports/leave_requests_report_list.html:123
+#: reports/templates/reports/leave_usage.html:110
+#: reports/templates/reports/team_report.html:90
+#: reports/templates/reports/users_per_role.html:95
+msgid "Pobierz PDF"
+msgstr "Pobierz PDF"
+
+#: reports/templates/reports/leave_requests_report_list.html:133
+msgid "Szukaj pracownika:"
+msgstr "Szukaj pracownika:"
+
+#: reports/templates/reports/leave_requests_report_list.html:134
+msgid "Imię, nazwisko lub login..."
+msgstr "Imię, nazwisko lub login..."
+
+#: reports/templates/reports/leave_requests_report_list.html:138
+msgid "Stan wniosku:"
+msgstr "Stan wniosku:"
+
+#: reports/templates/reports/leave_requests_report_list.html:141
+msgid "Nierozpatrzone (Oczekujące)"
+msgstr "Nierozpatrzone (Oczekujące)"
+
+#: reports/templates/reports/leave_requests_report_list.html:142
+msgid "Rozpatrzone (Wszystkie)"
+msgstr "Rozpatrzone (Wszystkie)"
+
+#: reports/templates/reports/leave_requests_report_list.html:143
+msgid "Zatwierdzone"
+msgstr "Zatwierdzone"
+
+#: reports/templates/reports/leave_requests_report_list.html:144
+msgid "Odrzucone"
+msgstr "Odrzucone"
+
+#: reports/templates/reports/leave_requests_report_list.html:145
+msgid "Anulowane"
+msgstr "Anulowane"
+
+#: reports/templates/reports/leave_requests_report_list.html:150
+#: reports/templates/reports/leave_usage.html:123
+msgid "Filtruj po zespole:"
+msgstr "Filtruj po zespole:"
+
+#: reports/templates/reports/leave_requests_report_list.html:161
+msgid "Data urlopu od:"
+msgstr "Data urlopu od:"
+
+#: reports/templates/reports/leave_requests_report_list.html:166
+msgid "Data urlopu do:"
+msgstr "Data urlopu do:"
+
+#: reports/templates/reports/leave_requests_report_list.html:184
+msgid "Okres"
+msgstr "Okres"
+
+#: reports/templates/reports/leave_requests_report_list.html:187
+msgid "Zatwierdził / Odrzucił"
+msgstr "Zatwierdził / Odrzucił"
+
+#: reports/templates/reports/leave_requests_report_list.html:237
+msgid "Brak wniosków urlopowych spełniających kryteria filtracji."
+msgstr "Brak wniosków urlopowych spełniających kryteria filtracji."
+
+#: reports/templates/reports/leave_requests_report_list.html:248
+#, python-format
+msgid "Strona %(number)s z %(total_pages)s (łącznie rekordów: %(count)s)"
+msgstr "Strona %(number)s z %(total_pages)s (łącznie rekordów: %(count)s)"
+
+#: reports/templates/reports/leave_usage.html:4
+msgid "Raport: Wykorzystanie urlopów"
+msgstr "Raport: Wykorzystanie urlopów"
+
+#: reports/templates/reports/leave_usage.html:102
+msgid "Wykorzystanie urlopów: Pracownicy"
+msgstr "Wykorzystanie urlopów: Pracownicy"
+
+#: reports/templates/reports/leave_usage.html:150 reports/views.py:729
+msgid "Przydzielone"
+msgstr "Przydzielone"
+
+#: reports/templates/reports/leave_usage.html:152 reports/views.py:729
+msgid "Pozostałe"
+msgstr "Pozostałe"
+
+#: reports/templates/reports/leave_usage.html:153
+#: reports/templates/reports/team_report.html:106
+#, python-format
+msgid "%% wykorzystania"
+msgstr "%% wykorzystania"
+
+#: reports/templates/reports/leave_usage.html:189
+msgid "Brak danych spełniających kryteria filtracji."
+msgstr "Brak danych spełniających kryteria filtracji."
+
+#: reports/templates/reports/team_report.html:4
+msgid "Raport: urlopy per zespół"
+msgstr "Raport: urlopy per zespół"
+
+#: reports/templates/reports/team_report.html:82
+msgid "Wykorzystanie urlopów: Zespoły"
+msgstr "Wykorzystanie urlopów: Zespoły"
+
+#: reports/templates/reports/team_report.html:103 reports/views.py:876
+msgid "Przydzielone (suma)"
+msgstr "Przydzielone (suma)"
+
+#: reports/templates/reports/team_report.html:104 reports/views.py:877
+msgid "Wykorzystane (suma)"
+msgstr "Wykorzystane (suma)"
+
+#: reports/templates/reports/team_report.html:105 reports/views.py:878
+msgid "Pozostałe (suma)"
+msgstr "Pozostałe (suma)"
+
+#: reports/templates/reports/team_report.html:137
+#: reports/templates/reports/users_per_role.html:130
+msgid "Brak danych."
+msgstr "Brak danych."
+
+#: reports/templates/reports/users_per_role.html:4
+msgid "Raport: Role użytkowników"
+msgstr "Raport: Role użytkowników"
+
+#: reports/templates/reports/users_per_role.html:110 reports/views.py:453
+#: reports/views.py:491
+msgid "Liczba użytkowników"
+msgstr "Liczba użytkowników"
+
+#: reports/templates/reports/users_per_role.html:112
+#, python-format
+msgid "%% aktywnych"
+msgstr "%% aktywnych"
+
+#: reports/templates/reports/users_per_role.html:144
+msgid "Wliczaj nieaktywnych do wykresu"
+msgstr "Wliczaj nieaktywnych do wykresu"
+
+#: reports/templates/reports/users_per_role.html:165
+msgid "użytkowników"
+msgstr "użytkowników"
+
+#: reports/views.py:100
+#, python-format
+msgid "Strona %(current)s z %(total)s"
+msgstr "Strona %(current)s z %(total)s"
+
+#: reports/views.py:211
+#, python-brace-format
+msgid "<b>Wygenerowano przez:</b> {name}"
+msgstr "<b>Wygenerowano przez:</b> {name}"
+
+#: reports/views.py:217
+#, python-brace-format
+msgid "<b>Rola użytkownika:</b> {role}"
+msgstr "<b>Rola użytkownika:</b> {role}"
+
+#: reports/views.py:223
+#, python-brace-format
+msgid "<b>Data utworzenia:</b> {date}"
+msgstr "<b>Data utworzenia:</b> {date}"
+
+#: reports/views.py:231
+#, python-brace-format
+msgid "<b>Zastosowane filtry:</b> {filters}"
+msgstr "<b>Zastosowane filtry:</b> {filters}"
+
+#: reports/views.py:239
+#, python-brace-format
+msgid "<b>Liczba rekordów:</b> {count}"
+msgstr "<b>Liczba rekordów:</b> {count}"
+
+#: reports/views.py:314
+msgid "Brak (wszystkie rekordy)"
+msgstr "Brak (wszystkie rekordy)"
+
+#: reports/views.py:371
+msgid "Brak roli"
+msgstr "Brak roli"
+
+#: reports/views.py:450 reports/views.py:512
+msgid "raport_role"
+msgstr "raport_role"
+
+#: reports/views.py:455 reports/views.py:493
+msgid "% aktywnych"
+msgstr "% aktywnych"
+
+#: reports/views.py:481
+msgid "Raport Użytkowników: Role"
+msgstr "Raport Użytkowników: Role"
+
+#: reports/views.py:504
+msgid "* Wykres uwzględnia: Wszyscy użytkownicy (aktywni i nieaktywni)"
+msgstr "* Wykres uwzględnia: Wszyscy użytkownicy (aktywni i nieaktywni)"
+
+#: reports/views.py:506
+msgid "* Wykres uwzględnia: Tylko aktywni użytkownicy"
+msgstr "* Wykres uwzględnia: Tylko aktywni użytkownicy"
+
+#: reports/views.py:672 reports/views.py:735
+msgid "raport_pracownicy"
+msgstr "raport_pracownicy"
+
+#: reports/views.py:677
+msgid "Przydzielone dni"
+msgstr "Przydzielone dni"
+
+#: reports/views.py:678
+msgid "Wykorzystane dni"
+msgstr "Wykorzystane dni"
+
+#: reports/views.py:679
+msgid "Pozostałe dni"
+msgstr "Pozostałe dni"
+
+#: reports/views.py:680 reports/views.py:729 reports/views.py:834
+#: reports/views.py:879
+msgid "% wykorzystania"
+msgstr "% wykorzystania"
+
+#: reports/views.py:715
+msgid "Raport Wykorzystania Urlopów: Pracownicy"
+msgstr "Raport Wykorzystania Urlopów: Pracownicy"
+
+#: reports/views.py:827 reports/views.py:886
+msgid "raport_zespoly"
+msgstr "raport_zespoly"
+
+#: reports/views.py:830 reports/views.py:875
+msgid "Liczba osób"
+msgstr "Liczba osób"
+
+#: reports/views.py:831
+msgid "Przydzielone dni (suma)"
+msgstr "Przydzielone dni (suma)"
+
+#: reports/views.py:832
+msgid "Wykorzystane dni (suma)"
+msgstr "Wykorzystane dni (suma)"
+
+#: reports/views.py:833
+msgid "Pozostałe dni (suma)"
+msgstr "Pozostałe dni (suma)"
+
+#: reports/views.py:856
+msgid "Raport Wykorzystania Urlopów: Zespoły"
+msgstr "Raport Wykorzystania Urlopów: Zespoły"
+
+#: reports/views.py:860 templates/request_base.html:126
 msgid "dni"
 msgstr "dni"
 
-#: templates/request_base.html:126
+#: reports/views.py:947 reports/views.py:1015
+msgid "raport_log_aktywnosc"
+msgstr "raport_log_aktywnosc"
+
+#: reports/views.py:949 reports/views.py:1003 reports/views.py:1078
+#: reports/views.py:1132
+msgid "Data i czas"
+msgstr "Data i czas"
+
+#: reports/views.py:950 reports/views.py:973 reports/views.py:1004
+#: reports/views.py:1079 reports/views.py:1102 reports/views.py:1133
+msgid "Użytkownik"
+msgstr "Użytkownik"
+
+#: reports/views.py:952 reports/views.py:972 reports/views.py:1006
+msgid "Typ obiektu"
+msgstr "Typ obiektu"
+
+#: reports/views.py:953 reports/views.py:1007
+msgid "ID obiektu"
+msgstr "ID obiektu"
+
+#: reports/views.py:984
+msgid "Raport Logów Aktywności"
+msgstr "Raport Logów Aktywności"
+
+#: reports/views.py:1068 reports/views.py:1123
+msgid "Anonim"
+msgstr "Anonim"
+
+#: reports/views.py:1076 reports/views.py:1144
+msgid "raport_log_autoryzacja"
+msgstr "raport_log_autoryzacja"
+
+#: reports/views.py:1081 reports/views.py:1135
+msgid "Poziom"
+msgstr "Poziom"
+
+#: reports/views.py:1082 reports/views.py:1136
+msgid "Adres IP"
+msgstr "Adres IP"
+
+#: reports/views.py:1101
+msgid "Poziom (severity)"
+msgstr "Poziom (severity)"
+
+#: reports/views.py:1113
+msgid "Raport Logów Uwierzytelniania"
+msgstr "Raport Logów Uwierzytelniania"
+
+#: reports/views.py:1278
+msgid "Brak (wszystkie widoczne wnioski)"
+msgstr "Brak (wszystkie widoczne wnioski)"
+
+#: reports/views.py:1386 reports/views.py:1455
+msgid "raport_wnioskow"
+msgstr "raport_wnioskow"
+
+#: reports/views.py:1388
+msgid "ID Wniosku"
+msgstr "ID Wniosku"
+
+#: reports/views.py:1391 reports/views.py:1444
+msgid "Od"
+msgstr "Od"
+
+#: reports/views.py:1392 reports/views.py:1445
+msgid "Do"
+msgstr "Do"
+
+#: reports/views.py:1395
+msgid "Zatwierdził/Odrzucił"
+msgstr "Zatwierdził/Odrzucił"
+
+#: reports/views.py:1421
+msgid "Raport Wniosków Urlopowych"
+msgstr "Raport Wniosków Urlopowych"
+
+#: reports/views.py:1448
+msgid "Zatwierdził(a)"
+msgstr "Zatwierdził(a)"
+
+#: reports/views.py:1506
+msgid "Brak dostępu dla Manager."
+msgstr "Brak dostępu dla Manager."
+
+#: team/templates/team/team_archive_detail.html:4
+msgid "Zarchiwizowany Zespół:"
+msgstr "Zarchiwizowany Zespół:"
+
+#: team/templates/team/team_archive_detail.html:177
+msgid "Zarchiwizowany"
+msgstr "Zarchiwizowany"
+
+#: team/templates/team/team_archive_detail.html:180
+msgid "Dane historyczne odtworzone na podstawie migawek wniosków urlopowych."
+msgstr "Dane historyczne odtworzone na podstawie migawek wniosków urlopowych."
+
+#: team/templates/team/team_archive_detail.html:185
+msgid "Powrót do listy zespołów"
+msgstr "Powrót do listy zespołów"
+
+#: team/templates/team/team_archive_detail.html:193
+msgid "Historyczni członkowie zespołu"
+msgstr "Historyczni członkowie zespołu"
+
+#: team/templates/team/team_archive_detail.html:202
+#: team/templates/team/team_detail.html:55
+msgid "Imię i nazwisko"
+msgstr "Imię i nazwisko"
+
+#: team/templates/team/team_archive_detail.html:204
+msgid "Konto użytkownika"
+msgstr "Konto użytkownika"
+
+#: team/templates/team/team_archive_detail.html:218
+msgid "Aktywne"
+msgstr "Aktywne"
+
+#: team/templates/team/team_archive_detail.html:220
+msgid "Nieaktywne"
+msgstr "Nieaktywne"
+
+#: team/templates/team/team_archive_detail.html:229
+msgid "Brak przypisanych historycznych członków."
+msgstr "Brak przypisanych historycznych członków."
+
+#: team/templates/team/team_confirm_delete.html:5
+msgid "Potwierdzenie usunięcia:"
+msgstr "Potwierdzenie usunięcia:"
+
+#: team/templates/team/team_confirm_delete.html:13
+msgid "Potwierdzenie usunięcia"
+msgstr "Potwierdzenie usunięcia"
+
+#: team/templates/team/team_confirm_delete.html:18
+msgid "Czy na pewno chcesz usunąć zespół"
+msgstr "Czy na pewno chcesz usunąć zespół"
+
+#: team/templates/team/team_confirm_delete.html:21
+msgid "Zespół zostanie dezaktywowany w systemie."
+msgstr "Zespół zostanie dezaktywowany w systemie."
+
+#: team/templates/team/team_confirm_delete.html:29
+msgid "Tak, usuń"
+msgstr "Tak, usuń"
+
+#: team/templates/team/team_detail.html:4
+msgid "Szczegóły Zespołu"
+msgstr "Szczegóły Zespołu"
+
+#: team/templates/team/team_detail.html:18
+msgid "Brak opisu dla tego zespołu."
+msgstr "Brak opisu dla tego zespołu."
+
+#: team/templates/team/team_detail.html:26
+msgid "Powrót do listy"
+msgstr "Powrót do listy"
+
+#: team/templates/team/team_detail.html:29
+msgid "Edytuj członków"
+msgstr "Edytuj członków"
+
+#: team/templates/team/team_detail.html:30
+msgid "Edytuj zespół"
+msgstr "Edytuj zespół"
+
+#: team/templates/team/team_detail.html:56
+msgid "Wyróżnij"
+msgstr "Wyróżnij"
+
+#: team/templates/team/team_detail.html:57
+msgid "Dostępne dni"
+msgstr "Dostępne dni"
+
+#: team/templates/team/team_detail.html:58
+msgid "Nieprzetworzone"
+msgstr "Nieprzetworzone"
+
+#: team/templates/team/team_detail.html:88
+msgid "Brak przypisanych członków."
+msgstr "Brak przypisanych członków."
+
+#: team/templates/team/team_detail.html:116
+msgid "Reset zaznaczenia"
+msgstr "Reset zaznaczenia"
+
+#: team/templates/team/team_detail.html:182
+#, python-format
+msgid "%(amount)s dzień"
+msgid_plural "%(amount)s dni"
+msgstr[0] "%(amount)s dzień"
+msgstr[1] "%(amount)s dni"
+
+#: team/templates/team/team_form.html:5
+#, python-format
+msgid "Edycja: %(name)s"
+msgstr "Edycja: %(name)s"
+
+#: team/templates/team/team_form.html:5
+msgid "Dodaj nowy zespół"
+msgstr "Dodaj nowy zespół"
+
+#: team/templates/team/team_form.html:14
+#, python-format
+msgid "Edycja Zespołu: %(name)s"
+msgstr "Edycja Zespołu: %(name)s"
+
+#: team/templates/team/team_form.html:14
+msgid "Utwórz Nowy Zespół"
+msgstr "Utwórz Nowy Zespół"
+
+#: team/templates/team/team_form.html:16
+msgid "Zdefiniuj podstawowe dane oraz przydziel kierownictwo zespołu."
+msgstr "Zdefiniuj podstawowe dane oraz przydziel kierownictwo zespołu."
+
+#: team/templates/team/team_form.html:68
+msgid "Wybierz współzarządzającego z listy"
+msgstr "Wybierz współzarządzającego z listy"
+
+#: team/templates/team/team_form.html:79
+msgid "Zapisz zespół"
+msgstr "Zapisz zespół"
+
+#: team/templates/team/team_form.html:95
+msgid "Wybierz osobę z listy"
+msgstr "Wybierz osobę z listy"
+
+#: team/templates/team/team_form.html:124
+msgid "Brak wybranych osób"
+msgstr "Brak wybranych osób"
+
+#: team/templates/team/team_list.html:4 team/templates/team/team_list.html:158
+msgid "Lista Zespołów"
+msgstr "Lista Zespołów"
+
+#: team/templates/team/team_list.html:166
+msgid "Raport Zespołów"
+msgstr "Raport Zespołów"
+
+#: team/templates/team/team_list.html:173
+msgid "Dodaj zespół"
+msgstr "Dodaj zespół"
+
+#: team/templates/team/team_list.html:182
+msgid "Aktywne zespoły"
+msgstr "Aktywne zespoły"
+
+#: team/templates/team/team_list.html:191
+#: team/templates/team/team_list.html:266
+msgid "Nazwa zespołu"
+msgstr "Nazwa zespołu"
+
+#: team/templates/team/team_list.html:194
+msgid "Liczba pracowników"
+msgstr "Liczba pracowników"
+
+#: team/templates/team/team_list.html:249
+msgid "Brak aktywnych zespołów."
+msgstr "Brak aktywnych zespołów."
+
+#: team/templates/team/team_list.html:257
+msgid "Zarchiwizowane zespoły"
+msgstr "Zarchiwizowane zespoły"
+
+#: team/templates/team/team_list.html:283
+msgid "Brak zarchiwizowanych zespołów."
+msgstr "Brak zarchiwizowanych zespołów."
+
+#: team/templates/team/team_members_form.html:5
+#, python-format
+msgid "Zarządzaj składem: %(name)s"
+msgstr "Zarządzaj składem: %(name)s"
+
+#: team/templates/team/team_members_form.html:13
+msgid "Zarządzanie Składem Zespołu"
+msgstr "Zarządzanie Składem Zespołu"
+
+#: team/templates/team/team_members_form.html:38
+msgid "Dodaj członka do zespołu..."
+msgstr "Dodaj członka do zespołu..."
+
+#: team/templates/team/team_members_form.html:42
+msgid "Aktualnie przypisani członkowie zespołu:"
+msgstr "Aktualnie przypisani członkowie zespołu:"
+
+#: team/templates/team/team_members_form.html:54
+msgid "Zapisz skład zespołu"
+msgstr "Zapisz skład zespołu"
+
+#: team/templates/team/team_members_form.html:70
+msgid "Wybierz osobę do dodania..."
+msgstr "Wybierz osobę do dodania..."
+
+#: team/templates/team/team_members_form.html:99
+msgid "Brak dodanych osób w tym zespole."
+msgstr "Brak dodanych osób w tym zespole."
+
+#: team/views.py:50
+msgid "Nie jesteś przypisany jako manager do żadnego aktywnego zespołu."
+msgstr "Nie jesteś przypisany jako manager do żadnego aktywnego zespołu."
+
+#: team/views.py:62
+msgid "Nie jesteś obecnie opiekunem żadnego aktywnego zespołu."
+msgstr "Nie jesteś obecnie opiekunem żadnego aktywnego zespołu."
+
+#: team/views.py:132
+msgid "Nie masz uprawnień do przeglądania tego zespołu"
+msgstr "Nie masz uprawnień do przeglądania tego zespołu"
+
+#: team/views.py:157
+#, python-brace-format
+msgid "Próba podglądu zespołu #{team_id} ({team_name}). Aktywna rola: {role}"
+msgstr "Próba podglądu zespołu #{team_id} ({team_name}). Aktywna rola: {role}"
+
+#: team/views.py:177 team/views.py:178
+msgid "Brak przypisanego"
+msgstr "Brak przypisanego"
+
+#: team/views.py:358
+msgid "Tylko administrator może przeglądać zarchiwizowane zespoły."
+msgstr "Tylko administrator może przeglądać zarchiwizowane zespoły."
+
+#: team/views.py:368
+#, python-brace-format
+msgid ""
+"Próba podglądu zarchiwizowanego zespołu #{team_id} ({team_name}). Aktywna "
+"rola: {role}"
+msgstr ""
+"Próba podglądu zarchiwizowanego zespołu #{team_id} ({team_name}). Aktywna "
+"rola: {role}"
+
+#: team/views.py:430
+msgid "Brak uprawnień. Tylko Administrator może tworzyć nowe zespoły."
+msgstr "Brak uprawnień. Tylko Administrator może tworzyć nowe zespoły."
+
+#: team/views.py:462
+#, python-brace-format
+msgid "Pomyślnie utworzono zespół '{name}'."
+msgstr "Pomyślnie utworzono zespół '{name}'."
+
+#: team/views.py:499
+msgid ""
+"Brak uprawnień. Możesz edytować dane tylko tego zespołu, którego jesteś "
+"opiekunem HR."
+msgstr ""
+"Brak uprawnień. Możesz edytować dane tylko tego zespołu, którego jesteś "
+"opiekunem HR."
+
+#: team/views.py:527
+#, python-brace-format
+msgid "Pomyślnie zaktualizowano dane zespołu '{name}'."
+msgstr "Pomyślnie zaktualizowano dane zespołu '{name}'."
+
+#: team/views.py:549
+msgid "Brak uprawnień. Tylko Administrator może dezaktywować zespół."
+msgstr "Brak uprawnień. Tylko Administrator może dezaktywować zespół."
+
+#: team/views.py:567
+#, python-brace-format
+msgid "Dezaktywowano zespół '{name}'."
+msgstr "Dezaktywowano zespół '{name}'."
+
+#: team/views.py:572
+#, python-brace-format
+msgid "Zespół '{name}' został pomyślnie dezaktywowany."
+msgstr "Zespół '{name}' został pomyślnie dezaktywowany."
+
+#: team/views.py:602
+msgid ""
+"Brak uprawnień. Możesz zarządzać składem osobowym tylko przypisanego do "
+"Ciebie zespołu."
+msgstr ""
+"Brak uprawnień. Możesz zarządzać składem osobowym tylko przypisanego do "
+"Ciebie zespołu."
+
+#: team/views.py:636
+#, python-brace-format
+msgid "Pomyślnie zaktualizowano skład zespołu '{name}'."
+msgstr "Pomyślnie zaktualizowano skład zespołu '{name}'."
+
+#: templates/403.html:4 templates/403.html:9
+msgid "Brak dostępu"
+msgstr "Brak dostępu"
+
+#: templates/403.html:10
+msgid "Nie masz uprawnień do przeglądania tej strony."
+msgstr "Nie masz uprawnień do przeglądania tej strony."
+
+#: templates/403.html:11 templates/404.html:11
+msgid "Wróć na Dashboard"
+msgstr "Wróć na Dashboard"
+
+#: templates/404.html:4
+msgid "Strona nie znaleziona"
+msgstr "Strona nie znaleziona"
+
+#: templates/404.html:9
+msgid "Strona nie została znaleziona"
+msgstr "Strona nie została znaleziona"
+
+#: templates/404.html:10
+msgid ""
+"Przepraszamy, ale strona, której szukasz, nie istnieje lub została "
+"przeniesiona."
+msgstr ""
+"Przepraszamy, ale strona, której szukasz, nie istnieje lub została "
+"przeniesiona."
+
+#: templates/base.html:348 templates/base.html:358
+msgid "Zmień rolę:"
+msgstr "Zmień rolę:"
+
+#: templates/base.html:360
+msgid "Wybierz..."
+msgstr "Wybierz..."
+
+#: templates/base.html:385
+msgid "Zmień język: English"
+msgstr "Zmień język: English"
+
+#: templates/base.html:390
+msgid "Zmień język: Polski"
+msgstr "Zmień język: Polski"
+
+#: templates/base.html:443
+msgid ""
+"Intuicyjna platforma do zarządzania wnioskami urlopowymi, planowania pracy "
+"zespołowej oraz automatyzacji procesów wewnętrznych w firmie. Z nami "
+"zaplanujesz słoneczny wypoczynek."
+msgstr ""
+"Intuicyjna platforma do zarządzania wnioskami urlopowymi, planowania pracy "
+"zespołowej oraz automatyzacji procesów wewnętrznych w firmie. Z nami "
+"zaplanujesz słoneczny wypoczynek."
+
+#: templates/base.html:447
+msgid "Nawigacja"
+msgstr "Nawigacja"
+
+#: templates/base.html:449
+msgid "Strona główna"
+msgstr "Strona główna"
+
+#: templates/base.html:458
+msgid "Wsparcie"
+msgstr "Wsparcie"
+
+#: templates/base.html:464
+msgid "infoShare Academy – kursy IT"
+msgstr "infoShare Academy – kursy IT"
+
+#: templates/base.html:467
+msgid "Repozytorium GitHub"
+msgstr "Repozytorium GitHub"
+
+#: templates/base.html:470
+msgid "Wróć na górę"
+msgstr "Wróć na górę"
+
+#: templates/login_base.html:8
+msgid "Sunny"
+msgstr "Sunny"
+
+#: templates/login_base.html:173
+msgid "System zarządzania urlopami"
+msgstr "System zarządzania urlopami"
+
+#: templates/login_base.html:198
+msgid "© 2026 SunnyTeam"
+msgstr "© 2026 SunnyTeam"
+
+#: templates/registration/password_reset_complete.html:4
+msgid "Hasło zmienione – Sunny"
+msgstr "Hasło zmienione – Sunny"
+
+#: templates/registration/password_reset_complete.html:11
+msgid "Hasło zostało zmienione!"
+msgstr "Hasło zostało zmienione!"
+
+#: templates/registration/password_reset_complete.html:13
+msgid "Twoje nowe hasło jest już aktywne. Możesz się zalogować."
+msgstr "Twoje nowe hasło jest już aktywne. Możesz się zalogować."
+
+#: templates/registration/password_reset_confirm.html:4
+msgid "Ustaw nowe hasło – Sunny"
+msgstr "Ustaw nowe hasło – Sunny"
+
+#: templates/registration/password_reset_confirm.html:9
+msgid "Nowe hasło 🔒"
+msgstr "Nowe hasło 🔒"
+
+#: templates/registration/password_reset_confirm.html:10
+msgid "Wprowadź swoje nowe, bezpieczne hasło."
+msgstr "Wprowadź swoje nowe, bezpieczne hasło."
+
+#: templates/registration/password_reset_confirm.html:37
+msgid "Nieprawidłowy link"
+msgstr "Nieprawidłowy link"
+
+#: templates/registration/password_reset_confirm.html:39
+msgid "Link do resetowania hasła jest nieprawidłowy lub wygasł."
+msgstr "Link do resetowania hasła jest nieprawidłowy lub wygasł."
+
+#: templates/registration/password_reset_confirm.html:42
+msgid "Wygeneruj nowy link"
+msgstr "Wygeneruj nowy link"
+
+#: templates/registration/password_reset_done.html:4
+msgid "Link wysłany – Sunny"
+msgstr "Link wysłany – Sunny"
+
+#: templates/registration/password_reset_done.html:11
+msgid "Sprawdź skrzynkę e-mail"
+msgstr "Sprawdź skrzynkę e-mail"
+
+#: templates/registration/password_reset_done.html:13
+msgid ""
+"Jeśli podany e-mail istnieje w systemie, wysłaliśmy wiadomość z instrukcją "
+"resetowania hasła."
+msgstr ""
+"Jeśli podany e-mail istnieje w systemie, wysłaliśmy wiadomość z instrukcją "
+"resetowania hasła."
+
+#: templates/registration/password_reset_done.html:17
+#: templates/registration/password_reset_form.html:31
+msgid "Wróć do logowania"
+msgstr "Wróć do logowania"
+
+#: templates/registration/password_reset_form.html:4
+msgid "Resetowanie hasła – Sunny"
+msgstr "Resetowanie hasła – Sunny"
+
+#: templates/registration/password_reset_form.html:8
+msgid "Resetowanie hasła 🔑"
+msgstr "Resetowanie hasła 🔑"
+
+#: templates/registration/password_reset_form.html:9
+msgid "Podaj swój e-mail, aby otrzymać link do zmiany hasła."
+msgstr "Podaj swój e-mail, aby otrzymać link do zmiany hasła."
+
+#: templates/registration/password_reset_form.html:14
+msgid "Proszę poprawić błędy poniżej."
+msgstr "Proszę poprawić błędy poniżej."
+
+#: templates/registration/password_reset_form.html:21
+msgid "Adres e-mail"
+msgstr "Adres e-mail"
+
+#: templates/registration/password_reset_form.html:22
+msgid "twoj@email.com"
+msgstr "twoj@email.com"
+
+#: templates/registration/password_reset_form.html:26
+msgid "Wyślij link resetujący"
+msgstr "Wyślij link resetujący"
+
+#: templates/request_base.html:113
+msgid "Button"
+msgstr "Button"
+
+#: templates/request_base.html:121
+msgid "Potwierdzenie"
+msgstr "Potwierdzenie"
+
+#: templates/request_base.html:122
+msgid "Czy na pewno chcesz"
+msgstr "Czy na pewno chcesz"
+
+#: templates/request_base.html:122
+msgid "wniosek?"
+msgstr "wniosek?"
+
+#: templates/request_base.html:125
+msgid "Wnioskowane / Dostępne dni:"
+msgstr "Wnioskowane / Dostępne dni:"
+
+#: templates/request_base.html:130
 msgid "Tak"
 msgstr "Tak"

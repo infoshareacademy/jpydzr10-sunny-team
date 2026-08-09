@@ -65,3 +65,37 @@ uprawnień w konsoli:
 ```bash
 python accounts/permission.py
 ```
+
+
+# Hierarchia Ról w Systemie
+## Worker < Manager < HR < COO
+### Tabela Uprawnień
+
+| Cecha / Uprawnienie | **Worker** | **Manager** | **HR** | **COO** | **Admin** |
+| :--- | :--- | :--- | :--- |:---------------------------------------------------------------| :--- |
+| **Opis roli** | Zwykły pracownik | Lider / Manager zespołu | Specjalista ds. kadr | Dyrektor Operacyjny (Zarząd) | Konto techniczne / Obsługa systemu |
+| **Wgląd w profile** | Tylko swój własny profil | Swój własny + Członków swojego zespołu | Wszyscy *(Worker, Manager, HR, COO)* | Wszyscy w całej firmie | Wszyscy *(widok parametrów konta)* |
+| **Składanie wniosków urlopowych** | **TAK** | **TAK** *(po przełączeniu na Worker)* | **TAK** *(po przełączeniu na Worker)* | **TAK** *(po przełączeniu na Worker)*  | **NIE** *(konto techniczne, brak urlopów)* |
+| **Komu AKCEPTUJE wnioski?** | **BRAK** | **Workerom** ze swojego zespołu | **Workerom** oraz **Managerom** | **Workerom**, **Managerom**, **HR-om** oraz **Samoakceptacja** | **BRAK** |
+ | **Możliwość przypisywania ról** | **BRAK** | **BRAK** | `Worker`, `Manager` | `Worker`, `Manager`, `HR` | **Wszystkie** *(Worker, Manager, HR, COO, Admin)* |
+ | **Wgląd w logi systemowe** | **NIE** | **NIE** | **NIE** | **NIE** | **TAK** |
+ | **Przełączanie widoków (Context Switching)** | Tylko `Worker` | `Manager` ⇆ `Worker` | `HR` ⇆ `Worker` | `COO` ⇆ `Worker`  | Tylko `Admin` |
+
+---
+
+### Zasady Zespołowe i Przepływy
+
+1. **Widoczność Profilu Workera:**
+   * Pracownik z rolą `Worker` ma dostęp wyłącznie do własnego profilu. Nie ma podglądu profili innych pracowników ani członków swojego zespołu.
+
+2. **Kaskada Akceptacji Wniosków:**
+   * **Wniosek Workera:** Może akceptować `Manager` (ze swojego zespołu), `HR` oraz `COO`.
+   * **Wniosek Managera:** Może akceptować `HR` oraz `COO`.
+   * **Wniosek HR:** Może akceptować wyłącznie `COO`.
+   * **Wniosek COO:** Jest automatycznie zatwierdzany przez system.
+
+3. **Przełączanie Kontekstu (Context Switching):**
+   * Każda rola pracownicza (`Manager`, `HR`, `COO`) sklada własne wnioski urlopowe oraz sprawdza swoje prywatne statystyki **wyłącznie po przełączeniu się na widok `Worker`**.
+
+4. **Izolacja Konta Admina:**
+   * `Admin` jest kontem technicznym (bez danych osobowych i urlopów), służącym wyłącznie do obsługi technicznej, zarządzania kontami, resetów haseł i podglądu logów systemowych. Żaden użytkownik biznesowy nie ma możliwości przełączenia się na konto Admina.

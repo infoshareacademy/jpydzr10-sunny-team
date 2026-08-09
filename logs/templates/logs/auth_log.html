@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Historia Logowań" %}{% endblock %}
+
+{% block content %}
+<style>
+    /* Kontenery główne */
+    .logs-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    .logs-header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .logs-title {
+        font-weight: 800;
+        color: #1a202c;
+        margin-bottom: 8px;
+        font-size: 2.2rem;
+    }
+
+    .logs-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    /* Tabela i elastyczność */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover td {
+        background-color: #f7fafc;
+    }
+
+    .col-datetime { color: #4a5568; font-weight: 500; white-space: nowrap; }
+    .col-user { font-weight: 700; color: #1a202c; }
+    .col-ip { font-family: monospace; color: #2d3748; font-weight: 600; }
+    .col-details { color: #2d3748; line-height: 1.5; min-width: 250px; word-wrap: break-word; }
+
+    /* Linki użytkowników */
+    .table-link {
+        color: #1a202c;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .table-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Filtry */
+    .filters {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        border: 1px solid #cbd5e0;
+    }
+
+    .filters form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-grow: 1;
+        min-width: 220px;
+    }
+
+    .filter-group label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2d3748;
+        white-space: nowrap;
+    }
+
+    .filters select, .filters input[type="date"] {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        background-color: #fff;
+        color: #1a202c;
+        font-size: 0.95rem;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .filters select:focus, .filters input[type="date"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    /* Przyciski Akcji i Linki */
+    .actions-group {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+    }
+
+    @media (max-width: 992px) {
+        .actions-group {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+
+    .btn-filter {
+        padding: 10px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-filter:hover {
+        background: #0056b3;
+    }
+
+    .btn-reset {
+        padding: 10px 24px;
+        background: #fff;
+        color: #4a5568;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-align: center;
+    }
+    .btn-reset:hover {
+        background: #edf2f7;
+        color: #1a202c;
+    }
+
+    .auth-link {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Badge (Statusy i Waga) */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    .badge-login_success { background-color: #c6f6d5; color: #1c5234; }
+    .badge-login_failed { background-color: #feebc8; color: #744210; }
+    .badge-incorrect_username { background-color: #feebc8; color: #744210; }
+    .badge-2fa_success { background-color: #c6f6d5; color: #1c5234; }
+    .badge-2fa_failed { background-color: #fde8e8; color: #9b1c1c; }
+    .badge-logout { background-color: #e2e8f0; color: #2d3748; }
+    .badge-ip_locked { background-color: #fed7d7; color: #742a2a; }
+    .badge-access_denied_403 { background-color: #e1effe; color: #1e429f; }
+    .badge-role_change { background-color: #fce7f3; color: #9d174d; }
+    .badge-password_changed { background-color: #e9d8fd; color: #441239; }
+
+    .badge-critical { background-color: #fed7d7; color: #742a2a; }
+    .badge-warning { background-color: #feebc8; color: #744210; }
+    .badge-info { background-color: #ebf8ff; color: #2b6cb0; }
+    .badge-default { background-color: #edf2f7; color: #4a5568; }
+
+    /* Paginacja */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 30px;
+    }
+    .pagination a, .pagination span {
+        padding: 10px 16px;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #2d3748;
+        font-size: 0.95rem;
+        font-weight: 600;
+        background: #fff;
+    }
+    .pagination .current {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+
+<div class="logs-wrapper mt-4">
+    <!-- Nagłówek i eksport -->
+    <div class="logs-header-container">
+        <div>
+            <h1 class="logs-title">{% translate "Logi Uwierzytelniania" %}</h1>
+            <p class="m-0"><a href="{% url 'activity_log' %}" class="auth-link">{% translate "Zobacz historię aktywności" %}</a></p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <!-- Przyciski eksportu przekazują wszystkie aktywne filtry URL -->
+            <a href="{% url 'export_auth_log_csv' %}?{{ request.GET.urlencode }}" class="btn btn-primary font-weight-bold">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> {% translate "Eksportuj do CSV" %}
+            </a>
+            <a href="{% url 'export_auth_log_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-danger font-weight-bold">
+                <i class="bi bi-file-earmark-pdf me-1"></i> {% translate "Pobierz PDF" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Sekcja Filtrów -->
+    <section class="filters">
+        <form method="get">
+            <div class="filter-group">
+                <label for="id_user">{% translate "Użytkownik" %}:</label>
+                <select name="user" id="id_user">
+                    <option value="">{% translate "Wszyscy" %}</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}" {% if user_filter == u.id|stringformat:"i" %}selected{% endif %}>{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_action">{% translate "Akcja" %}:</label>
+                <select name="action" id="id_action">
+                    <option value="">{% translate "Wszystkie" %}</option>
+                    {% for value, label in action_choices %}
+                    <option value="{{ value }}" {% if action_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_severity">{% translate "Waga" %}:</label>
+                <select name="severity" id="id_severity">
+                    <option value="">{% translate "Wszystkie" %}</option>
+                    {% for value, label in severity_choices %}
+                    <option value="{{ value }}" {% if severity_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_from">{% translate "Od" %}:</label>
+                <input type="date" name="date_from" id="id_date_from" value="{{ date_from }}">
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_to">{% translate "Do" %}:</label>
+                <input type="date" name="date_to" id="id_date_to" value="{{ date_to }}">
+            </div>
+
+            <div class="actions-group">
+                <button type="submit" class="btn-filter">{% translate "Filtruj" %}</button>
+                <a href="{% url 'auth_log' %}" class="btn-reset">{% translate "Reset" %}</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabela z historią -->
+    <section class="logs-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">{% translate "Data i godzina" %}</th>
+                        <th style="width: 12%;">{% translate "Użytkownik" %}</th>
+                        <th style="width: 16%;">{% translate "Akcja" %}</th>
+                        <th style="width: 11%;">{% translate "Waga" %}</th>
+                        <th style="width: 13%;">{% translate "Adres IP" %}</th>
+                        <th>{% translate "Szczegóły" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="col-datetime">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                        <td class="col-user">
+                            {% if log.user %}
+                                <a href="{% url 'profile' user_id=log.user.id %}" class="table-link">
+                                    {{ log.user }}
+                                </a>
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ log.action|default:'default'|cut:'.' }}">
+                                {{ log.get_action_display|default:log.action }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ log.severity|default:'default' }}">
+                                {{ log.get_severity_display|default:log.severity }}
+                            </span>
+                        </td>
+                        <td class="col-ip">{{ log.ip_address|default:"&mdash;" }}</td>
+                        <td class="col-details">{{ log.details|default:"&mdash;" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">
+                            {% translate "Brak wpisów w historii dla wybranych filtrów." %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginacja -->
+        {% if logs.has_other_pages %}
+        <nav class="pagination" aria-label="{% translate "Nawigacja stronami" %}">
+            {% if logs.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; {% translate "Pierwsza" %}</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.previous_page_number }}">&lsaquo; {% translate "Poprzednia" %}</a>
+            {% endif %}
+
+            {% for num in logs.paginator.page_range %}
+                {% if num == logs.number %}
+                    <span class="current" aria-current="page">{{ num }}</span>
+                {% elif num > logs.number|add:'-3' and num < logs.number|add:'3' %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if logs.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.next_page_number }}">{% translate "Następna" %} &rsaquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ logs.paginator.num_pages }}">{% translate "Ostatnia" %} &raquo;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

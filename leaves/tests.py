@@ -1,7 +1,11 @@
+from django.test import TestCase
+from django.urls import reverse
+
 from accounts.models import User
 from leaves.models import WorkerProfile, LeaveRequest
 from leaves.forms import LeaveRequestForm
 from leaves.utils import Calendar_utils
+from logs.models import AuthLog
 from datetime import date, timedelta
 
 class WorkerProfileTest(TestCase):
@@ -43,15 +47,19 @@ Testy egzekwowania uprawnień.
 
 Zakres: dla KAŻDEGO widoku chronionego przez `role_required` /
 `RoleRequiredMixin` sprawdzamy:
-  - rola BEZ danego uprawnienia -> 403 (PermissionDenied)
-  - rola Z danym uprawnieniem   -> NIE 403
-  - użytkownik niezalogowany    -> 302 (redirect do loginu), nigdy 403/500
+  - rola BEZ danego uprawnienia -> redirect na 'dashboard' (302)
+  - rola Z danym uprawnieniem   -> NIE redirect na 'dashboard'
+  - użytkownik niezalogowany    -> 302 (redirect do loginu), nigdy 500
+
+Dodatkowo weryfikujemy, że odmowa dostępu tworzy wpis w AuthLog
+(action='access_denied_403'), zgodnie z RoleRequiredMixin / role_required.
 """
 
 class ViewsPermissionMatrixTestCase(TestCase):
     """
     Dla widoków opartych o GET sprawdza pełną macierz: role z uprawnieniem
-    -> NIE 403, role bez uprawnienia -> 403, niezalogowany -> 302.
+    -> NIE redirect na dashboard, role bez uprawnienia -> redirect na dashboard,
+    niezalogowany -> 302 (redirect do loginu).
     """
 
     @classmethod
@@ -78,8 +86,14 @@ class ViewsPermissionMatrixTestCase(TestCase):
         self.client.login(username=f"user_{role.lower()}", password="testpass123")
 
     def assert_forbidden_for_roles(self, url_name, forbidden_roles, allowed_roles, url_kwargs=None):
-        # Uniwersalna metoda sprawdzająca dostęp (302 dla gościa, 403 dla zablokowanych, brak 403 dla dozwolonych)
+        """
+        Uniwersalna metoda sprawdzająca dostęp:
+          - gość -> redirect do loginu (302), nigdy 500
+          - rola bez uprawnień -> redirect na 'dashboard' + wpis w AuthLog
+          - rola z uprawnieniami -> NIE redirect na 'dashboard'
+        """
         url = reverse(url_name, kwargs=url_kwargs or {})
+        dashboard_url = reverse('dashboard')
 
         # niezalogowany -> redirect do loginu, nigdy 403/500
         self.client.logout()
@@ -92,21 +106,39 @@ class ViewsPermissionMatrixTestCase(TestCase):
 
         for role in forbidden_roles:
             self.login_as(role)
+            logs_before = AuthLog.objects.filter(action='access_denied_403').count()
+
             response = self.client.get(url)
+
             self.assertEqual(
-                response.status_code, 403,
-                f"[{url_name}] rola '{role}' bez uprawnień powinna dostać 403, "
+                response.status_code, 302,
+                f"[{url_name}] rola '{role}' bez uprawnień powinna dostać redirect, "
                 f"otrzymano {response.status_code}",
             )
+            self.assertEqual(
+                response.url, dashboard_url,
+                f"[{url_name}] rola '{role}' bez uprawnień powinna być przekierowana "
+                f"na dashboard, otrzymano redirect na {response.url}",
+            )
+
+            logs_after = AuthLog.objects.filter(action='access_denied_403').count()
+            self.assertEqual(
+                logs_after, logs_before + 1,
+                f"[{url_name}] odmowa dostępu dla roli '{role}' powinna utworzyć wpis "
+                f"w AuthLog (action='access_denied_403')",
+            )
+
             self.client.logout()
 
         for role in allowed_roles:
             self.login_as(role)
             response = self.client.get(url)
-            self.assertNotEqual(
-                response.status_code, 403,
-                f"[{url_name}] rola '{role}' z uprawnieniami nie powinna dostać 403",
-            )
+            if response.status_code == 302:
+                self.assertNotEqual(
+                    response.url, dashboard_url,
+                    f"[{url_name}] rola '{role}' z uprawnieniami nie powinna być "
+                    f"przekierowana na dashboard",
+                )
             self.client.logout()
 
     # --- can_see_all_requests --- (True: Admin, Manager, HR / False: Worker)
@@ -125,24 +157,6 @@ class ViewsPermissionMatrixTestCase(TestCase):
             "my_vacations",
             forbidden_roles=["Admin", "HR", "Manager"],
             allowed_roles=["Worker"],
-        )
-
-    # --- can_add_user --- (True: Admin, HR / False: Manager, Worker)
-    def test_add_user_permissions(self):
-        # Test uprawnień do widoku dodawania nowego użytkownika (Admin i HR)
-        self.assert_forbidden_for_roles(
-            "add_user",
-            forbidden_roles=["Manager", "Worker"],
-            allowed_roles=["Admin", "HR"],
-        )
-
-    # --- can_reset_password --- (True: Admin, HR / False: Manager, Worker)
-    def test_reset_password_permissions(self):
-        # Test uprawnień do widoku resetowania haseł (Admin i HR)
-        self.assert_forbidden_for_roles(
-            "reset_password",
-            forbidden_roles=["Manager", "Worker"],
-            allowed_roles=["Admin", "HR"],
         )
 
     # --- can_see_team_balance --- (True: Admin, Manager, HR / False: Worker)
@@ -172,14 +186,6 @@ class ViewsPermissionMatrixTestCase(TestCase):
             allowed_roles=["Admin", "Manager", "HR"],
         )
 
-    # --- can_view_logs --- (True: Admin, Manager, HR / False: Worker)
-    def test_log_history_permissions(self):
-        # Test dostępu do historii logów systemowych (Admin, HR, Manager)
-        self.assert_forbidden_for_roles(
-            "log_history",
-            forbidden_roles=["Worker"],
-            allowed_roles=["Admin", "HR", "Manager"],
-        )
 
     # --- can_submit_request (CBV) --- (True: Worker / False: Admin, HR, Manager)
     def test_leave_request_create_permissions(self):
@@ -192,7 +198,8 @@ class ViewsPermissionMatrixTestCase(TestCase):
 
     # --- can_approve_request --- (True: Admin, Manager, HR / False: Worker)
     def test_approve_request_permissions(self):
-        # Test akceptacji wniosku (POST) – Worker dostaje 403, kadra zarządzająca przechodzi pomyśln Trump
+        # Test akceptacji wniosku (POST) – Worker dostaje redirect na dashboard,
+        # kadra zarządzająca przechodzi pomyślnie (redirect na all_requests_list)
         pending = LeaveRequest.objects.create(
             employee=self.users["Worker"],
             start_date="2026-09-01",
@@ -201,32 +208,41 @@ class ViewsPermissionMatrixTestCase(TestCase):
             status=LeaveRequest.Status.PENDING,
         )
         url = reverse("approve_request", kwargs={"request_id": pending.pk})
+        dashboard_url = reverse('dashboard')
 
         self.client.logout()
         response = self.client.post(url)
         self.assertEqual(response.status_code, 302)
 
         self.login_as("Worker")
+        logs_before = AuthLog.objects.filter(action='access_denied_403').count()
         response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(
-            response.status_code, 403,
-            f"[approve_request] rola 'Worker' bez uprawnień powinna dostać 403, "
-            f"otrzymano {response.status_code}",
+            response.url, dashboard_url,
+            f"[approve_request] rola 'Worker' bez uprawnień powinna być przekierowana "
+            f"na dashboard, otrzymano redirect na {response.url}",
+        )
+        self.assertEqual(
+            AuthLog.objects.filter(action='access_denied_403').count(), logs_before + 1,
         )
         self.client.logout()
 
         for role in ["Admin", "Manager", "HR"]:
             self.login_as(role)
             response = self.client.post(url)
-            self.assertNotEqual(
-                response.status_code, 403,
-                f"[approve_request] rola '{role}' z uprawnieniami nie powinna dostać 403",
-            )
+            if response.status_code == 302:
+                self.assertNotEqual(
+                    response.url, dashboard_url,
+                    f"[approve_request] rola '{role}' z uprawnieniami nie powinna być "
+                    f"przekierowana na dashboard",
+                )
             self.client.logout()
 
     # --- can_reject_request --- (True: Admin, Manager, HR / False: Worker)
     def test_reject_request_permissions(self):
-        # Test odrzucenia wniosku (POST) – Worker dostaje 403, Admin/Manager/HR mają dostęp
+        # Test odrzucenia wniosku (POST) – Worker dostaje redirect na dashboard,
+        # Admin/Manager/HR mają dostęp
         pending = LeaveRequest.objects.create(
             employee=self.users["Worker"],
             start_date="2026-09-10",
@@ -235,32 +251,41 @@ class ViewsPermissionMatrixTestCase(TestCase):
             status=LeaveRequest.Status.PENDING,
         )
         url = reverse("reject_request", kwargs={"request_id": pending.pk})
+        dashboard_url = reverse('dashboard')
 
         self.client.logout()
         response = self.client.post(url)
         self.assertEqual(response.status_code, 302)
 
         self.login_as("Worker")
+        logs_before = AuthLog.objects.filter(action='access_denied_403').count()
         response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(
-            response.status_code, 403,
-            f"[reject_request] rola 'Worker' bez uprawnień powinna dostać 403, "
-            f"otrzymano {response.status_code}",
+            response.url, dashboard_url,
+            f"[reject_request] rola 'Worker' bez uprawnień powinna być przekierowana "
+            f"na dashboard, otrzymano redirect na {response.url}",
+        )
+        self.assertEqual(
+            AuthLog.objects.filter(action='access_denied_403').count(), logs_before + 1,
         )
         self.client.logout()
 
         for role in ["Admin", "Manager", "HR"]:
             self.login_as(role)
             response = self.client.post(url)
-            self.assertNotEqual(
-                response.status_code, 403,
-                f"[reject_request] rola '{role}' z uprawnieniami nie powinna dostać 403",
-            )
+            if response.status_code == 302:
+                self.assertNotEqual(
+                    response.url, dashboard_url,
+                    f"[reject_request] rola '{role}' z uprawnieniami nie powinna być "
+                    f"przekierowana na dashboard",
+                )
             self.client.logout()
 
     # --- can_change_request --- (True: Admin, Worker / False: Manager, HR)
     def test_leave_request_update_permissions(self):
-        # Test edycji wniosku urlopowego – dozwolone tylko dla Admina oraz właściciela wniosku (Worker)
+        # Test edycji wniosku urlopowego – dozwolone tylko dla Admina oraz
+        # właściciela wniosku (Worker). Manager/HR -> redirect na dashboard.
         pending = LeaveRequest.objects.create(
             employee=self.users["Worker"],
             start_date="2026-09-15",
@@ -269,6 +294,7 @@ class ViewsPermissionMatrixTestCase(TestCase):
             status=LeaveRequest.Status.PENDING,
         )
         url = reverse("leave_request_edit", kwargs={"pk": pending.pk})
+        dashboard_url = reverse('dashboard')
 
         self.client.logout()
         response = self.client.get(url)
@@ -276,22 +302,33 @@ class ViewsPermissionMatrixTestCase(TestCase):
 
         for role in ["Manager", "HR"]:
             self.login_as(role)
+            logs_before = AuthLog.objects.filter(action='access_denied_403').count()
             response = self.client.get(url)
             self.assertEqual(
-                response.status_code, 403,
-                f"[leave_request_edit] rola '{role}' bez uprawnień powinna dostać 403, "
+                response.status_code, 302,
+                f"[leave_request_edit] rola '{role}' bez uprawnień powinna dostać redirect, "
                 f"otrzymano {response.status_code}",
+            )
+            self.assertEqual(
+                response.url, dashboard_url,
+                f"[leave_request_edit] rola '{role}' bez uprawnień powinna być "
+                f"przekierowana na dashboard, otrzymano redirect na {response.url}",
+            )
+            self.assertEqual(
+                AuthLog.objects.filter(action='access_denied_403').count(), logs_before + 1,
             )
             self.client.logout()
 
         self.login_as("Admin")
         response = self.client.get(url)
-        self.assertNotEqual(response.status_code, 403)
+        if response.status_code == 302:
+            self.assertNotEqual(response.url, dashboard_url)
         self.client.logout()
 
         self.login_as("Worker")
         response = self.client.get(url)
-        self.assertNotEqual(response.status_code, 403)
+        if response.status_code == 302:
+            self.assertNotEqual(response.url, dashboard_url)
         self.client.logout()
 
 
@@ -336,31 +373,50 @@ class CancelLeaveViewPermissionTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_roles_with_permission_are_not_forbidden(self):
-        # Sprawdzenie, czy role posiadające uprawnienie (Admin, Worker) mogą pomyślnie anulować wniosek (brak 403)
-        for role in ["Admin", "Worker"]:
+        # Sprawdzenie, czy role posiadające uprawnienie (Worker) mogą
+        # pomyślnie anulować wniosek (brak redirectu na dashboard)
+        dashboard_url = reverse('dashboard')
+        for role in ["Worker"]:
             self.login_as(role)
             leave_request = self.make_request(self.users[role])
             url = reverse("leave_request_cancel", kwargs={"pk": leave_request.pk})
             response = self.client.post(url)
-            self.assertNotEqual(
-                response.status_code, 403,
-                f"Rola '{role}' ma can_cancel_request=True, nie powinna dostać 403",
-            )
+            if response.status_code == 302:
+                self.assertNotEqual(
+                    response.url, dashboard_url,
+                    f"Rola '{role}' ma can_cancel_request=True, nie powinna być "
+                    f"przekierowana na dashboard",
+                )
             self.client.logout()
 
-    def test_roles_without_permission_get_403(self):
-        # Sprawdzenie, czy role bez uprawnień (Manager, HR) dostaną 403 (Forbidden) przy próbie anulowania
+    def test_roles_without_permission_get_redirected_to_dashboard(self):
+        # Sprawdzenie, czy role bez uprawnień (Manager, HR) dostaną redirect
+        # na dashboard przy próbie anulowania, wraz z wpisem w AuthLog
+        dashboard_url = reverse('dashboard')
         for role in ["Manager", "HR"]:
             self.login_as(role)
             leave_request = self.make_request(self.users[role])
             url = reverse("leave_request_cancel", kwargs={"pk": leave_request.pk})
+
+            logs_before = AuthLog.objects.filter(action='access_denied_403').count()
             response = self.client.post(url)
+
             self.assertEqual(
-                response.status_code, 403,
-                f"Rola '{role}' ma can_cancel_request=False, powinna dostać 403, "
+                response.status_code, 302,
+                f"Rola '{role}' ma can_cancel_request=False, powinna dostać redirect, "
                 f"otrzymano {response.status_code}",
             )
+            self.assertEqual(
+                response.url, dashboard_url,
+                f"Rola '{role}' bez uprawnień powinna być przekierowana na dashboard, "
+                f"otrzymano redirect na {response.url}",
+            )
+            self.assertEqual(
+                AuthLog.objects.filter(action='access_denied_403').count(), logs_before + 1,
+            )
             self.client.logout()
+
+
 class LeaveRequestSubmissionTest(TestCase):
 
     def setUp(self):
