@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Lista Zespołów" %}{% endblock %}
+
+{% block content %}
+<style>
+    /* Główny kontener z elastycznym marginesem bocznym */
+    .teams-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    /* Sekcja główna - ukrywa wszystko co wystaje poza zaokrąglone brzegi */
+    .teams-section {
+        margin-bottom: 35px;
+        background: #ffffff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    .teams-section-title {
+        font-weight: 800;
+        color: #1a202c;
+        font-size: 1.35rem;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #cbd5e0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .section-title-badge {
+        font-size: 0.85rem;
+        background: #e2e8f0;
+        color: #475569;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    /* Kontener responsywny dla tabeli wewnątrz sekcji */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+        border: 1px solid #cbd5e0;
+        background: #ffffff;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    th {
+        background-color: #f1f5f9 !important;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        letter-spacing: 0.5px;
+        padding: 14px 16px;
+        border-bottom: 2px solid #cbd5e0;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1e293b;
+        font-size: 0.92rem;
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    tbody tr:hover td {
+        background-color: #f8fafc;
+    }
+
+    /* PRZYCISKI */
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-sizing: border-box;
+        vertical-align: middle;
+    }
+
+    .btn-create {
+        background-color: #007bff;
+        color: white;
+        border: 1px solid #007bff;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .btn-create:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+        color: white;
+    }
+
+    .user-link {
+        color: #1a202c;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .user-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Badges */
+    .badge-archive-tag {
+        background-color: #fee2e2;
+        color: #991b1b;
+        padding: 4px 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius: 9999px;
+    }
+
+    .empty-state {
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin: 0;
+        padding: 10px 0;
+    }
+</style>
+
+<div class="teams-wrapper mt-4">
+    <!-- Nagłówek z wyrównaniem przycisków do prawej strony -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">
+            {% trans "Lista Zespołów" %}
+        </h1>
+
+        <!-- Grupa przycisków -->
+        <div class="d-flex gap-2 align-items-stretch">
+            {% if active_role in 'Manager,HR,Admin' %}
+                <a href="{% url 'team_report' %}" class="btn btn-success btn-custom">
+                    <i class="bi bi-clipboard-data-fill"></i>
+                    <span>{% trans "Raport Zespołów" %}</span>
+                </a>
+            {% endif %}
+
+            {% if active_role == 'Admin' %}
+                <a href="{% url 'team-create' %}" class="btn-custom btn-create">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>{% trans "Dodaj zespół" %}</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- SEKCJA 1: AKTYWNE ZESPOŁY -->
+    <section class="teams-section">
+        <div class="teams-section-title">
+            <span>{% trans "Aktywne zespoły" %}</span>
+            <span class="section-title-badge">{{ active_teams|length }}</span>
+        </div>
+
+        {% if active_teams %}
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">{% trans "Nazwa zespołu" %}</th>
+                            <th style="width: 25%;">{% trans "Manager" %}</th>
+                            <th style="width: 25%;">{% trans "HR" %}</th>
+                            <th style="width: 20%;">{% trans "Liczba pracowników" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in active_teams %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'team-detail' team.pk %}" class="user-link">
+                                        {{ team.name }}
+                                    </a>
+                                </td>
+
+                                <!-- MANAGER -->
+                                <td>
+                                    {% if team.manager %}
+                                        {% if active_role == 'Admin' %}
+                                            <a href="{% url 'profile' user_id=team.manager.id %}" class="user-link">
+                                                {{ team.manager.get_full_name|default:team.manager.username }}
+                                            </a>
+                                        {% else %}
+                                            <span style="font-weight: 600; color: #2d3748;">
+                                                {{ team.manager.get_full_name|default:team.manager.username }}
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="color: #718096;">&mdash; {% trans "Brak" %} &mdash;</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- HR -->
+                                <td>
+                                    {% if team.hr %}
+                                        {% if active_role == 'Admin' %}
+                                            <a href="{% url 'profile' user_id=team.hr.id %}" class="user-link">
+                                                {{ team.hr.get_full_name|default:team.hr.username }}
+                                            </a>
+                                        {% else %}
+                                            <span style="font-weight: 600; color: #2d3748;">
+                                                {{ team.hr.get_full_name|default:team.hr.username }}
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span style="color: #718096;">&mdash; {% trans "Brak" %} &mdash;</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ team.members_count|default:team.members.count }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-state">{% trans "Brak aktywnych zespołów." %}</p>
+        {% endif %}
+    </section>
+
+    <!-- SEKCJA 2: NIEAKTYWNE / ZARCHIWIZOWANE ZESPOŁY (Tylko dla Admina) -->
+    {% if active_role == 'Admin' %}
+        <section class="teams-section">
+            <div class="teams-section-title">
+                <span>{% trans "Zarchiwizowane zespoły" %}</span>
+                <span class="section-title-badge">{{ inactive_teams|length }}</span>
+            </div>
+
+            {% if inactive_teams %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 100%;">{% trans "Nazwa zespołu" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in inactive_teams %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'team-archive-detail' team.pk %}" class="user-link">
+                                            {{ team.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-state">{% trans "Brak zarchiwizowanych zespołów." %}</p>
+            {% endif %}
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

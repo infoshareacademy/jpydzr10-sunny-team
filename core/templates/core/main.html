@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sunny - aplikacja urlopowa" %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <header class="dashboard-header">
+        <h1>{% blocktrans %}Witaj {{ user.first_name }}! 👋{% endblocktrans %}</h1>
+        <p class="text-muted">{{ random_role_phrase }}</p>
+    </header>
+
+    <div class="dashboard-strips">
+
+        <!-- KARTA 1: PROFIL UŻYTKOWNIKA -->
+<!-- KARTA 1: PROFIL UŻYTKOWNIKA -->
+{% if active_role != 'Admin' %}
+<div class="strip-card">
+    <div class="strip-bg-icon"><i class="bi bi-person-badge-fill"></i></div>
+    <div class="strip-base-content">
+        <div class="strip-summary">
+            <span class="strip-pretitle">{% trans "Profil użytkownika" %}</span>
+            <h3 class="strip-title">{{ user.first_name }} {{ user.last_name }}</h3>
+            <p class="strip-subtitle">{% blocktrans %}Aktualna rola: {{ active_role }}{% endblocktrans %}</p>
+        </div>
+    </div>
+    <div class="strip-hover-overlay">
+        <div class="overlay-buttons" style="flex-wrap: wrap; justify-content: center;">
+
+            {% if available_roles|length == 1 %}
+                <form action="{% url 'switch_role' %}" method="post" style="display: inline-flex;">
+                    {% csrf_token %}
+                    <input type="hidden" name="role" value="{{ available_roles.0 }}">
+                    {% blocktrans with role_name=available_roles.0 asvar role_title %}Zmień rolę: {{ role_name }}{% endblocktrans %}
+                    <button type="submit" class="btn btn-dashboard-action" title="{{ role_title }}" style="display: flex; align-items: center; border: 0 !important;">
+                        <i class="bi bi-compass-fill"></i>
+                        <span class="btn-text">{% blocktrans with role_name=available_roles.0 %}Zmień rolę: {{ role_name }}{% endblocktrans %}</span>
+                    </button>
+                </form>
+            {% elif available_roles|length > 1 %}
+                <form id="roleForm" action="{% url 'switch_role' %}" method="post" style="position: relative; display: inline-flex;">
+                    {% csrf_token %}
+                    <div class="btn btn-dashboard-action" title="{% trans 'Zmień rolę' %}" style="position: relative; overflow: hidden; display: flex; align-items: center; border: 0 !important;">
+                        <i class="bi bi-compass-fill"></i>
+                            <span class="btn-text">{% trans "Zmień rolę" %}</span>
+                        <select name="role" onchange="this.form.submit()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10;">
+                            <option value="" disabled selected>{% trans "Zmień rolę" %}</option>
+                            {% for role in available_roles %}
+                                <option value="{{ role }}">{{ role }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            {% endif %}
+            <!-- PRZYCISK SZCZEGÓŁY - WYCIĄGNIĘTY POZA BLOK IF/ELIF -->
+            <a href="{% url 'profile' user.id %}" class="btn btn-dashboard-action" title="{% trans "Szczegóły profilu" %}">
+                <i class="bi bi-info-square-fill"></i><span class="btn-text">{% trans "Szczegóły" %}</span>
+            </a>
+
+            <!-- PRZYCISK WYLOGUJ -->
+            <form action="{% url 'logout' %}" method="post" style="display: inline-flex;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-dashboard-action text-danger" title="{% trans "Wyloguj się" %}" style="display: flex; align-items: center; border: 0 !important;">
+                    <i class="bi bi-door-open-fill"></i><span class="btn-text">{% trans "Wyloguj" %}</span>
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- KARTA 2: WNIOSKI URLOPOWE -->
+        {% if active_role in 'Worker,Manager,HR, Admin' %}
+        <div class="strip-card">
+            <div class="strip-bg-icon"><i class="bi bi-postcard-fill"></i></div>
+            <div class="strip-base-content">
+                <div class="strip-summary">
+                    <span class="strip-pretitle">{% trans "Planowanie" %}</span>
+                    <h3 class="strip-title">{% trans "Wnioski Urlopowe" %}</h3>
+                    <p class="strip-subtitle">
+                        {% if active_role == 'Worker' %}{% trans "Obsługa Twoich wniosków urlopowych." %}{% else %}{% trans "Przeglądanie listy wniosków w systemie." %}{% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="strip-hover-overlay">
+                <div class="overlay-buttons">
+                    {% if active_role == 'Worker' %}
+                        <a href="{% url 'new_request' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Złóż nowy wniosek urlopowy" %}"><i class="bi bi-file-earmark-plus-fill"></i><span class="btn-text">{% trans "Nowy" %}</span></a>
+                        <a href="{% url 'my_vacations' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Przejrzyj aktualne wnioski" %}"><i class="bi bi-folder-fill"></i><span class="btn-text">{% trans "Lista" %}</span></a>
+                    {% else %}
+                        <a href="{% url 'pending_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Wnioski do rozważenia" %}"><i class="bi bi-stopwatch-fill"></i><span class="btn-text">{% trans "Oczekujące" %}</span></a>
+                        <a href="{% url 'history_requests_list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Zapis wniosków" %}"><i class="bi bi-archive-fill"></i><span class="btn-text">{% trans "Historia" %}</span></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+<!-- KARTA 3: ZARZĄDZANIE -->
+        {% if active_role in 'Manager,HR,Admin' %}
+        <div class="strip-card">
+            <div class="strip-bg-icon"><i class="bi bi-kanban-fill"></i></div>
+            <div class="strip-base-content">
+                <div class="strip-summary">
+                    <span class="strip-pretitle">{% trans "Organizacja" %}</span>
+                    <h3 class="strip-title">{% trans "Zarządzanie" %}</h3>
+                    <p class="strip-subtitle">{% trans "Struktura organizacyjna, zasoby ludzkie i podział ról." %}</p>
+                </div>
+            </div>
+            <div class="strip-hover-overlay">
+                <div class="overlay-buttons">
+                    <a href="{% url 'reports_index' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Lista Raportów" %}"><i class="bi bi-clipboard-data-fill"></i><span class="btn-text">{% trans "Raporty" %}</span></a>
+                    <a href="{% url 'user_list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Zarządzaj pracownikami" %}"><i class="bi bi-person-fill"></i><span class="btn-text">{% trans "Pracownicy" %}</span></a>
+                    <a href="{% url 'team-list' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Zarządzaj zespołami" %}"><i class="bi bi-people-fill"></i></i><span class="btn-text">{% trans "Zespoły" %}</span></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- KARTA 4: PANEL ADMINA -->
+        {% if active_role == 'Admin' %}
+        <div class="strip-card">
+            <div class="strip-bg-icon"><i class="bi bi-terminal-fill"></i></div>
+            <div class="strip-base-content">
+                <div class="strip-summary">
+                    <span class="strip-pretitle">{% trans "Administracja" %}</span>
+                    <h3 class="strip-title">{% trans "Panel Admina" %}</h3>
+                    <p class="strip-subtitle">{% trans "Monitorowanie bezpieczeństwa i logów systemowych." %}</p>
+                </div>
+            </div>
+            <div class="strip-hover-overlay">
+                <div class="overlay-buttons">
+                    <a href="{% url 'activity_log' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Logi aktywności systemowej" %}"><i class="bi bi-keyboard-fill"></i></i><span class="btn-text">{% trans "Logi Aktywności" %}</span></a>
+                    <a href="{% url 'auth_log' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Logi autoryzacji i logowań" %}"><i class="bi bi-key-fill"></i><span class="btn-text">{% trans "Logi Autoryzacji" %}</span></a>
+                    <a href="{% url 'add_user' %}" class="btn btn-warning btn-dashboard-action" title="{% trans "Dodaj nowego użytkownika" %}"><i class="bi bi-person-plus-fill"></i><span class="btn-text">{% trans "Dodaj Użytkownika" %}</span></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<style>
+    .dashboard-container { max-width: 1300px; margin:auto; padding: 0 2rem; }
+    .dashboard-header { margin-bottom: 2.5rem; }
+    .dashboard-strips { display: flex; flex-direction: column; gap: 2.5rem; }
+
+    .strip-card {
+        position: relative; border-radius: 20px; overflow: hidden; min-height: 140px;
+        background: #ffffff; border: 2px solid #e2e8f0;
+        transition: all 0.4s ease;
+    }
+
+    .strip-base-content { display: flex; align-items: center; padding: 2.5rem 3.5rem; z-index: 2; position: relative; }
+    .strip-summary { flex-grow: 1; transition: transform 0.4s ease; }
+    .strip-pretitle { display: block; font-size: 0.8rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1.2px; color: #0f172a; margin-bottom: 0.4rem; transition: color 0.4s; }
+    .strip-title { font-size: 1.6rem; font-weight: 1000; margin: 0 0 0.4rem 0; color: #0f172a; transition: color 0.4s; }
+    .strip-subtitle { font-size: 0.95rem; color: #475569; transition: color 0.4s; }
+
+    .strip-bg-icon {
+        position: absolute; right: 4%; top: 50%; transform: translateY(-50%) rotate(-5deg);
+        font-size: 7.5rem; pointer-events: none; z-index: 1; color: #87cefa; opacity: 0.35;
+        transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .strip-hover-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; transition: opacity 0.4s ease-in-out; z-index: 3;
+    }
+
+    .overlay-buttons { display: flex; gap: 2rem; }
+
+    .btn-dashboard-action {
+        font-size: 1.1rem !important; font-weight: 700 !important;
+        padding: 0.8rem 1.8rem !important; border-radius: 12px !important;
+        display: inline-flex !important; align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease !important;
+        background-color: #ffffff !important;
+        border: 0 !important;
+        color: #334155 !important;
+    }
+
+    select option {
+        color: #334155;
+        background-color: #ffffff;
+        padding: 10px;
+    }
+
+    .btn-dashboard-action i { margin-right: 0.85rem !important; font-size: 1.3rem !important; }
+
+    .strip-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        background-color: #87cefa;  border: 0;
+    }
+    .strip-card:hover .strip-summary { transform: translateX(10px); }
+    .strip-card:hover .strip-pretitle, .strip-card:hover .strip-title { color: #ffffff; }
+    .strip-card:hover .strip-subtitle { color: #f8fafc; }
+
+    .strip-card:hover .btn-dashboard-action:hover {
+        background-color: #ffdf22 !important;
+        color: #ffffff !important;
+        transform: translateY(-4px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .strip-card:hover .strip-bg-icon {
+        color: #ffffff !important;
+        opacity: 0.65;
+        transform: translateY(-50%) scale(1.1) rotate(4deg);
+    }
+    .strip-card:hover .strip-hover-overlay { opacity: 1; pointer-events: auto; }
+
+    @media (max-width: 768px) {
+        .strip-base-content { padding: 2rem 1.5rem; flex-direction: column; text-align: center; }
+
+        .overlay-buttons {
+            flex-direction: row;
+            width: 100%;
+            justify-content: center;
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+
+        .btn-dashboard-action .btn-text {
+            display: none !important;
+        }
+
+        .btn-dashboard-action i {
+            margin-right: 0 !important;
+        }
+
+        .btn-dashboard-action {
+            padding: 0.8rem 1.2rem !important;
+        }
+    }
+</style>
+{% endblock %}

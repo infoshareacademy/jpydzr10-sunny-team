@@ -1,60 +1,48 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.views import PasswordChangeView
+
 from django.shortcuts import render, redirect
-from django.utils import timezone
-from datetime import timedelta
+from django.urls import reverse_lazy
+
+from logs.models import AuthLog
+from logs.utils import get_client_ip, get_lockout_until, reset_failed_attempts, log_failed_attempt
 import random
-from logs.models import EmailVerificationCode
-from accounts.models import User
-from logs.models import LoginAttempt
-from logs.utils import get_client_ip
+from mail.models import EmailVerificationCode
 from django.core.mail import send_mail
+from django.utils.translation import gettext_lazy as _
+from django.utils.text import format_lazy
 from logs.models import EmailVerificationCode, PasswordResetToken
 
 
-MAX_FAILED_ATTEMPTS = 5
-LOCKOUT_WINDOW_MINUTES = 5
-
-
-def is_locked_out(username, ip_address):
-    """Sprawdza czy dla danego username/IP przekroczono limit nieudanych prob logowania w oknie czasowym."""
-    since = timezone.now() - timedelta(minutes=LOCKOUT_WINDOW_MINUTES)
-    failed_count = LoginAttempt.objects.filter(
-        username=username,
-        ip_address=ip_address,
-        success=False,
-        invalidated=False,
-        timestamp__gte=since,
-    ).count()
-    return failed_count >= MAX_FAILED_ATTEMPTS
-
-def reset_failed_attempts(username, ip_address):
-    """
-    Oznacza dotychczasowe nieudane proby jako 'invalidated' po udanym zalogowaniu.
-    Historia zostaje w bazie, ale nie liczy sie juz do lockout.
-    """
-    LoginAttempt.objects.filter(
-        username=username,
-        ip_address=ip_address,
-        success=False,
-        invalidated=False,
-    ).update(invalidated=True)
+User = get_user_model()
 
 
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
-        form.error_messages['invalid_login'] = 'Invalid credentials.'
-        form.error_messages['inactive'] = 'This account is disabled.'
+        form.error_messages['invalid_login'] = _('Błędne dane.')
+        form.error_messages['inactive'] = _('Konto nieaktywne.')
         ip_address = get_client_ip(request)
-        username = request.POST.get('username', '')
+        raw_username = request.POST.get('username', '')
 
-        if is_locked_out(username, ip_address):
+        # Próba dopasowania wpisanego username do istniejącego konta
+        existing_user = User.objects.filter(username=raw_username).first()
+
+        # Blokada juz aktywna - NIC nie logujemy, tylko pokazujemy komunikat.
+        lockout_until = get_lockout_until(ip_address)
+        if lockout_until is not None:
             form.add_error(
                 None,
-                f'Too many failed login attempts. Try again in {LOCKOUT_WINDOW_MINUTES} minutes.'
+                format_lazy(
+                    _('Zbyt wiele prób logowania. Blokada do {time}.'),
+                    time=lockout_until.strftime("%H:%M:%S")
+                )
             )
-            return render(request, 'login.html', {'form': form})
+            return render(request, 'login.html', {
+                'form': form,
+                'lockout_until': lockout_until,
+            })
 
         if form.is_valid():
             user = authenticate(
@@ -62,55 +50,55 @@ def login_view(request):
                 username=form.cleaned_data['username'],
                 password=form.cleaned_data['password'],
             )
-            if user is None:
-                LoginAttempt.objects.create(
-                    user=None,
-                    username=username,
-                    ip_address=ip_address,
-                    success=False,
-                )
-                form.add_error(None, 'Invalid credentials.')
-            elif not user.is_active:
-                LoginAttempt.objects.create(
-                    user=user,
-                    username=username,
-                    ip_address=ip_address,
-                    success=False,
-                )
-                form.add_error(None, 'This account is disabled.')
+            if user is None or not user.is_active:
+                new_lockout = log_failed_attempt(existing_user, raw_username, ip_address)
+                if new_lockout is not None:
+                    return render(request, 'login.html', {
+                        'form': form,
+                        'lockout_until': new_lockout,
+                    })
             else:
-                LoginAttempt.objects.create(
+                AuthLog.objects.create(
                     user=user,
-                    username=username,
                     ip_address=ip_address,
-                    success=True,
+                    action='login_success',
+                    severity='info',
+                    details=_('Poprawne uwierzytelnienie hasłem. Rozpoczęto procedurę 2FA.')
                 )
-                # Udane logowanie - unieważniamy poprzednie nieudane proby 
-                reset_failed_attempts(username, ip_address)
+                # Udane logowanie - unieważniamy poprzednie nieudane proby
+                reset_failed_attempts(ip_address)
                 code = str(random.randint(100000, 999999))
                 EmailVerificationCode.objects.create(user=user, code=code)
                 request.session['2fa_user_id'] = user.id
-                print(f"KOD 2FA: {code}") # DO ZMIANY NA MAILA JAK JUZ BEDZIE GOTOWY DO WYYSLEK :)
-                # send_mail(
-                # subject='Kod weryfikacyjny 2FA',
-                # message=f'Twój kod weryfikacyjny: {code}',
-                # from_email='noreply@sunnyteam.pl',
-                # recipient_list=[user.email],
-                # )
+                print(f"KOD 2FA: {code}")
+                send_mail(
+                     subject=_('Kod weryfikacyjny 2FA'),
+                     message=_('Twój kod weryfikacyjny: %(code)s') % {'code': code},
+                     from_email='noreply@sunnyteam.pl',
+                     recipient_list=[user.email],
+                )
                 return redirect('verify_2fa')
         else:
-            LoginAttempt.objects.create(
-                user=None,
-                username=username,
-                ip_address=ip_address,
-                success=False,
-            )
+            # Formularz nie przeszedł walidacji (np. puste hasło lub nieistniejący user)
+            new_lockout = log_failed_attempt(existing_user, raw_username, ip_address)
+            if new_lockout is not None:
+                return render(request, 'login.html', {
+                    'form': form,
+                    'lockout_until': new_lockout,
+                })
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
 
-
 def logout_view(request):
+    if request.user.is_authenticated:
+        AuthLog.objects.create(
+            user=request.user,
+            ip_address=get_client_ip(request),
+            action='logout',
+            severity='info',
+            details=_('Poprawne wylogowanie.')
+        )
     logout(request)
     return redirect('login')
 
@@ -128,6 +116,7 @@ def verify_2fa(request):
 
     if request.method == 'POST':
         code_input = request.POST.get('code')
+        ip_address = get_client_ip(request)
         try:
             user = User.objects.get(id=user_id)
             verification = EmailVerificationCode.objects.filter(
@@ -138,13 +127,52 @@ def verify_2fa(request):
             if verification and verification.code == code_input:
                 verification.is_used = True
                 verification.save()
-                del request.session['2fa_user_id']
+                AuthLog.objects.create(
+                    user=user,
+                    ip_address=ip_address,
+                    action='2fa_success',
+                    severity='info',
+                    details=_('Pomyślna weryfikacja dwuetapowa (2FA). Zalogowano użytkownika.')
+                )
                 login(request, user)
-                return redirect('dashboard')
+                if '2fa_user_id' in request.session:
+                    del request.session['2fa_user_id']
+                request.session['must_change_password'] = user.must_change_password
+                if user.must_change_password:
+                    return redirect('first_password_change')
+                return redirect('home')
+
             else:
-                return render(request, 'verify_2fa.html', {'error': 'Nieprawidłowy kod.'})
+                AuthLog.objects.create(
+                    user=user,
+                    ip_address=ip_address,
+                    action='2fa_failed',
+                    severity='warning',
+                    details=_("Wprowadzono błędny kod 2FA.")
+                )
+                return render(request, 'verify_2fa.html', {'error': _('Nieprawidłowy kod.')})
         except User.DoesNotExist:
             return redirect('login')
+    return render(request, 'verify_2fa.html')
+
+class FirstPasswordChangeView(PasswordChangeView):
+    template_name = 'first_password_change.html'
+    success_url = reverse_lazy('first_password_change_done')
+
+    def form_valid(self, form):
+        user = self.request.user
+        user.must_change_password = False
+        user.save()
+        self.request.session['must_change_password'] = False
+        AuthLog.objects.create(
+            user=user,
+            ip_address=get_client_ip(self.request),
+            action='password_changed',
+            severity='info',
+            details=_('Użytkownik pomyślnie zmienił tymczasowe hasło.')
+        )
+
+        return super().form_valid(form)
     
     return render(request, 'verify_2fa.html')
 

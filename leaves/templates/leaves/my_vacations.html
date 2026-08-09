@@ -1,182 +1,456 @@
 {% extends 'base.html' %}
-{%load i18n %}
+{% load i18n %}
+
 {% block title %}{% trans "Moje Urlopy" %}{% endblock %}
 
 {% block content %}
-
 <style>
-    .section {
-        margin-bottom: 50px;
-    }
-    .section h3 {
-        border-bottom: 2px solid #0d6efd;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-        background: white;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-    th, td {
-        white-space: nowrap;
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #eee;
-    }
-    th {
-        background-color: #f8f9fa;
-        font-weight: 600;
+    /* Konfiguracja układu głównego */
+    .logs-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
     }
 
-    .status-badge {
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        display: inline-block;
+    .logs-section {
+        margin-bottom: 35px;
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    /* Nagłówki sekcji */
+    .section-title {
+        font-weight: 800;
+        color: #1a202c;
+        font-size: 1.35rem;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #cbd5e0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Tabela i wrappery */
+    .table-responsive-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    .unified-app-table {
+        width: 100%;
+        min-width: 700px;
+        border-collapse: collapse;
+        table-layout: fixed !important;
+    }
+
+    .unified-app-table th {
+        background-color: #f1f5f9;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        padding: 12px 16px;
+        border-bottom: 2px solid #cbd5e0;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    .unified-app-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1e293b;
+        font-size: 0.92rem;
+        vertical-align: middle;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .unified-app-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .unified-app-table tbody tr {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .unified-app-table tbody tr:hover td {
+        background-color: #f8fafc;
+    }
+
+    /* Statusy (Badges) */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        white-space: nowrap;
         min-width: 110px;
-        text-align: center;
+    }
+
+    .badge-approved  { background-color: #def7ec; color: #03543f; }
+    .badge-pending   { background-color: #fef3c7; color: #92400e; }
+    .badge-rejected  { background-color: #fde8e8; color: #9b1c1c; }
+    .badge-canceled,
+    .badge-cancelled { background-color: #f3f4f6; color: #4b5563; }
+    .badge-default   { background-color: #f3f4f6; color: #4b5563; }
+
+    /* Przyciski Akcji */
+    .actions-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-action {
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 6px;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+    }
+
+    .btn-edit {
+        background-color: #007bff;
+        color: #ffffff !important;
+    }
+
+    .btn-edit:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-cancel {
+        background-color: #ffffff;
+        color: #ef4444;
+        border: 1px solid #fca5a5;
+    }
+
+    .btn-cancel:hover {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    .empty-state {
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin: 0;
+        padding: 10px 0;
+    }
+
+    /* Style dla Modala Akcji */
+    .modal-backdrop-custom {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .modal-content-box {
+        background: #ffffff;
+        padding: 24px;
+        border-radius: 12px;
+        max-width: 450px;
+        width: 90%;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: translateY(-20px);
+        transition: transform 0.25s ease;
     }
 </style>
 
-<div class="container mt-4">
+<div class="logs-wrapper mt-4">
+    <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 28px; font-size: 2.2rem;">
+        {% trans "Moje Urlopy" %}
+    </h1>
 
-    <h1 class="mb-4">{% trans "Moje Urlopy" %}</h1>
+    <!-- SEKCJA 1: AKTUALNE (TRWAJĄCE) -->
+    <section class="logs-section">
+        <div class="section-title">
+            <span>{% trans "Aktualne (trwające)" %}</span>
+        </div>
 
-    <div class="section">
-        <h3>{% trans "Aktualne (trwające)" %}</h3>
         {% if current_vacations %}
-        <table>
-            <thead>
-                <tr>
-                    <th>{% trans "Data rozpoczęcia" %}</th>
-                    <th>{% trans "Data zakończenia" %}</th>
-                    <th>{% trans "Liczba dni" %}</th>
-                    <th>{% trans "Status" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for req in current_vacations %}
-                <tr>
-                    <td>{{ req.start_date }}</td>
-                    <td>{{ req.end_date }}</td>
-                    <td>{{ req.days }}</td>
-                    <td>
-                        {% if req.status == 'approved' %}
-                            <span class="status-badge" style="background: #28a745; color: white;">{% trans "Zatwierdzony" %}</span>
-                        {% elif req.status == 'pending' %}
-                            <span class="status-badge" style="background: #ffc107; color: #212529;">{% trans "Oczekujący" %}</span>
-                        {% elif req.status == 'rejected' %}
-                            <span class="status-badge" style="background: #dc3545; color: white;">{% trans "Odrzucony" %}</span>
-                        {% elif req.status == 'canceled' or req.status == 'cancelled' %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">{% trans "Anulowany" %}</span>
-                        {% else %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+            <div class="table-responsive-wrapper">
+                <table class="unified-app-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">{% trans "Data rozpoczęcia" %}</th>
+                            <th style="width: 25%;">{% trans "Data zakończenia" %}</th>
+                            <th style="width: 20%;">{% trans "Liczba dni" %}</th>
+                            <th style="width: 30%;">{% trans "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in current_vacations %}
+                            <tr onclick="navigateToDetail(event, '{% url 'leave_detail' pk=req.pk %}')">
+                                <td class="fw-semibold">{{ req.start_date }}</td>
+                                <td class="fw-semibold">{{ req.end_date }}</td>
+                                <td>{{ req.days }}</td>
+                                <td>
+                                    {% if req.status == 'approved' %}
+                                        <span class="badge badge-approved">{% trans "Zatwierdzony" %}</span>
+                                    {% elif req.status == 'pending' %}
+                                        <span class="badge badge-pending">{% trans "Oczekujący" %}</span>
+                                    {% elif req.status == 'rejected' %}
+                                        <span class="badge badge-rejected">{% trans "Odrzucony" %}</span>
+                                    {% elif req.status == 'canceled' or req.status == 'cancelled' %}
+                                        <span class="badge badge-canceled">{% trans "Anulowany" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-default">{{ req.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <p>{% trans "Brak aktualnych urlopów." %}</p>
+            <p class="empty-state">{% trans "Brak aktualnych urlopów." %}</p>
         {% endif %}
-    </div>
+    </section>
 
-    <div class="section">
-        <h3>{% trans "Planowane" %}</h3>
+    <!-- SEKCJA 2: PLANOWANE -->
+    <section class="logs-section">
+        <div class="section-title">
+            <span>{% trans "Planowane" %}</span>
+        </div>
+
         {% if planned_vacations %}
-        <table>
-            <thead>
-                <tr>
-                    <th>{% trans "Data rozpoczęcia" %}</th>
-                    <th>{% trans "Data zakończenia" %}</th>
-                    <th>{% trans "Liczba dni" %}</th>
-                    <th>{% trans "Status" %}</th>
-                    <th>{% trans "Akcje" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for req in planned_vacations %}
-                <tr>
-                    <td>{{ req.start_date }}</td>
-                    <td>{{ req.end_date }}</td>
-                    <td>{{ req.days }}</td>
-                    <td>
-                        {% if req.status == 'approved' %}
-                            <span class="status-badge" style="background: #28a745; color: white;">{% trans "Zatwierdzony" %}</span>
-                        {% elif req.status == 'pending' %}
-                            <span class="status-badge" style="background: #ffc107; color: #212529;">{% trans "Oczekujący" %}</span>
-                        {% elif req.status == 'canceled' or req.status == 'cancelled' %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">{% trans "Anulowany" %}</span>
-                        {% else %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if req.status == 'pending' %}
-                            <a href="{% url 'leave_request_edit' req.pk %}"
-                               class="btn btn-primary">{% trans "Edytuj" %}</a>
+            <div class="table-responsive-wrapper">
+                <table class="unified-app-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">{% trans "Data rozpoczęcia" %}</th>
+                            <th style="width: 20%;">{% trans "Data zakończenia" %}</th>
+                            <th style="width: 15%;">{% trans "Liczba dni" %}</th>
+                            <th style="width: 20%;">{% trans "Status" %}</th>
+                            <th style="width: 25%;">{% trans "Akcje" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in planned_vacations %}
+                            <tr onclick="navigateToDetail(event, '{% url 'leave_detail' pk=req.pk %}')">
+                                <td class="fw-semibold">{{ req.start_date }}</td>
+                                <td class="fw-semibold">{{ req.end_date }}</td>
+                                <td>{{ req.days }}</td>
+                                <td>
+                                    {% if req.status == 'approved' %}
+                                        <span class="badge badge-approved">{% trans "Zatwierdzony" %}</span>
+                                    {% elif req.status == 'pending' %}
+                                        <span class="badge badge-pending">{% trans "Oczekujący" %}</span>
+                                    {% elif req.status == 'canceled' or req.status == 'cancelled' %}
+                                        <span class="badge badge-canceled">{% trans "Anulowany" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-default">{{ req.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if req.status == 'pending' %}
+                                        <div class="actions-cell">
+                                            <a href="{% url 'leave_request_edit' req.pk %}" class="btn-action btn-edit" onclick="event.stopPropagation();">
+                                                {% trans "Edytuj" %}
+                                            </a>
 
-                            <form method="post"
-                                  action="{% url 'leave_request_cancel' req.pk %}"
-                                  style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger"
-                                        onclick="return confirm('{% trans "Czy na pewno chcesz anulować?" %}')">
-                                    {% trans "Anuluj" %}
-                                </button>
-                            </form>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                                            <button type="button" class="btn-action btn-cancel" onclick="event.stopPropagation(); openLeaveActionModal('cancel', '{% url 'leave_request_cancel' req.pk %}')">
+                                                {% trans "Anuluj" %}
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <p>{% trans "Brak planowanych urlopów." %}</p>
+            <p class="empty-state">{% trans "Brak planowanych urlopów." %}</p>
         {% endif %}
-    </div>
+    </section>
 
-    <div class="section">
-        <h3>{% trans "Archiwalne" %}</h3>
+    <!-- SEKCJA 3: ARCHIWALNE -->
+    <section class="logs-section">
+        <div class="section-title">
+            <span>{% trans "Archiwalne" %}</span>
+        </div>
+
         {% if archival_vacations %}
-        <table>
-            <thead>
-                <tr>
-                    <th>{% trans "Data rozpoczęcia" %}</th>
-                    <th>{% trans "Data zakończenia" %}</th>
-                    <th>{% trans "Liczba dni" %}</th>
-                    <th>{% trans "Status" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for req in archival_vacations %}
-                <tr>
-                    <td>{{ req.start_date }}</td>
-                    <td>{{ req.end_date }}</td>
-                    <td>{{ req.days }}</td>
-                    <td>
-                        {% if req.status == 'accepted' or req.status == 'approved' %}
-                            <span class="status-badge" style="background: #28a745; color: white;">{% trans "Zatwierdzony" %}</span>
-                        {% elif req.status == 'rejected' %}
-                            <span class="status-badge" style="background: #dc3545; color: white;">{% trans "Odrzucony" %}</span>
-                        {% elif req.status == 'canceled' or req.status == 'cancelled' %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">{% trans "Anulowany" %}</span>
-                        {% else %}
-                            <span class="status-badge" style="background: #6c757d; color: white;">{{ req.status|title }}</span>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+            <div class="table-responsive-wrapper">
+                <table class="unified-app-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">{% trans "Data rozpoczęcia" %}</th>
+                            <th style="width: 25%;">{% trans "Data zakończenia" %}</th>
+                            <th style="width: 20%;">{% trans "Liczba dni" %}</th>
+                            <th style="width: 30%;">{% trans "Status" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in archival_vacations %}
+                            <tr onclick="navigateToDetail(event, '{% url 'leave_detail' pk=req.pk %}')">
+                                <td class="fw-semibold">{{ req.start_date }}</td>
+                                <td class="fw-semibold">{{ req.end_date }}</td>
+                                <td>{{ req.days }}</td>
+                                <td>
+                                    {% if req.status == 'accepted' or req.status == 'approved' %}
+                                        <span class="badge badge-approved">{% trans "Zatwierdzony" %}</span>
+                                    {% elif req.status == 'rejected' %}
+                                        <span class="badge badge-rejected">{% trans "Odrzucony" %}</span>
+                                    {% elif req.status == 'canceled' or req.status == 'cancelled' %}
+                                        <span class="badge badge-canceled">{% trans "Anulowany" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-default">{{ req.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-            <p>{% trans "Brak archiwalnych urlopów." %}</p>
+            <p class="empty-state">{% trans "Brak archiwalnych urlopów." %}</p>
         {% endif %}
+    </section>
+</div>
+
+<!-- Struktura Modala Akcji -->
+<div id="global-action-modal" class="modal-backdrop-custom">
+    <div class="modal-content-box">
+        <h3 id="modal-title" style="margin-top:0; font-weight:700;"></h3>
+        <p id="modal-message" style="margin: 15px 0; color: #4b5563;"></p>
+
+        <form id="global-action-form" method="post">
+            {% csrf_token %}
+            <div style="margin-bottom: 15px;">
+                <textarea id="id_global_answer_comment" name="comment" class="form-control" rows="3" placeholder="{% trans 'Komentarz (opcjonalnie)...' %}" style="width: 100%; border: 1px solid #cbd5e0; border-radius: 6px; padding: 8px;"></textarea>
+                <small id="global-answer-counter" style="color: #6b7280; display: block; margin-top: 4px; text-align: right;"></small>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeGlobalActionModal()" style="padding: 6px 14px; border-radius: 6px; background: #e2e8f0; border: none; color: #475569; font-weight: 600; cursor: pointer;">
+                    {% trans "Zamknij" %}
+                </button>
+                <button type="submit" id="modal-submit-btn" class="btn" style="padding: 6px 14px; border-radius: 6px; border: none; color: #ffffff; font-weight: 600; cursor: pointer;">
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+    function navigateToDetail(event, url) {
+        if (!event.target.closest('.actions-cell')) {
+            window.location.href = url;
+        }
+    }
+
+    function toggleTeamsDropdown(event, triggerElem) {
+        if (event.target.closest('a')) {
+            return;
+        }
+        event.stopPropagation();
+        event.preventDefault();
+        const dropdown = triggerElem.querySelector('.floating-teams-dropdown');
+        const isAlreadyOpen = dropdown.classList.contains('show');
+        document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => el.classList.remove('show'));
+        if (!isAlreadyOpen) {
+            const rect = triggerElem.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.classList.add('show');
+        }
+    }
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.more-teams-trigger')) {
+            document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => el.classList.remove('show'));
+        }
+    });
+
+    // Obsługa Modala Akcji (Tylko Anulowanie)
+    const globalModal = document.getElementById('global-action-modal');
+    const globalForm = document.getElementById('global-action-form');
+    const titleElem = document.getElementById('modal-title');
+    const msgElem = document.getElementById('modal-message');
+    const submitBtn = document.getElementById('modal-submit-btn');
+    const answerInput = document.getElementById('id_global_answer_comment');
+    const answerCounter = document.getElementById('global-answer-counter');
+
+    window.openLeaveActionModal = function(actionType, url, infoText = '') {
+        if (!globalModal || !globalForm) return;
+
+        globalForm.action = url;
+
+        if (actionType === 'cancel') {
+            titleElem.textContent = "{% trans 'Anulowanie wniosku' %}";
+            titleElem.className = "top text-primary";
+            msgElem.innerHTML = `{% trans 'Czy na pewno chcesz <b>anulować</b> ten wniosek urlopowy?' %}<br>`;
+            submitBtn.style.backgroundColor = '#007bff';
+            submitBtn.textContent = "{% trans 'Anuluj wniosek' %}";
+        }
+
+        globalModal.style.opacity = "1";
+        globalModal.style.pointerEvents = "auto";
+        const box = globalModal.querySelector('.modal-content-box');
+        if (box) box.style.transform = "translateY(0)";
+    }
+
+    window.closeGlobalActionModal = function() {
+        if (globalModal) {
+            globalModal.style.opacity = "0";
+            globalModal.style.pointerEvents = "none";
+            const box = globalModal.querySelector('.modal-content-box');
+            if (box) box.style.transform = "translateY(-20px)";
+
+            if (answerInput) {
+                answerInput.value = '';
+                updateAnswerCounter();
+            }
+        }
+    }
+
+    function updateAnswerCounter() {
+        if (answerInput && answerCounter) {
+            const maxLength = 250;
+            const currentLength = answerInput.value.length;
+            const remaining = maxLength - currentLength;
+            answerCounter.textContent = `{% trans 'Pozostało' %} ${remaining} / ${maxLength} {% trans 'znaków' %}`;
+        }
+    }
+
+    if (answerInput) {
+        answerInput.addEventListener('input', updateAnswerCounter);
+    }
+
+    window.addEventListener('click', function(event) {
+        if (event.target === globalModal) {
+            closeGlobalActionModal();
+        }
+    });
+</script>
 {% endblock %}

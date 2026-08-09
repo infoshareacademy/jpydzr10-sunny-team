@@ -1,56 +1,417 @@
-{% extends "base.html" %}
-{% block title %}Lista uzytkownikow{% endblock %}
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Lista Użytkowników" %}{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-  <h1 class="mb-4 text-center">Użytkownicy</h1>
-  <div class="row justify-content-center">
-    <div class="col-10">   {# ← np. col-8, col-10, col-lg-8 — dobierz do gustu #}
-      <table class="table table-striped table-bordered">
-    <thead class="table-dark">
-      <tr>
-        <th>Zespół</th>
-        <th>Imie</th>
-        <th>Nazwisko</th>
-        <th>Rola</th>
-        <th>Czy aktywny</th>
-        <th>Akcje</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-        <tr>
-          <td>
-            {% if user.worker_profile %}
-                {{ user.worker_profile.team }}
-            {% else %}
-                <span class="text-muted">—</span>
+<style>
+    .users-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    .users-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover td {
+        background-color: #f7fafc;
+    }
+
+    .filters {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        border: 1px solid #cbd5e0;
+    }
+
+    .filters form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-grow: 1;
+        min-width: 180px;
+    }
+
+    .filter-group label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2d3748;
+        white-space: nowrap;
+    }
+
+    .filters select, .filters input[type="text"] {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        background-color: #fff;
+        color: #1a202c;
+        font-size: 0.95rem;
+        font-weight: 500;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a5568;
+        cursor: pointer;
+    }
+
+    .actions-group {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+    }
+
+    .btn-filter {
+        padding: 10px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-reset {
+        padding: 10px 24px;
+        background: #fff;
+        color: #4a5568;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .user-link, .team-link {
+        color: #1a202c;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .user-link:hover, .team-link:hover {
+        text-decoration: underline;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .badge-admin { background-color: #fde8e8; color: #9b1c1c; }
+    .badge-manager { background-color: #fef3c7; color: #92400e; }
+    .badge-hr { background-color: #e1effe; color: #1e429f; }
+    .badge-worker { background-color: #def7ec; color: #03543f; }
+
+    /* Stylizacja Przycisków Akcji Admina */
+    .btn-action-edit {
+        padding: 6px 12px;
+        background-color: #3182ce;
+        color: white;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: background-color 0.2s;
+        display: inline-block;
+    }
+    .btn-action-edit:hover { background-color: #2b6cb0; color: white; }
+
+    .btn-action-deactivate {
+        padding: 6px 12px;
+        background-color: #e53e3e;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .btn-action-deactivate:hover { background-color: #c53030; }
+
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-create {
+        background-color: #2b6cb0;
+        color: white;
+        border: none;
+    }
+    .btn-create:hover {
+        background-color: #2c5282;
+        color: white;
+    }
+</style>
+
+<div class="users-wrapper mt-4">
+    <!-- Nagłówek z wyrównaniem przycisków do prawej strony -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 style="font-weight: 800; color: #1a202c; margin: 0; font-size: 2.2rem;">{% trans "Lista Użytkowników" %}</h1>
+            <p style="margin: 4px 0 0 0; color: #718096; font-size: 1rem;">
+                {% if active_role == 'Admin' %}
+                    {% trans "Panel zarządzania kontami użytkowników w systemie" %}
+                {% else %}
+                    {% trans "Przegląd użytkowników" %}
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Grupa przycisków akcji -->
+        <div class="d-flex gap-2 align-items-stretch">
+            {% if active_role in 'Manager,HR,Admin' %}
+                <a href="{% url 'leave_usage_report' %}" class="btn btn-success btn-custom">
+                    <i class="bi bi-clipboard-data-fill"></i>
+                    <span>{% trans "Raport użytkowników" %}</span>
+                </a>
             {% endif %}
-          </td>
-          <td>{{ user.first_name }}</td>
-          <td>{{ user.last_name }}</td>
-          <td>{{ user.role }}</td>
-          <td>
-            {% if user.is_active %}
-              <span class="badge bg-success">Tak</span>
-            {% else %}
-              <span class="badge bg-danger">Nie</span>
+
+            {% if active_role in 'Admin' %}
+                <a href="{% url 'add_user' %}" class="btn-custom btn-create">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>{% trans "Dodaj użytkownika" %}</span>
+                </a>
             {% endif %}
-          </td>
-          <td>
-            {% if user.is_active %}
-              <a href="{% url 'deactivate_user' user.pk %}" class="btn btn-sm btn-warning">
-                Dezaktywuj
-              </a>
-            {% else %}
-              <span class="text-muted">Nieaktywny</span>
+        </div>
+    </div>
+
+    <!-- Filtry -->
+    <section class="filters">
+        <form method="get">
+            <div class="filter-group">
+                <label for="id_search">{% trans "Szukaj:" %}</label>
+                <input type="text" name="search" id="id_search" placeholder="{% trans "Imię, nazwisko, login..." %}" value="{{ search_query }}">
+            </div>
+
+            {% if active_role == 'HR' %}
+            <div class="filter-group">
+                <label for="id_team">{% trans "Zespół:" %}</label>
+                <select name="team" id="id_team">
+                    <option value="">{% trans "Wszystkie zespoły" %}</option>
+                    {% for team in managed_teams %}
+                    <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             {% endif %}
-          </td>
-        </tr>
-      {% empty %}
-        <tr>
-          <td colspan="4">Nie znaleziono uztkownikow.</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+            {% if active_role == 'Admin' %}
+            <!-- Filtr Roli dla Admina -->
+            <div class="filter-group">
+                <label for="id_role">{% trans "Rola:" %}</label>
+                <select name="role" id="id_role">
+                    <option value="">{% trans "Wszystkie role" %}</option>
+                    <option value="Admin" {% if selected_role == 'Admin' %}selected{% endif %}>{% trans "Admin" %}</option>
+                    <option value="Manager" {% if selected_role == 'Manager' %}selected{% endif %}>{% trans "Manager" %}</option>
+                    <option value="HR" {% if selected_role == 'HR' %}selected{% endif %}>{% trans "HR" %}</option>
+                    <option value="Worker" {% if selected_role == 'Worker' %}selected{% endif %}>{% trans "Pracownik" %}</option>
+                </select>
+            </div>
+
+            <!-- Filtr Statusu (Aktywności) dla Admina -->
+            <div class="filter-group">
+                <label for="id_status">{% trans "Status:" %}</label>
+                <select name="status" id="id_status">
+                    <option value="">{% trans "Wszyscy" %}</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>{% trans "Aktywni" %}</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>{% trans "Nieaktywni" %}</option>
+                </select>
+            </div>
+
+            <label class="checkbox-group">
+                <input type="checkbox" name="no_team" value="1" {% if no_team_only %}checked{% endif %}> {% trans "Bez zespołu" %}
+            </label>
+
+            <label class="checkbox-group">
+                <input type="checkbox" name="no_profile" value="1" {% if no_profile_only %}checked{% endif %}> {% trans "Bez profilu" %}
+            </label>
+            {% endif %}
+
+            <div class="actions-group">
+                <button type="submit" class="btn-filter">{% trans "Filtruj" %}</button>
+                <a href="{% url 'user_list' %}" class="btn-reset">{% trans "Reset" %}</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabela z Użytkownikami -->
+    <section class="users-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <!-- 1. Imię i Nazwisko -->
+                        <th>{% trans "Imię i Nazwisko" %}</th>
+
+                        <!-- 2. Należy do zespołu -->
+                        <th>{% trans "Należy do zespołu" %}</th>
+
+                        <!-- 3. Rola (Ukryta dla Manager oraz HR) -->
+                        {% if active_role not in 'Manager,HR' %}
+                        <th>{% trans "Rola" %}</th>
+                        {% endif %}
+
+                        <!-- 4. Zarządza zespołami (TYLKO ADMIN) -->
+                        {% if active_role == 'Admin' %}
+                        <th>{% trans "Zarządza zespołami" %}</th>
+
+                        <!-- 5. Akcje (TYLKO ADMIN) -->
+                        <th style="text-align: right;">{% trans "Akcje" %}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr {% if not u.is_active %}style="opacity: 0.6; background-color: #fff5f5;"{% endif %}>
+                        <!-- 1. Imię i Nazwisko -->
+                        <td>
+                            <a href="{% url 'profile' user_id=u.id %}" class="user-link">
+                                {{ u.get_full_name|default:u.username }}
+                            </a>
+                            <div style="font-size: 0.85rem; color: #718096; font-family: monospace; font-weight: 600;">
+                                @{{ u.username }}
+                            </div>
+                        </td>
+
+                        <!-- 2. Należy do zespołu -->
+                        <td style="color: #2d3748; font-weight: 500;">
+                            {% if u.worker_profile and u.worker_profile.team %}
+                                <a href="{% url 'team-detail' pk=u.worker_profile.team.id %}" class="team-link">
+                                    {{ u.worker_profile.team.name }}
+                                </a>
+                            {% else %}
+                                <span style="color: #a0aec0; font-style: italic;">&mdash; {% trans "Brak" %} &mdash;</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 3. Rola (Ukryta dla Manager oraz HR) -->
+                        {% if active_role not in 'Manager,HR' %}
+                        <td>
+                            <span class="badge badge-{{ u.role|lower }}">
+                                {{ u.get_role_display|default:u.role }}
+                            </span>
+                        </td>
+                        {% endif %}
+
+                        <!-- Dostępne tylko dla Admina -->
+                        {% if active_role == 'Admin' %}
+                        <!-- 4. Zarządza zespołami -->
+                        <td>
+                            {% if u.managed_teams_list %}
+                                {% for team in u.managed_teams_list %}
+                                    <a href="{% url 'team-detail' pk=team.id %}" class="team-link">{{ team.name }}</a>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: #a0aec0; font-style: italic;">&mdash; {% trans "Brak" %} &mdash;</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 5. Akcje -->
+                        <td style="text-align: right; white-space: nowrap;">
+                            <div style="display: inline-flex; gap: 6px; align-items: center;">
+                                {% if u.is_active %}
+                                    <!-- Edycja profilu widoczna tylko dla aktywnych użytkowników -->
+                                    <a href="{% url 'edit_worker_profile' user_id=u.id %}" class="btn-action-edit" title="{% trans "Edytuj profil użytkownika" %}">
+                                        {% trans "Edytuj profil" %}
+                                    </a>
+
+                                    <form method="post" action="{% url 'deactivate_user' pk=u.id %}" style="display: inline;" onsubmit="return confirm('{% trans "Czy na pewno chcesz dezaktywować tego użytkownika?" %}');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-action-deactivate">
+                                            {% trans "Dezaktywuj" %}
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if active_role == 'Admin' %}5{% elif active_role in 'Manager,HR' %}2{% else %}3{% endif %}" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">
+                            {% trans "Brak użytkowników spełniających podane kryteria." %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
 {% endblock %}

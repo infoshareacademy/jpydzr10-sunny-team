@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'admin_panel',
     'login',
     'reports',
+    'core',
+    'mail'
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -111,8 +113,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'calendar_app.validators.PasswordValidator',
+    },
 ]
-
 
 # Internationalization
 LANGUAGE_CODE = 'pl'

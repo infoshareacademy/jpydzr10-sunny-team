@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Historia Wniosków Urlopowych" %}{% endblock %}
+
+{% block content %}
+<style>
+    /* Główny kontener z elastycznym marginesem bocznym */
+    .logs-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    .logs-header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .logs-title {
+        font-weight: 800;
+        color: #1a202c;
+        margin-bottom: 8px;
+        font-size: 2.2rem;
+    }
+
+    .logs-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .clickable-row:hover td {
+        background-color: #edf2f7;
+    }
+
+    .row-link {
+        color: #1a202c;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .row-link:hover {
+        text-decoration: underline;
+        color: #007bff;
+    }
+
+    .col-team { color: #4a5568; font-weight: 500; }
+    .col-date { color: #2d3748; font-weight: 600; white-space: nowrap; }
+    .col-days { font-weight: 700; color: #1a202c; text-align: center; }
+    .col-created { color: #718096; font-size: 0.9rem; white-space: nowrap; }
+    .col-status { text-align: right; }
+    .text-empty { text-align: center; padding: 60px; color: #718096; font-size: 1.1rem; }
+
+    .filters {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        border: 1px solid #cbd5e0;
+    }
+
+    .filters form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-grow: 1;
+        min-width: 180px;
+    }
+
+    .filter-group label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2d3748;
+        white-space: nowrap;
+    }
+
+    .filters select, .filters input[type="text"], .filters input[type="date"] {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        background-color: #fff;
+        color: #1a202c;
+        font-size: 0.95rem;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .filters select:focus, .filters input[type="text"]:focus, .filters input[type="date"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    .actions-group {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+    }
+
+    @media (max-width: 992px) {
+        .actions-group {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+
+    .btn-filter {
+        padding: 10px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-filter:hover {
+        background: #0056b3;
+    }
+
+    .btn-reset {
+        padding: 10px 24px;
+        background: #fff;
+        color: #4a5568;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+    .btn-reset:hover {
+        background: #edf2f7;
+        color: #1a202c;
+    }
+
+    .auth-link {
+        color: #007bff;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .badge-approved { background-color: #def7ec; color: #03543f; }
+    .badge-rejected { background-color: #fde8e8; color: #9b1c1c; }
+    .badge-cancelled { background-color: #f3f4f6; color: #4b5563; }
+    .badge-default { background-color: #e1effe; color: #1e429f; }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 30px;
+    }
+
+    .pagination a, .pagination span {
+        padding: 10px 16px;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #2d3748;
+        font-size: 0.95rem;
+        font-weight: 600;
+        background: #fff;
+    }
+
+    .pagination .current {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+
+<div class="logs-wrapper mt-4">
+    <div class="logs-header-container">
+        <div>
+            <h1 class="logs-title">{% trans "Historia Wniosków Urlopowych" %}</h1>
+            <p class="m-0"><a href="{% url 'pending_requests_list' %}" class="auth-link">{% trans "Przejdź do wniosków oczekujących" %}</a></p>
+        </div>
+    </div>
+
+    <!-- Pasek Filtrów -->
+    <section class="filters">
+        <form method="get">
+            <div class="filter-group">
+                <label for="id_search">{% trans "Szukaj:" %}</label>
+                {% translate "Pracownik..." as search_placeholder %}
+                <input type="text" name="search" id="id_search" value="{{ filters.search }}" placeholder="{{ search_placeholder }}">
+            </div>
+
+            <div class="filter-group">
+                <label for="id_team">{% trans "Zespół:" %}</label>
+                <select name="team" id="id_team">
+                    <option value="">{% trans "Wszystkie" %}</option>
+                    {% for team in managed_teams %}
+                    <option value="{{ team.id }}" {% if filters.team == team.id %}selected{% endif %}>{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_status">{% trans "Status:" %}</label>
+                <select name="status" id="id_status">
+                    <option value="">{% trans "Wszystkie" %}</option>
+                    {% for value, label in status_choices %}
+                        {% if value != 'PENDING' %}
+                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{% trans label %}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_from">{% trans "Od:" %}</label>
+                <input type="date" name="date_from" id="id_date_from" value="{{ filters.date_from }}">
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_to">{% trans "Do:" %}</label>
+                <input type="date" name="date_to" id="id_date_to" value="{{ filters.date_to }}">
+            </div>
+
+            <div class="actions-group">
+                <button type="submit" class="btn-filter">{% trans "Filtruj" %}</button>
+                <a href="{% url 'history_requests_list' %}" class="btn-reset">{% trans "Reset" %}</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabela Historii -->
+    <section class="logs-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">{% trans "Pracownik" %}</th>
+                        <th style="width: 15%;">{% trans "Zespół" %}</th>
+                        <th style="width: 15%;">{% trans "Okres urlopu" %}</th>
+                        <th style="width: 20%; text-align: center;">{% trans "Dni" %}</th>
+                        <th style="width: 15%;">{% trans "Złożono dnia" %}</th>
+                        <th style="width: 15%; text-align: right;">{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in history_requests %}
+                    <tr class="clickable-row" onclick="window.location.href='{% url 'leave_detail' pk=req.id %}';">
+                        <td>
+                            {% if req.employee and req.employee.id %}
+                                <a href="{% url 'profile' user_id=req.employee.id %}" class="row-link" onclick="event.stopPropagation();">
+                                    {{ req.employee.get_full_name|default:req.employee.username }}
+                                </a>
+                            {% else %}
+                                <span>&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-team">
+                            {% if req.employee.worker_profile.team and req.employee.worker_profile.team.id %}
+                                <a href="{% url 'team-detail' pk=req.employee.worker_profile.team.id %}" class="row-link col-team" onclick="event.stopPropagation();">
+                                    {{ req.employee.worker_profile.team.name }}
+                                </a>
+                            {% else %}
+                                <span>&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="col-date">
+                            {{ req.start_date|date:"Y-m-d" }} – {{ req.end_date|date:"Y-m-d" }}
+                        </td>
+                        <td class="col-days">
+                            {{ req.amount_days }}
+                        </td>
+                        <td class="col-created">
+                            {{ req.created_at|date:"Y-m-d H:i" }}
+                        </td>
+                        <td class="col-status">
+                            {% if req.status == 'approved' %}
+                                <span class="badge badge-approved">{% trans "Zaakceptowany" %}</span>
+                            {% elif req.status == 'rejected' %}
+                                <span class="badge badge-rejected">{% trans "Odrzucony" %}</span>
+                            {% elif req.status == 'canceled' %}
+                                <span class="badge badge-cancelled">{% trans "Anulowany" %}</span>
+                            {% else %}
+                                <span class="badge badge-default">{% trans req.get_status_display|default:req.status %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-empty">{% trans "Brak wpisów w historii wniosków dla wybranych filtrów." %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginacja -->
+        {% if history_requests.has_other_pages %}
+        {% translate "Nawigacja stronami" as aria_pagination_label %}
+        <nav class="pagination" aria-label="{{ aria_pagination_label }}">
+            {% if history_requests.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; {% trans "Pierwsza" %}</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ history_requests.previous_page_number }}">&lsaquo; {% trans "Poprzednia" %}</a>
+            {% endif %}
+
+            {% for num in history_requests.paginator.page_range %}
+                {% if num == history_requests.number %}
+                    <span class="current" aria-current="page">{{ num }}</span>
+                {% elif num > history_requests.number|add:'-3' and num < history_requests.number|add:'3' %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if history_requests.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ history_requests.next_page_number }}">{% trans "Następna" %} &rsaquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ history_requests.paginator.num_pages }}">{% trans "Ostatnia" %} &raquo;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

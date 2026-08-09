@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Wnioski do zaakceptowania" %}{% endblock %}
+
+{% block content %}
+<style>
+    .btn-filter {
+        padding: 10px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-filter:hover {
+        background: #0056b3;
+    }
+    .btn-reset {
+        padding: 10px 24px;
+        background: #fff;
+        color: #4a5568;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        text-align: center;
+    }
+    .btn-reset:hover {
+        background: #edf2f7;
+        color: #1a202c;
+    }
+
+    /* Główny kontener z elastycznym marginesem bocznym */
+    .logs-wrapper {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    /* Sekcja główna - ukrywa wszystko co wystaje poza zaokrąglone brzegi */
+    .logs-section {
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e0;
+        overflow: hidden;
+    }
+
+    /* Kontener responsywny dla tabeli wewnątrz sekcji */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+    }
+
+    th {
+        background-color: #ebf1f5 !important;
+        color: #2d3748;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        padding: 18px 20px;
+        border-bottom: 3px solid #cbd5e0;
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 18px 20px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1a202c;
+        font-size: 1rem;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Interaktywny klikalny wiersz */
+    .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .clickable-row:hover td {
+        background-color: #edf2f7;
+    }
+
+    /* Linki wewnątrz wiersza */
+    .row-link {
+        color: #1a202c;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .row-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Filtry - Responsywny układ Flexbox */
+    .filters {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        border: 1px solid #cbd5e0;
+    }
+    .filters form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-grow: 1;
+        min-width: 200px;
+    }
+    .filter-group label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2d3748;
+        white-space: nowrap;
+    }
+    .filters select, .filters input[type="text"], .filters input[type="date"] {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #cbd5e0;
+        border-radius: 8px;
+        background-color: #fff;
+        color: #1a202c;
+        font-size: 0.95rem;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    .filters select:focus, .filters input[type="text"]:focus, .filters input[type="date"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    /* Grupa przycisków akcji w filtrach */
+    .actions-group {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+    }
+    @media (max-width: 992px) {
+        .actions-group {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+
+    .auth-link {
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Paginacja */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 30px;
+    }
+    .pagination a, .pagination span {
+        padding: 10px 16px;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #2d3748;
+        font-size: 0.95rem;
+        font-weight: 600;
+        background: #fff;
+    }
+    .pagination .current {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    /* CSS dla Modala Akcji */
+    .global-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .modal-content-box {
+        background: #ffffff;
+        width: 100%;
+        max-width: 480px;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        transform: translateY(-20px);
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .modal-content-box h3.top {
+        margin-top: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .modal-content-box textarea {
+        width: 100%;
+        min-height: 90px;
+        border: 1px solid #cbd5e0;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.95rem;
+        outline: none;
+        resize: vertical;
+        box-sizing: border-box;
+    }
+
+    .modal-content-box textarea:focus {
+        border-color: #007bff;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .modal-actions .btn {
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        color: white;
+    }
+
+    .btn-secondary-modal {
+        background-color: #e2e8f0;
+        color: #4a5568 !important;
+    }
+    .btn-secondary-modal:hover {
+        background-color: #cbd5e0;
+    }
+
+    .text-success { color: #10b981; }
+    .text-danger { color: #ef4444; }
+    .text-primary { color: #007bff; }
+</style>
+
+<div class="logs-wrapper mt-4">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 30px;">
+        <div>
+            <h1 style="font-weight: 800; color: #1a202c; margin-bottom: 8px; font-size: 2.2rem;">{% trans "Oczekujące Wnioski" %}</h1>
+            <p style="margin: 0;"><a href="{% url 'history_requests_list' %}" class="auth-link">{% trans "Przejdź do historii wniosków" %}</a></p>
+        </div>
+    </div>
+
+    <!-- Pasek Filtrów -->
+    <section class="filters">
+        <form method="get">
+            <div class="filter-group">
+                <label for="id_search">{% trans "Szukaj:" %}</label>
+                {% translate "Pracownik..." as search_placeholder %}
+                <input type="text" name="search" id="id_search" value="{{ filters.search }}" placeholder="{{ search_placeholder }}">
+            </div>
+
+            <div class="filter-group">
+                <label for="id_team">{% trans "Zespół:" %}</label>
+                <select name="team" id="id_team">
+                    <option value="">{% trans "Wszystkie" %}</option>
+                    {% for team in managed_teams %}
+                    <option value="{{ team.id }}" {% if filters.team == team.id %}selected{% endif %}>{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_from">{% trans "Od:" %}</label>
+                <input type="date" name="date_from" id="id_date_from" value="{{ filters.date_from }}">
+            </div>
+
+            <div class="filter-group">
+                <label for="id_date_to">{% trans "Do:" %}</label>
+                <input type="date" name="date_to" id="id_date_to" value="{{ filters.date_to }}">
+            </div>
+
+            <div class="actions-group">
+                <button type="submit" class="btn-filter">{% trans "Filtruj" %}</button>
+                <a href="{% url 'pending_requests_list' %}" class="btn-reset">{% trans "Reset" %}</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabela Wyników -->
+    <section class="logs-section">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">{% trans "Pracownik" %}</th>
+                        <th style="width: 15%;">{% trans "Zespół" %}</th>
+                        <th style="width: 15%;">{% trans "Okres urlopu" %}</th>
+                        <th style="width: 20%; text-align: center;">{% trans "Dni" %}</th>
+                        <th style="width: 15%;">{% trans "Złożono dnia" %}</th>
+                        <th style="width: 15%; text-align: right;">{% trans "Decyzja" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                    <tr class="clickable-row" onclick="window.location.href='{% url 'leave_detail' pk=req.id %}';">
+                        <td>
+                            {% if req.employee %}
+                                <a href="{% url 'profile' user_id=req.employee.id %}" class="row-link" onclick="event.stopPropagation();">
+                                    {{ req.employee.get_full_name|default:req.employee.username }}
+                                </a>
+                            {% else %}
+                                <span style="color: #1a202c;">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td style="color: #4a5568; font-weight: 500;">
+                            {% if req.employee.worker_profile.team %}
+                                <a href="{% url 'team-detail' pk=req.employee.worker_profile.team.id %}" class="row-link" style="font-weight: 500; color: #4a5568;" onclick="event.stopPropagation();">
+                                    {{ req.employee.worker_profile.team.name }}
+                                </a>
+                            {% else %}
+                                <span>&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td style="color: #2d3748; font-weight: 600; white-space: nowrap;">
+                            {{ req.start_date|date:"Y-m-d" }} – {{ req.end_date|date:"Y-m-d" }}
+                        </td>
+                        <td style="font-weight: 700; color: #1a202c; text-align: center;">
+                            {{ req.amount_days }}
+                        </td>
+                        <td style="color: #718096; font-size: 0.9rem; white-space: nowrap;">
+                            {{ req.created_at|date:"Y-m-d H:i" }}
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;" onclick="event.stopPropagation();">
+                            {% comment %} Ukrywanie przycisków decyzji, jeśli aktywna rola to Admin {% endcomment %}
+                            {% if active_role == 'Admin' %}
+                                <span style="color: #a0aec0; font-size: 0.85rem; font-style: italic;">&mdash;</span>
+                            {% elif can_approve %}
+                                <button type="button" class="btn btn-sm btn-success font-weight-bold" onclick='openLeaveActionModal("approve", "{% url "approve_request" req.id %}")'>
+                                    {% trans "Zaakceptuj" %}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger font-weight-bold" onclick='openLeaveActionModal("reject", "{% url "reject_request" req.id %}")'>
+                                    {% trans "Odrzuć" %}
+                                </button>
+                            {% else %}
+                                <span style="color: #a0aec0; font-size: 0.85rem; font-style: italic;">{% trans "Brak uprawnień" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:60px; color: #718096; font-size: 1.1rem;">{% trans "Brak oczekujących wniosków urlopowych do rozpatrzenia." %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginacja Zachowująca Filtry GET -->
+        {% if pending_requests.has_other_pages %}
+        {% translate "Nawigacja stronami" as aria_pagination_label %}
+        <nav class="pagination" aria-label="{{ aria_pagination_label }}">
+            {% if pending_requests.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; {% trans "Pierwsza" %}</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.previous_page_number }}">&lsaquo; {% trans "Poprzednia" %}</a>
+            {% endif %}
+
+            {% for num in pending_requests.paginator.page_range %}
+                {% if num == pending_requests.number %}
+                    <span class="current" aria-current="page">{{ num }}</span>
+                {% elif num > pending_requests.number|add:'-3' and num < pending_requests.number|add:'3' %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if pending_requests.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.next_page_number }}">{% trans "Następna" %} &rsaquo;</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ pending_requests.paginator.num_pages }}">{% trans "Ostatnia" %} &raquo;</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </section>
+</div>
+
+<!-- Globalny Modal Akcji (Popup) -->
+<div id="global-action-modal" class="global-modal-overlay">
+    <div class="modal-content-box">
+        <h3 id="modal-title" class="top"></h3>
+        <p id="modal-message" style="color: #4a5568; margin-bottom: 15px;"></p>
+
+        <form id="global-action-form" method="post">
+            {% csrf_token %}
+            <div style="margin-bottom: 10px;">
+                <label for="id_global_answer_comment" style="display: block; font-weight: 600; margin-bottom: 5px; color: #2d3748; font-size: 0.9rem;">
+                    {% trans "Komentarz / Odpowiedź (opcjonalnie):" %}
+                </label>
+                {% translate "Wpisz uzasadnienie lub uwagę..." as comment_placeholder %}
+                <textarea name="comment" id="id_global_answer_comment" maxlength="250" placeholder="{{ comment_placeholder }}"></textarea>
+                <div id="global-answer-counter" style="font-size: 0.8rem; color: #718096; text-align: right; margin-top: 4px;">
+                    {% trans "Pozostało 250 / 250 znaków" %}
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary-modal" onclick="closeGlobalActionModal()">{% trans "Anuluj" %}</button>
+                <button type="submit" id="modal-submit-btn" class="btn"></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleTeamsDropdown(event, triggerElem) {
+        if (event.target.closest('a')) {
+            return;
+        }
+        event.stopPropagation();
+        event.preventDefault();
+        const dropdown = triggerElem.querySelector('.floating-teams-dropdown');
+        const isAlreadyOpen = dropdown.classList.contains('show');
+        document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => el.classList.remove('show'));
+        if (!isAlreadyOpen) {
+            const rect = triggerElem.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.classList.add('show');
+        }
+    }
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.more-teams-trigger')) {
+            document.querySelectorAll('.floating-teams-dropdown.show').forEach(el => el.classList.remove('show'));
+        }
+    });
+
+    // Obsługa Modala Akcji
+    const globalModal = document.getElementById('global-action-modal');
+    const globalForm = document.getElementById('global-action-form');
+    const titleElem = document.getElementById('modal-title');
+    const msgElem = document.getElementById('modal-message');
+    const submitBtn = document.getElementById('modal-submit-btn');
+    const answerInput = document.getElementById('id_global_answer_comment');
+    const answerCounter = document.getElementById('global-answer-counter');
+
+    window.openLeaveActionModal = function(actionType, url, infoText = '') {
+        if (!globalModal || !globalForm) return;
+
+        globalForm.action = url;
+        submitBtn.className = 'btn';
+
+        if (actionType === 'approve') {
+            titleElem.textContent = "{% trans 'Zatwierdzenie wniosku' %}";
+            titleElem.className = "top text-success";
+            msgElem.innerHTML = `{% trans 'Czy na pewno chcesz <b>zatwierdzić</b> ten wniosek urlopowy?' %}<br>`;
+            submitBtn.style.backgroundColor = '#10b981';
+            submitBtn.textContent = "{% trans 'Zatwierdź' %}";
+        }
+        else if (actionType === 'reject') {
+            titleElem.textContent = "{% trans 'Odrzucenie wniosku' %}";
+            titleElem.className = "top text-danger";
+            msgElem.innerHTML = `{% trans 'Czy na pewno chcesz <b>odrzucić</b> ten wniosek urlopowy?' %}<br>`;
+            submitBtn.style.backgroundColor = '#ef4444';
+            submitBtn.textContent = "{% trans 'Odrzuć' %}";
+        }
+        else if (actionType === 'cancel') {
+            titleElem.textContent = "{% trans 'Anulowanie wniosku' %}";
+            titleElem.className = "top text-primary";
+            msgElem.innerHTML = `{% trans 'Czy na pewno chcesz <b>anulować</b> ten wniosek urlopowy?' %}<br>`;
+            submitBtn.style.backgroundColor = '#007bff';
+            submitBtn.textContent = "{% trans 'Anuluj wniosek' %}";
+        }
+
+        globalModal.style.opacity = "1";
+        globalModal.style.pointerEvents = "auto";
+        const box = globalModal.querySelector('.modal-content-box');
+        if (box) box.style.transform = "translateY(0)";
+    }
+
+    window.closeGlobalActionModal = function() {
+        if (globalModal) {
+            globalModal.style.opacity = "0";
+            globalModal.style.pointerEvents = "none";
+            const box = globalModal.querySelector('.modal-content-box');
+            if (box) box.style.transform = "translateY(-20px)";
+
+            if (answerInput) {
+                answerInput.value = '';
+                updateAnswerCounter();
+            }
+        }
+    }
+
+    function updateAnswerCounter() {
+        if (answerInput && answerCounter) {
+            const maxLength = 250;
+            const currentLength = answerInput.value.length;
+            const remaining = maxLength - currentLength;
+            const textRemaining = "{% trans 'Pozostało' %}";
+            const textChars = "{% trans 'znaków' %}";
+            answerCounter.textContent = `${textRemaining} ${remaining} / ${maxLength} ${textChars}`;
+        }
+    }
+
+    if (answerInput) {
+        answerInput.addEventListener('input', updateAnswerCounter);
+    }
+
+    window.addEventListener('click', function(event) {
+        if (event.target === globalModal) {
+            closeGlobalActionModal();
+        }
+    });
+</script>
+{% endblock %}

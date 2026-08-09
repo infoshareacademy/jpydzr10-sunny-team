@@ -1,8 +1,8 @@
 from django.contrib import admin
-from logs.models import ChangeLog
+from logs.models import ActivityLog
 
 
-@admin.register(ChangeLog)
+@admin.register(ActivityLog)
 class ChangeLogAdmin(admin.ModelAdmin):
     readonly_fields = ["who","action","object_type","created_at"]
     def has_add_permission(self,request):

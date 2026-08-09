@@ -1,80 +1,162 @@
 from django.db import models
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 import uuid
 from django.utils import timezone
 from datetime import timedelta
 
 
-class ChangeLog(models.Model):
-    ACTION_CHOICES = [
-        ('dodaj','Dodaj'),
-        ('usun', 'Usun'),
-        ('edytuj', 'Edytuj'),
-        ('zatwierdz', 'Zatwierdz'),
-        ('odrzuc', 'Odrzuc'),
-        ('anuluj','Anuluj'),
-        ('reset_hasla','Reset_hasla'),
-        ('login','Login'),
-        ('logout', 'Logout'),
-        ('login_failed','Login_failed'),
-        ('403','Forbidden_403'),
-        ('switch_choice','Switch_choice'),
+class ActivityLog(models.Model):
+    """Logi zmian obiektów biznesowych (głównie wnioski urlopowe, użytkownicy)."""
 
+    ACTION_CHOICES = [
+        ('create', _('Dodaj')),
+        ('update', _('Edytuj')),
+        ('delete', _('Usuń')),
+        ('approve', _('Zatwierdź')),
+        ('reject', _('Odrzuć')),
+        ('cancel', _('Anuluj')),
     ]
 
     OBJECT_TYPE_CHOICES = [
-        ('user','User'),
-        ('leave_request','Leave_request'),
-        ('password','Password')
+        ('user', _('Konto Użytkownika')),
+        ('worker_profile', _('Profil Pracownika')),
+        ('team', _('Zespół')),
+        ('leave_request', _('Wniosek urlopowy')),
     ]
+
+    SEVERITY_CHOICES = [
+        ('info', _('Info')),
+        ('warning', _('Ostrzeżenie')),
+        ('critical', _('Krytyczne')),
+    ]
+
     who = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
-        null=True
+        null=True,
+        related_name='activity_logs',
+        verbose_name=_('Użytkownik'),
     )
-    SEVERITY_CHOICES = [
-        ('info', 'Info'),
-        ('warning', 'Warning'),
-        ('critical', 'Critical')
-    ]
 
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
-    object_type = models.CharField(max_length=20,choices=OBJECT_TYPE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
-    severity = models.CharField(max_length=10,choices=SEVERITY_CHOICES,default='info')
-    details = models.CharField(max_length=255, null=True, blank=True)
+    action = models.CharField(
+        max_length=20,
+        choices=ACTION_CHOICES,
+        verbose_name=_('Akcja'),
+    )
+    object_type = models.CharField(
+        max_length=20,
+        choices=OBJECT_TYPE_CHOICES,
+        verbose_name=_('Typ obiektu'),
+    )
+    object_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_('ID obiektu'),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Data utworzenia'),
+    )
+    severity = models.CharField(
+        max_length=10,
+        choices=SEVERITY_CHOICES,
+        default='info',
+        verbose_name=_('Waga'),
+    )
+    details = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('Szczegóły'),
+    )
+
+    class Meta:
+        verbose_name = _('Log aktywności')
+        verbose_name_plural = _('Logi aktywności')
+        indexes = [
+            models.Index(fields=['object_type', 'object_id']),
+        ]
 
     def __str__(self):
-        return f"{self.who} - {self.action} - {self.object_type} - {self.created_at} - {self.ip_address} -  "
+        return f"{self.who} - {self.get_action_display()} - {self.get_object_type_display()}#{self.object_id} - {self.created_at}"
 
-class LoginAttempt(models.Model):
+
+class AuthLog(models.Model):
+    """Logi dotyczące autoryzacji i bezpieczeństwa (logowania, dostęp)."""
+
+    ACTION_CHOICES = [
+        ('login_success', _('Logowanie udane')),
+        ('login_failed', _('Logowanie nieudane')),
+        ('incorrect_username', _('Brak użytkownika')),
+        ('2fa_success', _('Weryfikacja 2FA udana')),
+        ('2fa_failed', _('Niepoprawny kod 2FA')),
+        ('logout', _('Wylogowanie')),
+        ('access_denied_403', _('Odmowa dostępu')),
+        ('ip_locked', _('IP zablokowane')),
+        ('role_change', _('Zmiana roli')),
+        ('password_changed', _('Zmiana hasła')),
+    ]
+
+    SEVERITY_CHOICES = [
+        ('info', _('Info')),
+        ('warning', _('Ostrzeżenie')),
+        ('critical', _('Krytyczne')),
+    ]
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='login_attempts',
+        related_name='auth_logs',
+        verbose_name=_('Użytkownik'),
     )
-    username = models.CharField(max_length=150)
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    success = models.BooleanField(default=False)
+
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        verbose_name=_('Adres IP'),
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Data i godzina'),
+    )
+    action = models.CharField(
+        max_length=20,
+        choices=ACTION_CHOICES,
+        verbose_name=_('Akcja'),
+    )
+    severity = models.CharField(
+        max_length=10,
+        choices=SEVERITY_CHOICES,
+        default='info',
+        verbose_name=_('Waga'),
+    )
     invalidated = models.BooleanField(
         default=False,
-        help_text="True gdy ten nieudany login zostal 'wyzerowany' przez pozniejsze udane logowanie."
+        verbose_name=_('Unieważniony'),
+    )
+    details = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('Szczegóły'),
     )
 
     class Meta:
+        verbose_name = _('Log autoryzacji')
+        verbose_name_plural = _('Logi autoryzacji')
         ordering = ['-timestamp']
         indexes = [
-            models.Index(fields=['username', 'timestamp']),
-            models.Index(fields=['ip_address', 'timestamp']),
+            models.Index(fields=['user', 'timestamp']),
+            models.Index(fields=['ip_address', 'action', 'timestamp']),
         ]
 
     def __str__(self):
         status = 'OK' if self.success else 'FAIL'
         return f"{self.username} - {status} - {self.ip_address} - {self.timestamp}"
+      
 class EmailVerificationCode(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     code = models.CharField(max_length=6)

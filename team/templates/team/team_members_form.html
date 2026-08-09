@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% blocktranslate with name=team.name %}Zarządzaj składem: {{ name }}{% endblocktranslate %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/team.css' %}">
+
+<div class="form-wrapper">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">{% trans "Zarządzanie Składem Zespołu" %}</h1>
+            <p class="form-subtitle">{% trans "Zespół:" %} <strong style="color: #007bff;">{{ team.name }}</strong></p>
+        </div>
+
+        <form method="post" id="membersForm" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors-banner">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label>{{ form.members.label }}</label>
+
+                <!-- Ukryty oryginalny select Django -->
+                <div style="display: none;">
+                    {{ form.members }}
+                </div>
+
+                <!-- Pojedyncza lista rozwijana -->
+                <select id="members_dropdown" class="form-control">
+                    <option value="">-- {% trans "Dodaj członka do zespołu..." %} --</option>
+                </select>
+
+                <!-- Dynamiczna lista tagów / pigułek -->
+                <label style="margin-top: 15px; font-size: 0.85rem; color: #718096;">{% trans "Aktualnie przypisani członkowie zespołu:" %}</label>
+                <div id="members_tags" class="selected-tags-container"></div>
+
+                {% if form.members.errors %}
+                    <ul class="error-list">
+                        {% for error in form.members.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'team-detail' pk=team.pk %}" class="btn-custom btn-cancel">{% trans "Anuluj" %}</a>
+                <button type="submit" class="btn-custom btn-save">{% trans "Zapisz skład zespołu" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function setupTagSelector(originalSelectId, dropdownId, tagsContainerId) {
+        const originalSelect = document.getElementById(originalSelectId);
+        const dropdown = document.getElementById(dropdownId);
+        const tagsContainer = document.getElementById(tagsContainerId);
+
+        if (!originalSelect || !dropdown || !tagsContainer) return;
+
+        function renderDropdown() {
+            dropdown.innerHTML = '<option value="">-- {% trans "Wybierz osobę do dodania..." %} --</option>';
+            Array.from(originalSelect.options).forEach(opt => {
+                if (!opt.selected) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = opt.value;
+                    newOpt.textContent = opt.textContent;
+                    dropdown.appendChild(newOpt);
+                }
+            });
+        }
+
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            let hasSelection = false;
+
+            Array.from(originalSelect.options).forEach(opt => {
+                if (opt.selected) {
+                    hasSelection = true;
+                    const tag = document.createElement('div');
+                    tag.className = 'user-tag';
+                    tag.innerHTML = `
+                        <span>${opt.textContent}</span>
+                        <button type="button" class="remove-btn" data-value="${opt.value}">✕</button>
+                    `;
+                    tagsContainer.appendChild(tag);
+                }
+            });
+
+            if (!hasSelection) {
+                tagsContainer.innerHTML = '<span style="color: #a0aec0; font-size: 0.875rem; padding: 4px;">{% trans "Brak dodanych osób w tym zespole." %}</span>';
+            }
+        }
+
+        dropdown.addEventListener('change', function() {
+            const val = this.value;
+            if (!val) return;
+
+            Array.from(originalSelect.options).forEach(opt => {
+                if (opt.value === val) opt.selected = true;
+            });
+
+            renderDropdown();
+            renderTags();
+        });
+
+        tagsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-btn')) {
+                const val = e.target.getAttribute('data-value');
+                Array.from(originalSelect.options).forEach(opt => {
+                    if (opt.value === val) opt.selected = false;
+                });
+
+                renderDropdown();
+                renderTags();
+            }
+        });
+
+        renderDropdown();
+        renderTags();
+    }
+
+    setupTagSelector('id_members', 'members_dropdown', 'members_tags');
+});
+</script>
+{% endblock %}

@@ -1,9 +1,12 @@
 {% extends 'request_base.html' %}
 {% load i18n %}
+
 {% block title %}{% trans "Nowy wniosek" %}{% endblock %}
+
 {% block top %}{% trans "Nowy wniosek" %}{% endblock %}
 
 {% block form_action %}{% url 'leave_request_add' %}{% endblock %}
+
 {% block button %}{% trans "Wyślij wniosek" %}{% endblock %}
 
-{% block approve %}{% trans "wysłać" %}{% endblock %}
+{% block approve %}{% translate "wysłać" context "leave request submit action verb" %}{% endblock %}
